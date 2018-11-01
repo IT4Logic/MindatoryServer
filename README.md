@@ -1,7 +1,7 @@
 # Mindatory
 Mindatory API server
 
-###v0.1
+### v0.1
 * Building the application skeleton. 
 * Database configuration.
 * Swagger configuration.
