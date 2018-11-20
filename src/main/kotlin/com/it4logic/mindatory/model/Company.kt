@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic. All rights reserved.
+    Copyright (c) 2018, IT4Logic. All rights reserved.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -28,7 +28,6 @@ import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
-import org.springframework.data.rest.core.annotation.RestResource
 import javax.persistence.*
 
 @Audited
@@ -80,9 +79,7 @@ data class Company (
 ) : ApplicationEntityBase()
 
 /**
- * Company Entity Repository
+ * Repository
  */
-
-//@RestResource()
+@RepositoryRestResource(exported = false)
 interface CompanyRepository : ApplicationBaseRepository<Company>
-//TODO add control

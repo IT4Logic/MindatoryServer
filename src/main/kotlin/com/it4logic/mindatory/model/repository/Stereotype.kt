@@ -18,50 +18,38 @@
 
  */
 
-package com.it4logic.mindatory.model
+package com.it4logic.mindatory.model.repository
 
-import com.it4logic.mindatory.model.common.ApplicationCompanyBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationCompanyEntityBase
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import javax.validation.constraints.Size
-import javax.validation.constraints.NotBlank
+import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
+import com.it4logic.mindatory.model.common.ApplicationRepositoryEntityBase
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
+import javax.validation.constraints.NotBlank
+import javax.validation.constraints.Size
 
-
-/**
- * Solution entity that will be used as container for the whole application.
- * One database can have one or more solutions. Solution will act like a database but without the need to change the database and that will be at runtime.
- */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_application_repositories", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositoryNameUniqueIndex, columnNames = ["name"])),
-    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositorySolutionUniqueIndex, columnNames = ["solution_id"]))
+@Table(name = "t_stereotypes", uniqueConstraints = [
+    (UniqueConstraint(name = ApplicationConstraintCodes.StereotypeNameUniqueIndex, columnNames = ["name"]))
 ])
-data class ApplicationRepository (
+data class Stereotype (
     @get: NotBlank
-    @get: Size(min = 2, max = 100)
+    @get: Size(min = 2, max = 50)
     @Column(nullable = false, length = 255)
     var name: String = "",
 
     @get: Size(max = 255)
     @Column(length = 255)
-    var description: String = "",
+    var description: String = ""
 
-    var shared: Boolean = true,
-
-    @ManyToOne(optional=true)
-    @JoinColumn(name = "solution_id")
-    var solution: Solution? = null
-
-) : ApplicationCompanyEntityBase()
+) : ApplicationRepositoryEntityBase()
 
 /**
- * Solution Entity Rest Repository
+ * Repository
  */
 @RepositoryRestResource(exported = false)
-interface ApplicationRepositoryRepository : ApplicationCompanyBaseRepository<ApplicationRepository>
+interface StereotypeRepository : ApplicationRepositoryBaseRepository<Stereotype>

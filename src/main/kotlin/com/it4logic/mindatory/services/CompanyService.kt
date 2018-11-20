@@ -18,23 +18,26 @@
 
  */
 
-package com.it4logic.mindatory.config
+package com.it4logic.mindatory.services
 
 import com.it4logic.mindatory.model.Company
-import org.springframework.data.rest.core.config.RepositoryRestConfiguration
-import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer
-import org.springframework.stereotype.Component
-import org.springframework.http.HttpMethod
+import com.it4logic.mindatory.model.CompanyRepository
+import com.it4logic.mindatory.model.common.ApplicationBaseRepository
+import com.it4logic.mindatory.services.common.ApplicationBaseService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
 
 
-@Component
-class SpringDataRestCustomization : RepositoryRestConfigurer {
+@Service
+class CompanyService : ApplicationBaseService<Company>() {
+  @Autowired
+  private lateinit var companyRepository: CompanyRepository
 
-  override fun configureRepositoryRestConfiguration(config: RepositoryRestConfiguration) {
-    config.exposureConfiguration.forDomainType(Company::class.java)
-        .withItemExposure { _, httpMethods ->
-          httpMethods.disable(HttpMethod.DELETE, HttpMethod.POST)
-        }
+  override fun repository(): ApplicationBaseRepository<Company> = companyRepository
+
+  override fun type(): Class<Company> = Company::class.java
+
+  fun findFirst(): Company {
+      return repository().findAll()[0]
   }
 }
-
