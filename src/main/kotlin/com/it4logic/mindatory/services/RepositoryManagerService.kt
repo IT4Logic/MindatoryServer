@@ -3,7 +3,7 @@ package com.it4logic.mindatory.services
 import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
 import com.it4logic.mindatory.api.plugins.MindatoryPlugin
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.exceptions.ObjectNotFoundException
+import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import org.pf4j.spring.SpringPluginManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -30,7 +30,7 @@ class RepositoryManagerService {
             if(dataType != null)
                 return dataType
         }
-        throw ObjectNotFoundException(typeUUID, ApplicationErrorCodes.NotFoundAttributeTemplateDataType)
+        throw ApplicationObjectNotFoundException(typeUUID, ApplicationErrorCodes.NotFoundAttributeTemplateDataType)
     }
 
     fun hasAttributeTemplateDataType(typeUUID: String) : Boolean {

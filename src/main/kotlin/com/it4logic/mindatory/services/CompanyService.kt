@@ -26,9 +26,11 @@ import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 
 @Service
+@Transactional
 class CompanyService : ApplicationBaseService<Company>() {
   @Autowired
   private lateinit var companyRepository: CompanyRepository

@@ -4,11 +4,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.it4logic</groupId>
-	<artifactId>MindatoryServer</artifactId>
+	<artifactId>MindatoryAPIServer</artifactId>
 	<version>0.3.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>Mindatory Server</name>
+	<name>Mindatory API Server</name>
 	<description>System Engineering Tool</description>
 
 	<parent>

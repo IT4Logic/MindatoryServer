@@ -20,9 +20,9 @@
 
 package com.it4logic.mindatory.model
 
-import com.it4logic.mindatory.model.common.ApplicationCompanyBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationCompanyEntityBase
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
+import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -64,4 +64,4 @@ data class ApplicationRepository (
  * Solution Entity Rest Repository
  */
 @RepositoryRestResource(exported = false)
-interface ApplicationRepositoryRepository : ApplicationCompanyBaseRepository<ApplicationRepository>
+interface ApplicationRepositoryRepository : ApplicationSolutionBaseRepository<ApplicationRepository>

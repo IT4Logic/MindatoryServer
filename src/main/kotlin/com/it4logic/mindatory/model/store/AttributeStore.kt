@@ -67,4 +67,7 @@ data class AttributeStore (
  * Repository
  */
 @RepositoryRestResource(exported = false)
-interface AttributeStoreRepository : ApplicationSolutionBaseRepository<AttributeStore>
+interface AttributeStoreRepository : ApplicationSolutionBaseRepository<AttributeStore> {
+    fun countByAttributeTemplateRepositoryId(id: Long): Long
+    fun countByAttributeTemplateId(id: Long): Long
+}

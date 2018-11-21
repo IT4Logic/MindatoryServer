@@ -20,14 +20,17 @@
 
 package com.it4logic.mindatory.services.repository
 
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
+import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.repository.JoinTemplate
 import com.it4logic.mindatory.model.repository.JoinTemplateRepository
+import com.it4logic.mindatory.model.store.JoinStoreRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
-
 
 @Service
 @Transactional
@@ -35,7 +38,16 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
   @Autowired
   private lateinit var joinTemplateRepository: JoinTemplateRepository
 
+  @Autowired
+  private lateinit var joinStoreRepository: JoinStoreRepository
+
   override fun repository(): ApplicationBaseRepository<JoinTemplate> = joinTemplateRepository
 
   override fun type(): Class<JoinTemplate> = JoinTemplate::class.java
+
+  override fun beforeDelete(target: JoinTemplate) {
+    val count = joinStoreRepository.countByJoinTemplateId(target.id)
+    if(count > 0)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationJoinTemplateHasRelatedStoreData)
+  }
 }

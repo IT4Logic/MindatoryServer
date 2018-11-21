@@ -20,9 +20,14 @@
 
 package com.it4logic.mindatory.services.repository
 
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
+import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.repository.ArtifactTemplate
 import com.it4logic.mindatory.model.repository.ArtifactTemplateRepository
+import com.it4logic.mindatory.model.repository.JoinTemplateRepository
+import com.it4logic.mindatory.model.store.ArtifactStoreRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -35,7 +40,27 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
   @Autowired
   private lateinit var artifactTemplateRepository: ArtifactTemplateRepository
 
+  @Autowired
+  private lateinit var artifactStoreRepository: ArtifactStoreRepository
+
+  @Autowired
+  private lateinit var joinTemplateRepository: JoinTemplateRepository
+
   override fun repository(): ApplicationBaseRepository<ArtifactTemplate> = artifactTemplateRepository
 
   override fun type(): Class<ArtifactTemplate> = ArtifactTemplate::class.java
+
+  override fun beforeDelete(target: ArtifactTemplate) {
+    var count = artifactStoreRepository.countByArtifactTemplateId(target.id)
+    if(count > 0)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateHasRelatedStoreData)
+
+    count = joinTemplateRepository.countBySourceArtifacts_Id(target.id)
+    if(count > 0)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateUsedInJoinTemplates)
+
+    count = joinTemplateRepository.countByTargetArtifacts_Id(target.id)
+    if(count > 0)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateUsedInJoinTemplates)
+  }
 }

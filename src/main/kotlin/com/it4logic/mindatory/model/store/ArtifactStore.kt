@@ -51,4 +51,7 @@ data class ArtifactStore (
  * Repository
  */
 @RepositoryRestResource(exported = false)
-interface ArtifactStoreRepository : ApplicationSolutionBaseRepository<ArtifactStore>
+interface ArtifactStoreRepository : ApplicationSolutionBaseRepository<ArtifactStore> {
+    fun countByArtifactTemplateRepositoryId(id: Long): Long
+    fun countByArtifactTemplateId(id: Long): Long
+}

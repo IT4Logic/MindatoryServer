@@ -24,8 +24,6 @@ import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
 import com.it4logic.mindatory.controllers.common.ApplicationBaseController
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
-import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.exceptions.ObjectNotFoundException
 import com.it4logic.mindatory.model.repository.AttributeTemplate
 import com.it4logic.mindatory.services.repository.AttributeTemplateService
 import com.it4logic.mindatory.services.RepositoryManagerService
@@ -60,10 +58,5 @@ class AttributeTemplateController : ApplicationBaseController<AttributeTemplate>
   @GetMapping("/data-types/{uuid}")
   fun doGetDataType(@PathVariable uuid: String) : ResponseEntity<AttributeTemplateDataType> {
     return ResponseEntity.ok(repositoryManagerService.getAttributeTemplateDataType(uuid))
-  }
-
-  override fun beforeCreate(target: AttributeTemplate) {
-    if(!repositoryManagerService.hasAttributeTemplateDataType(target.typeUUID))
-      throw ObjectNotFoundException(target.typeUUID, ApplicationErrorCodes.NotFoundAttributeTemplateDataType)
   }
 }

@@ -57,4 +57,7 @@ data class JoinStore (
  * Repository
  */
 @RepositoryRestResource(exported = false)
-interface JoinStoreRepository : ApplicationSolutionBaseRepository<JoinStore>
+interface JoinStoreRepository : ApplicationSolutionBaseRepository<JoinStore> {
+    fun countByJoinTemplateRepositoryId(id: Long): Long
+    fun countByJoinTemplateId(id: Long): Long
+}
