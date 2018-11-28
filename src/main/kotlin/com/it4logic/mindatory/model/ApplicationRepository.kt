@@ -46,7 +46,7 @@ data class ApplicationRepository (
     @get: NotBlank
     @get: Size(min = 2, max = 100)
     @Column(nullable = false, length = 255)
-    var name: String = "",
+    var name: String,
 
     @get: Size(max = 255)
     @Column(length = 255)

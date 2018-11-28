@@ -20,7 +20,10 @@
 
 package com.it4logic.mindatory.services.store
 
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
+import com.it4logic.mindatory.model.common.DesignStatus
 import com.it4logic.mindatory.model.store.ArtifactStore
 import com.it4logic.mindatory.model.store.ArtifactStoreRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
@@ -35,7 +38,34 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
   @Autowired
   private lateinit var artifactStoreRepository: ArtifactStoreRepository
 
+  @Autowired
+  private lateinit var attributeStoreService: AttributeStoreService
+
   override fun repository(): ApplicationBaseRepository<ArtifactStore> = artifactStoreRepository
 
   override fun type(): Class<ArtifactStore> = ArtifactStore::class.java
+
+  override fun beforeCreate(target: ArtifactStore) {
+    if(target.artifactTemplate.id != target.artifactTemplateVersion.artifactTemplate.id)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
+
+    if(target.artifactTemplateVersion.designStatus != DesignStatus.Released)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
+
+    for(attribute in target.attributeStores) {
+      attributeStoreService.validate(attribute)
+    }
+  }
+
+  override fun beforeUpdate(target: ArtifactStore) {
+    if(target.artifactTemplate.id != target.artifactTemplateVersion.artifactTemplate.id)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
+
+    if(target.artifactTemplateVersion.designStatus != DesignStatus.Released)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
+
+    for(attribute in target.attributeStores) {
+      attributeStoreService.validate(attribute)
+    }
+  }
 }

@@ -46,7 +46,7 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
   override fun type(): Class<JoinTemplate> = JoinTemplate::class.java
 
   override fun beforeDelete(target: JoinTemplate) {
-    val count = joinStoreRepository.countByJoinTemplateId(target.id)
+    val count = joinStoreRepository.countByJoinTemplateVersionId(target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationJoinTemplateHasRelatedStoreData)
   }

@@ -24,7 +24,9 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationSolutionEntityBase
+import com.it4logic.mindatory.model.common.StoreObjectStatus
 import com.it4logic.mindatory.model.repository.AttributeTemplate
+import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -43,23 +45,30 @@ data class AttributeStore (
     var contents: String,
 
     @Transient
-    var jsonContents: JsonNode,
+    var contentsJson: JsonNode,
 
     @get: NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "attribute_template_id", nullable = false)
-    var attributeTemplate: AttributeTemplate? = null
+    var attributeTemplate: AttributeTemplate,
+
+    @get: NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "attribute_template_ver_id", nullable = false)
+    var attributeTemplateVersion: AttributeTemplateVersion,
+
+    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active
 
 ) : ApplicationSolutionEntityBase() {
     @PrePersist
     @PreUpdate
     fun preSave() {
-        contents = ObjectMapper().writeValueAsString(jsonContents)
+        contents = ObjectMapper().writeValueAsString(contentsJson)
     }
 
     @PostLoad
     fun postLoad() {
-        jsonContents = ObjectMapper().readTree(contents)
+        contentsJson = ObjectMapper().readTree(contents)
     }
 }
 
@@ -69,5 +78,5 @@ data class AttributeStore (
 @RepositoryRestResource(exported = false)
 interface AttributeStoreRepository : ApplicationSolutionBaseRepository<AttributeStore> {
     fun countByAttributeTemplateRepositoryId(id: Long): Long
-    fun countByAttributeTemplateId(id: Long): Long
+    fun countByAttributeTemplateVersionId(id: Long): Long
 }

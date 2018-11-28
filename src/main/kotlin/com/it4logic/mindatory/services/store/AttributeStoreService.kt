@@ -20,22 +20,38 @@
 
 package com.it4logic.mindatory.services.store
 
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
+import com.it4logic.mindatory.model.common.DesignStatus
 import com.it4logic.mindatory.model.store.AttributeStore
 import com.it4logic.mindatory.model.store.AttributeStoreRepository
+import com.it4logic.mindatory.services.RepositoryManagerService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.*
 import javax.transaction.Transactional
 
 
 @Service
 @Transactional
-class AttributeStoreService : ApplicationBaseService<AttributeStore>() {
+class AttributeStoreService {
+
   @Autowired
-  private lateinit var attributeStoreRepository: AttributeStoreRepository
+  private lateinit var repositoryManagerService: RepositoryManagerService
 
-  override fun repository(): ApplicationBaseRepository<AttributeStore> = attributeStoreRepository
+  fun validate(target: AttributeStore) {
+    if(target.attributeTemplate.id != target.attributeTemplateVersion.attributeTemplate.id)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
 
-  override fun type(): Class<AttributeStore> = AttributeStore::class.java
+    if(target.attributeTemplateVersion.designStatus != DesignStatus.Released)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
+
+    val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(target.attributeTemplateVersion.typeUUID)
+    dataTypeManager.validateDataTypeContents(
+                                UUID.fromString(target.attributeTemplateVersion.typeUUID),
+                                target.attributeTemplateVersion.propertiesJson,
+                                target.contentsJson)
+  }
 }

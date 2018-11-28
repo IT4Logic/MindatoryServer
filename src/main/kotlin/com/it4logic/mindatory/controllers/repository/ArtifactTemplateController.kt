@@ -24,9 +24,23 @@ import com.it4logic.mindatory.controllers.common.ApplicationBaseController
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.model.repository.ArtifactTemplate
+import com.it4logic.mindatory.model.repository.ArtifactTemplateVersion
+import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
+import com.it4logic.mindatory.model.store.ArtifactStore
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.repository.ArtifactTemplateService
+import org.springframework.data.domain.Pageable
+import org.springframework.data.rest.core.RepositoryConstraintViolationException
+import org.springframework.http.HttpMethod
+import org.springframework.http.ResponseEntity
+import org.springframework.validation.Errors
+import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+import javax.validation.Valid
+
 
 @CrossOrigin
 @RestController
@@ -38,5 +52,56 @@ class ArtifactTemplateController : ApplicationBaseController<ArtifactTemplate>()
 
   override fun service(): ApplicationBaseService<ArtifactTemplate> {
     return artifactTemplateService
+  }
+
+  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+  @GetMapping("{id}/design-versions")
+  fun doGetDesignVersions(@PathVariable id: Long) : List<ArtifactTemplateVersion> {
+    return artifactTemplateService.getAllDesignVersions(id)
+  }
+
+  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+  @GetMapping("{id}/design-versions/{verId}")
+  fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : ArtifactTemplateVersion {
+    return artifactTemplateService.getDesignVersion(id, verId)
+  }
+
+  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+  @PostMapping("{id}/design-versions/start")
+  fun doStartDesignVersion(@PathVariable id: Long) : ResponseEntity<ArtifactTemplateVersion> {
+    val result = artifactTemplateService.startNewDesignVersion(id)
+    val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
+    return ResponseEntity.created(location).body(result)
+  }
+
+  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+  @PostMapping("{id}/design-versions/release")
+  fun doReleaseDesignVersion(@PathVariable id: Long) : ResponseEntity<ArtifactTemplateVersion> {
+    val result = artifactTemplateService.releaseDesignVersion(id)
+    return ResponseEntity.ok(result)
+  }
+
+  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+  @GetMapping("{id}/design-versions/{verId}")
+  fun doGetAttributes(@PathVariable id: Long, @PathVariable verId: Long) : List<AttributeTemplateVersion> {
+    return artifactTemplateService.getAllAttributes(id, verId)
+  }
+
+  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+  @PostMapping("{id}/design-versions/{verId}/attributes/add")
+  fun doAddAttribute(@PathVariable id: Long, @PathVariable verId: Long, @Valid @RequestBody target: AttributeTemplateVersion)  {
+    artifactTemplateService.addAttribute(id, verId, target)
+  }
+
+  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+  @PostMapping("{id}/design-versions/{verId}/attributes/{attributeId}/remove")
+  fun doRemoveAttribute(@PathVariable id: Long, @PathVariable verId: Long, @PathVariable attributeId: Long)  {
+    artifactTemplateService.removeAttribute(id, verId, attributeId)
+  }
+
+  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+  @PostMapping("{id}/design-versions/{verId}/migrate-stores/{targetVerId}")
+  fun doStoresMigrate(@PathVariable id: Long, @PathVariable verId: Long, @PathVariable targetVerId: Long): List<ArtifactStore> {
+    return artifactTemplateService.migrateStores(id, verId, targetVerId)
   }
 }

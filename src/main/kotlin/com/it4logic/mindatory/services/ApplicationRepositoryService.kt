@@ -25,9 +25,7 @@ import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.ApplicationRepositoryRepository
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.repository.ArtifactTemplateRepository
-import com.it4logic.mindatory.model.repository.JoinTemplateRepository
-import com.it4logic.mindatory.model.repository.StereotypeRepository
+import com.it4logic.mindatory.model.repository.*
 import com.it4logic.mindatory.model.store.ArtifactStoreRepository
 import com.it4logic.mindatory.model.store.AttributeStoreRepository
 import com.it4logic.mindatory.model.store.JoinStoreRepository
@@ -44,10 +42,10 @@ class ApplicationRepositoryService : ApplicationBaseService<ApplicationRepositor
   private lateinit var applicationRepositoryRepository: ApplicationRepositoryRepository
 
   @Autowired
-  private lateinit var artifactTemplateRepository: ArtifactTemplateRepository
+  private lateinit var artifactTemplateVersionRepository: ArtifactTemplateVersionRepository
 
   @Autowired
-  private lateinit var joinTemplateRepository: JoinTemplateRepository
+  private lateinit var joinTemplateVersionRepository: JoinTemplateVersionRepository
 
   @Autowired
   private lateinit var artifactStoreRepository: ArtifactStoreRepository
@@ -79,25 +77,25 @@ class ApplicationRepositoryService : ApplicationBaseService<ApplicationRepositor
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasJoinTemplatesRelatedStoreData)
 
     // check if there are artifact templates from this repository used in joins templates from other repositories
-    count = joinTemplateRepository.countByRepositoryIdNotAndSourceArtifacts_RepositoryId(target.id, target.id)
+    count = joinTemplateVersionRepository.countByRepositoryIdNotAndSourceArtifacts_RepositoryId(target.id, target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInJoinTemplatesFromOtherRepositories)
 
-    count = joinTemplateRepository.countByRepositoryIdNotAndTargetArtifacts_RepositoryId(target.id, target.id)
+    count = joinTemplateVersionRepository.countByRepositoryIdNotAndTargetArtifacts_RepositoryId(target.id, target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInJoinTemplatesFromOtherRepositories)
 
     // check if there are attribute templates from this repository used in artifact templates from other repositories
-    count = artifactTemplateRepository.countByRepositoryIdNotAttributes_RepositoryId(target.id, target.id)
+    count = artifactTemplateVersionRepository.countByRepositoryIdNotAndAttributes_RepositoryId(target.id, target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInArtifactTemplatesFromOtherRepositories)
 
     // check if there are stereotypes from this repository used in join templates from other repositories
-    count = joinTemplateRepository.countByRepositoryIdNotAndSourceStereotypeRepositoryId(target.id, target.id)
+    count = joinTemplateVersionRepository.countByRepositoryIdNotAndSourceStereotypeRepositoryId(target.id, target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasStereotypesUsedInJoinTemplatesFromOtherRepositories)
 
-    count = joinTemplateRepository.countByRepositoryIdNotAndTargetStereotypeRepositoryId(target.id, target.id)
+    count = joinTemplateVersionRepository.countByRepositoryIdNotAndTargetStereotypeRepositoryId(target.id, target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasStereotypesUsedInJoinTemplatesFromOtherRepositories)
   }

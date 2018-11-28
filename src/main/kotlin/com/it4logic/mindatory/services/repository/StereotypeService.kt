@@ -24,6 +24,7 @@ import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.repository.JoinTemplateRepository
+import com.it4logic.mindatory.model.repository.JoinTemplateVersionRepository
 import com.it4logic.mindatory.model.repository.Stereotype
 import com.it4logic.mindatory.model.repository.StereotypeRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
@@ -41,16 +42,19 @@ class StereotypeService : ApplicationBaseService<Stereotype>() {
   @Autowired
   private lateinit var joinTemplateRepository: JoinTemplateRepository
 
+  @Autowired
+  private lateinit var joinTemplateVersionRepository: JoinTemplateVersionRepository
+
   override fun repository(): ApplicationBaseRepository<Stereotype> = stereotypeRepository
 
   override fun type(): Class<Stereotype> = Stereotype::class.java
 
   override fun beforeDelete(target: Stereotype) {
-    var count = joinTemplateRepository.countBySourceStereotypeId(target.id)
+    var count = joinTemplateVersionRepository.countBySourceStereotypeId(target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationStereotypesUsedInJoinTemplates)
 
-    count = joinTemplateRepository.countByTargetStereotypeId(target.id)
+    count = joinTemplateVersionRepository.countByTargetStereotypeId(target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationStereotypesUsedInJoinTemplates)
   }

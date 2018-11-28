@@ -22,7 +22,9 @@ package com.it4logic.mindatory.model.store
 
 import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationSolutionEntityBase
+import com.it4logic.mindatory.model.common.StoreObjectStatus
 import com.it4logic.mindatory.model.repository.JoinTemplate
+import com.it4logic.mindatory.model.repository.JoinTemplateVersion
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -35,21 +37,27 @@ import javax.validation.constraints.NotNull
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_join_stores")
 data class JoinStore (
-
     @get: NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "source_artifact_store_id", nullable = false)
-    var sourceArtifact: ArtifactStore? = null,
+    var sourceArtifact: ArtifactStore,
 
     @get: NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "target_artifact_store_id", nullable = false)
-    var targetArtifact: ArtifactStore? = null,
+    var targetArtifact: ArtifactStore,
 
     @get: NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "join_template_id", nullable = false)
-    var joinTemplate: JoinTemplate? = null
+    var joinTemplate: JoinTemplate,
+
+    @get: NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "join_template_ver_id", nullable = false)
+    var joinTemplateVersion: JoinTemplateVersion,
+
+    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active
 
 ) : ApplicationSolutionEntityBase()
 
@@ -59,5 +67,5 @@ data class JoinStore (
 @RepositoryRestResource(exported = false)
 interface JoinStoreRepository : ApplicationSolutionBaseRepository<JoinStore> {
     fun countByJoinTemplateRepositoryId(id: Long): Long
-    fun countByJoinTemplateId(id: Long): Long
+    fun countByJoinTemplateVersionId(id: Long): Long
 }

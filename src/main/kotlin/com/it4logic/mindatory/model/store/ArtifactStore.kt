@@ -22,7 +22,9 @@ package com.it4logic.mindatory.model.store
 
 import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationSolutionEntityBase
+import com.it4logic.mindatory.model.common.StoreObjectStatus
 import com.it4logic.mindatory.model.repository.ArtifactTemplate
+import com.it4logic.mindatory.model.repository.ArtifactTemplateVersion
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -35,15 +37,21 @@ import javax.validation.constraints.NotNull
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_artifact_stores")
 data class ArtifactStore (
-
     @get: NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "artifact_template_id", nullable = false)
-    var artifactTemplate: ArtifactTemplate? = null,
+    var artifactTemplate: ArtifactTemplate,
+
+    @get: NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "artifact_template_ver_id", nullable = false)
+    var artifactTemplateVersion: ArtifactTemplateVersion,
 
     @ManyToMany()
     @JoinTable(name = "t_artifact_attribute_stores", joinColumns = [JoinColumn(name = "artifact_id")], inverseJoinColumns = [JoinColumn(name = "attribute_id")])
-    var attributeStores: MutableList<AttributeStore> = mutableListOf()
+    var attributeStores: MutableList<AttributeStore> = mutableListOf(),
+
+    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active
 
 ) : ApplicationSolutionEntityBase()
 
@@ -54,4 +62,6 @@ data class ArtifactStore (
 interface ArtifactStoreRepository : ApplicationSolutionBaseRepository<ArtifactStore> {
     fun countByArtifactTemplateRepositoryId(id: Long): Long
     fun countByArtifactTemplateId(id: Long): Long
+
+    fun findAllByArtifactTemplateVersionId(id: Long): List<ArtifactStore>
 }

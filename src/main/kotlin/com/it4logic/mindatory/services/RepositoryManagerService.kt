@@ -1,6 +1,7 @@
 package com.it4logic.mindatory.services
 
 import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
+import com.it4logic.mindatory.api.plugins.AttributeTemplateDataTypeManager
 import com.it4logic.mindatory.api.plugins.MindatoryPlugin
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
@@ -29,6 +30,16 @@ class RepositoryManagerService {
             val dataType = plugin.attributeTemplateDataTypeManager().dataType(UUID.fromString(typeUUID))
             if(dataType != null)
                 return dataType
+        }
+        throw ApplicationObjectNotFoundException(typeUUID, ApplicationErrorCodes.NotFoundAttributeTemplateDataType)
+    }
+
+    fun getAttributeTemplateDataTypeManager(typeUUID: String) : AttributeTemplateDataTypeManager {
+        val plugins = pluginManager.getExtensions(MindatoryPlugin::class.java)
+        for(plugin in plugins) {
+            val manager = plugin.attributeTemplateDataTypeManager()
+            if(manager.dataType(UUID.fromString(typeUUID)) != null)
+                return manager
         }
         throw ApplicationObjectNotFoundException(typeUUID, ApplicationErrorCodes.NotFoundAttributeTemplateDataType)
     }

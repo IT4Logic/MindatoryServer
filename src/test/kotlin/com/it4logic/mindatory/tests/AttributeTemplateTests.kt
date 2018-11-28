@@ -61,7 +61,7 @@ class AttributeTemplateTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$", hasSize<Any>(2)))
     }
-
+/*
     @Test
     fun `B- Manage Attribute Templates`() {
         val textDataTypeUUID = "cd59f8d2-02d5-4175-97d8-be1bdec3c2a5"
@@ -140,4 +140,5 @@ class AttributeTemplateTests {
         )
             .andExpect(status().isNotFound)
     }
+    */
 }

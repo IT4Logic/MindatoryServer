@@ -31,12 +31,12 @@ import org.springframework.web.bind.annotation.*
 @CrossOrigin
 @RestController
 @RequestMapping(ApplicationControllerEntryPoints.ATTRIBUTE_STORES)
-class AttributeStoreController : ApplicationBaseController<AttributeStore>() {
+class AttributeStoreController /*: ApplicationBaseController<AttributeStore>()*/ {
 
   @Autowired
   lateinit var attributeStoreService: AttributeStoreService
 
-  override fun service(): ApplicationBaseService<AttributeStore> {
-    return attributeStoreService
-  }
+//  override fun service(): ApplicationBaseService<AttributeStore> {
+//    return attributeStoreService
+//  }
 }
