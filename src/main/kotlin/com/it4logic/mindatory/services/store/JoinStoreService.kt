@@ -20,7 +20,10 @@
 
 package com.it4logic.mindatory.services.store
 
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
+import com.it4logic.mindatory.model.common.DesignStatus
 import com.it4logic.mindatory.model.store.JoinStore
 import com.it4logic.mindatory.model.store.JoinStoreRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
@@ -38,4 +41,20 @@ class JoinStoreService : ApplicationBaseService<JoinStore>() {
   override fun repository(): ApplicationBaseRepository<JoinStore> = joinStoreRepository
 
   override fun type(): Class<JoinStore> = JoinStore::class.java
+
+  override fun beforeCreate(target: JoinStore) {
+    if(target.joinTemplate.id != target.joinTemplateVersion.joinTemplate.id)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
+
+    if(target.joinTemplateVersion.designStatus != DesignStatus.Released)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
+  }
+
+  override fun beforeUpdate(target: JoinStore) {
+    if(target.joinTemplate.id != target.joinTemplateVersion.joinTemplate.id)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
+
+    if(target.joinTemplateVersion.designStatus != DesignStatus.Released)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
+  }
 }

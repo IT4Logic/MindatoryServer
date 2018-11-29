@@ -73,7 +73,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
             if(version.id == versionId)
                 return version
         }
-        throw ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
+        throw ApplicationObjectNotFoundException(versionId, AttributeTemplateVersion::class.java.simpleName.toLowerCase())
     }
 
     fun createVersion(attributeTemplateId: Long, attributeTemplateVersion: AttributeTemplateVersion): AttributeTemplateVersion {

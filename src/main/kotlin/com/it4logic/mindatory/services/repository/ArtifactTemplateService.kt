@@ -192,6 +192,7 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
 
         for(store in sourceArtifactStores) {
             val targetArtifactStore = ArtifactStore(artifactTemplate = store.artifactTemplate, artifactTemplateVersion = target)
+            targetArtifactStore.solution = store.solution
 
             for(attributeStore in store.attributeStores) {
                 var attributeTemplateVersion: AttributeTemplateVersion?
@@ -231,11 +232,14 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
     }
 
     fun migrateStores(artifactId: Long, versionId: Long, targetVersionId: Long): MutableList<ArtifactStore> {
-        val sourceVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(versionId,artifactId).orElseThrow {
+        val targetVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(targetVersionId,artifactId).orElseThrow {
             ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
         }
 
-        val targetVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(targetVersionId,artifactId).orElseThrow {
+        if(targetVersion.designStatus != DesignStatus.Released)
+            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateStoreObjectsToNoneReleasedVersion)
+
+        val sourceVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(versionId,artifactId).orElseThrow {
             ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
         }
 

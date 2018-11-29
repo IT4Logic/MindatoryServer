@@ -51,7 +51,7 @@ data class JoinTemplateVersion (
     var sourceStereotype: Stereotype,
 
     @ManyToMany()
-    @JoinTable(name = "t_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
+    @JoinTable(name = "t_source_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
     var sourceArtifacts: MutableList<ArtifactTemplate> = mutableListOf(),
 
     @get: NotNull
@@ -60,7 +60,7 @@ data class JoinTemplateVersion (
     var targetStereotype: Stereotype,
 
     @ManyToMany()
-    @JoinTable(name = "t_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
+    @JoinTable(name = "t_target_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
     var targetArtifacts: MutableList<ArtifactTemplate> = mutableListOf(),
 
     var designStatus: DesignStatus = DesignStatus.InDesign,
@@ -87,6 +87,7 @@ interface JoinTemplateVersionRepository : ApplicationRepositoryBaseRepository<Jo
     fun countByTargetStereotypeId(id: Long): Long
 
     fun findOneByJoinTemplateIdAndDesignStatus(id: Long, designStatus: DesignStatus): Optional<JoinTemplateVersion>
+    fun findOneByIdAndJoinTemplateId(id1: Long, id2: Long): Optional<JoinTemplateVersion>
 
     @Query("select max(designVersion) from JoinTemplateVersion a where a.joinTemplate.id = ?1")
     fun maxDesignVersion(id: Long): Int

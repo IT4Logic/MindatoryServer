@@ -29,6 +29,7 @@ import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
+import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
 
 
@@ -37,15 +38,15 @@ import javax.validation.constraints.NotNull
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_join_stores")
 data class JoinStore (
-    @get: NotNull
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "source_artifact_store_id", nullable = false)
-    var sourceArtifact: ArtifactStore,
+    @get: NotEmpty
+    @ManyToMany()
+    @JoinTable(name = "t_source_artifact_join_stores", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
+    var sourceArtifacts: MutableList<ArtifactStore> = mutableListOf(),
 
-    @get: NotNull
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "target_artifact_store_id", nullable = false)
-    var targetArtifact: ArtifactStore,
+    @get: NotEmpty
+    @ManyToMany()
+    @JoinTable(name = "t_target_artifact_join_stores", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
+    var targetArtifacts: MutableList<ArtifactStore> = mutableListOf(),
 
     @get: NotNull
     @ManyToOne(optional = false)
@@ -68,4 +69,10 @@ data class JoinStore (
 interface JoinStoreRepository : ApplicationSolutionBaseRepository<JoinStore> {
     fun countByJoinTemplateRepositoryId(id: Long): Long
     fun countByJoinTemplateVersionId(id: Long): Long
+
+    fun findAllByJoinTemplateVersionId(id: Long): List<JoinStore>
+
+    fun countByJoinTemplateVersionIdAndSourceArtifacts_Id(id1: Long, id2: Long): Long
+    fun countByJoinTemplateVersionIdAndTargetArtifacts_Id(id1: Long, id2: Long): Long
+
 }

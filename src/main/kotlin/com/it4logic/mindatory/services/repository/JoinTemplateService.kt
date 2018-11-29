@@ -24,8 +24,10 @@ import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.repository.JoinTemplate
-import com.it4logic.mindatory.model.repository.JoinTemplateRepository
+import com.it4logic.mindatory.model.common.DesignStatus
+import com.it4logic.mindatory.model.common.StoreObjectStatus
+import com.it4logic.mindatory.model.repository.*
+import com.it4logic.mindatory.model.store.JoinStore
 import com.it4logic.mindatory.model.store.JoinStoreRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
@@ -39,6 +41,9 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
   private lateinit var joinTemplateRepository: JoinTemplateRepository
 
   @Autowired
+  private lateinit var joinTemplateVersionRepository: JoinTemplateVersionRepository
+
+  @Autowired
   private lateinit var joinStoreRepository: JoinStoreRepository
 
   override fun repository(): ApplicationBaseRepository<JoinTemplate> = joinTemplateRepository
@@ -49,5 +54,152 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
     val count = joinStoreRepository.countByJoinTemplateVersionId(target.id)
     if(count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationJoinTemplateHasRelatedStoreData)
+  }
+
+  // ================================================================================================================
+
+  fun getAllDesignVersions(id: Long): List<JoinTemplateVersion> {
+    val obj = findById(id)
+    return obj.versions
+  }
+
+  fun getDesignVersion(id: Long, versionId: Long): JoinTemplateVersion {
+    val obj = findById(id)
+    for(version in obj.versions) {
+      if(version.id == versionId)
+        return version
+    }
+    throw ApplicationObjectNotFoundException(versionId, JoinTemplateVersion::class.java.simpleName.toLowerCase())
+  }
+
+  fun createVersion(joinTemplateId: Long, joinTemplateVersion: JoinTemplateVersion): JoinTemplateVersion {
+    return createVersion(findById(joinTemplateId), joinTemplateVersion)
+  }
+
+  fun createVersion(target: JoinTemplate, joinTemplateVersion: JoinTemplateVersion): JoinTemplateVersion {
+    // check if we have a current in-design version
+    val result = joinTemplateVersionRepository.findOneByJoinTemplateIdAndDesignStatus(
+      target.id,
+      DesignStatus.InDesign
+    )
+
+    if (result.isPresent)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateHasInDesignVersion)
+
+    val max = joinTemplateVersionRepository.maxDesignVersion(target.id)
+    joinTemplateVersion.designVersion = max + 1
+    joinTemplateVersion.designStatus = DesignStatus.InDesign
+    target.versions.add(joinTemplateVersion)
+
+    update(target)
+
+    return joinTemplateVersion
+  }
+
+  fun updateVersion(joinTemplateId: Long, joinTemplateVersion: JoinTemplateVersion): JoinTemplateVersion {
+    val result = joinTemplateVersionRepository.findOneByIdAndJoinTemplateId(joinTemplateVersion.id, joinTemplateId).orElseThrow {
+      ApplicationObjectNotFoundException(joinTemplateVersion.id, JoinTemplateVersion::class.java.simpleName.toLowerCase())
+    }
+
+    if(result.designStatus == DesignStatus.Released)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedJoinTemplateVersion)
+
+    return joinTemplateVersionRepository.save(joinTemplateVersion)
+  }
+
+  fun releaseVersion(joinTemplateId: Long, joinTemplateVersionId: Long): JoinTemplateVersion {
+    val result = joinTemplateVersionRepository.findOneByIdAndJoinTemplateId(joinTemplateVersionId, joinTemplateId).orElseThrow {
+      ApplicationObjectNotFoundException(joinTemplateVersionId, JoinTemplateVersion::class.java.simpleName.toLowerCase())
+    }
+    return releaseVersion(joinTemplateId, result)
+  }
+
+  fun releaseVersion(joinTemplateId: Long, joinTemplateVersion: JoinTemplateVersion): JoinTemplateVersion {
+    val result = joinTemplateVersionRepository.findOneByIdAndJoinTemplateId(joinTemplateVersion.id, joinTemplateId).orElseThrow {
+      ApplicationObjectNotFoundException(joinTemplateVersion.id, JoinTemplateVersion::class.java.simpleName.toLowerCase())
+    }
+
+    if(result.designStatus == DesignStatus.Released)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedJoinTemplateVersion)
+
+    joinTemplateVersion.designStatus = DesignStatus.Released
+
+    return joinTemplateVersionRepository.save(joinTemplateVersion)
+  }
+
+  fun deleteVersion(joinTemplateId: Long, joinTemplateVersionId: Long) {
+    val result = joinTemplateVersionRepository.findOneByIdAndJoinTemplateId(joinTemplateVersionId, joinTemplateId).orElseThrow {
+      ApplicationObjectNotFoundException(joinTemplateVersionId, JoinTemplateVersion::class.java.simpleName.toLowerCase())
+    }
+    deleteVersion(joinTemplateId, result)
+  }
+
+  fun deleteVersion(joinTemplateId: Long, joinTemplateVersion: JoinTemplateVersion) {
+    val result = joinTemplateVersionRepository.findOneByIdAndJoinTemplateId(joinTemplateVersion.id, joinTemplateId).orElseThrow {
+      ApplicationObjectNotFoundException(joinTemplateVersion.id, JoinTemplateVersion::class.java.simpleName.toLowerCase())
+    }
+
+    var count = joinStoreRepository.countByJoinTemplateVersionId(joinTemplateVersion.id)
+    if (count > 0)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationJoinTemplateVersionHasRelatedStoreData)
+
+    joinTemplateVersionRepository.delete(result)
+  }
+
+  // ================================================================================================================
+
+  fun isArtifactExists(targetArtifact: ArtifactTemplate, lookupList: List<ArtifactTemplate>): Boolean {
+    for(obj in lookupList) {
+      if(targetArtifact.id == obj.id)
+        return true
+    }
+    return false
+  }
+
+  fun migrateStores(sourceVersion: JoinTemplateVersion, targetVersion: JoinTemplateVersion): MutableList<JoinStore> {
+    for(sourceArtifact in sourceVersion.sourceArtifacts) {
+      if(!isArtifactExists(sourceArtifact, targetVersion.sourceArtifacts)) {
+        val count = joinStoreRepository.countByJoinTemplateVersionIdAndSourceArtifacts_Id(sourceVersion.id, sourceArtifact.id)
+        if(count > 0)
+          throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateJoinStoresDueToRemovedSourceArtifactWithRelativeData)
+      }
+    }
+
+    for(targetArtifact in sourceVersion.targetArtifacts) {
+      if(!isArtifactExists(targetArtifact, targetVersion.targetArtifacts)) {
+        val count = joinStoreRepository.countByJoinTemplateVersionIdAndTargetArtifacts_Id(sourceVersion.id, targetArtifact.id)
+        if(count > 0)
+          throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateJoinStoresDueToRemovedTargetArtifactWithRelativeData)
+      }
+    }
+
+    val targetStores = mutableListOf<JoinStore>()
+    val sourceStores = joinStoreRepository.findAllByJoinTemplateVersionId(sourceVersion.id)
+    for(sourceStore in sourceStores) {
+      val targetStore = JoinStore(sourceStore.sourceArtifacts, sourceStore.targetArtifacts, sourceStore.joinTemplate, targetVersion)
+      targetStore.solution = sourceStore.solution
+      targetStores.add(targetStore)
+      sourceStore.storeStatus = StoreObjectStatus.Migrated
+    }
+
+    joinStoreRepository.saveAll(sourceStores)
+    joinStoreRepository.saveAll(targetStores)
+
+    return targetStores
+  }
+
+  fun migrateStores(joinTemplateId: Long, sourceVersionId: Long, targetVersionId: Long): MutableList<JoinStore> {
+    val targetVersion = joinTemplateVersionRepository.findOneByIdAndJoinTemplateId(targetVersionId, joinTemplateId).orElseThrow {
+      ApplicationObjectNotFoundException(targetVersionId, JoinTemplateVersion::class.java.simpleName.toLowerCase())
+    }
+
+    if(targetVersion.designStatus != DesignStatus.Released)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateStoreObjectsToNoneReleasedVersion)
+
+    val sourceVersion = joinTemplateVersionRepository.findOneByIdAndJoinTemplateId(sourceVersionId, joinTemplateId).orElseThrow {
+      ApplicationObjectNotFoundException(sourceVersionId, JoinTemplateVersion::class.java.simpleName.toLowerCase())
+    }
+
+    return migrateStores(sourceVersion, targetVersion)
   }
 }
