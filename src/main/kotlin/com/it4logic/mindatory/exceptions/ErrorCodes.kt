@@ -87,10 +87,14 @@ interface ApplicationErrorCodes {
                 = "mindatory.error.validation.cannot_migrate_join_stores_due_to_removed_source_artifact_with_relative_data"
         const val ValidationCannotMigrateJoinStoresDueToRemovedTargetArtifactWithRelativeData
                 = "mindatory.error.validation.cannot_migrate_join_stores_due_to_removed_target_artifact_with_relative_data"
-
-//        const val ValidationGroupHasUsers               = "mindatory.error.validation.group_has_users"
-//        const val ValidationPasswordsNotMatched         = "mindatory.error.validation.passwords_not_matched"
-//        const val ValidationIncorrectUserPassword       = "mindatory.error.validation.incorrect_user_password"
+        const val ValidationGroupHasUsers
+                = "mindatory.error.validation.group_has_users"
+        const val ValidationPasswordsNotMatched
+                = "mindatory.error.validation.passwords_not_matched"
+        const val ValidationIncorrectUserPassword
+                = "mindatory.error.validation.incorrect_user_password"
+        const val ValidationChangeAnotherUserProfileNotAllowed
+                = "mindatory.error.validation.change_another_user_profile_not_allowed"
 
         // Data Not Found
         const val NotFoundAttributeTemplateDataType     = "mindatory.error.data.not_found_attribute_template_data_type"
@@ -101,19 +105,19 @@ interface ApplicationErrorCodes {
 //        const val NotFoundUser                          = "mindatory.error.data.user_not_found"
 
         // JWT
-//        const val SecurityInvalidJwtSignature           = "mindatory.error.security.invalid_jwt_signature"
-//        const val SecurityInvalidJwtToken               = "mindatory.error.security.invalid_jwt_token"
-//        const val SecurityExpiredJwtToken               = "mindatory.error.security.expired_jwt_token"
-//        const val SecurityUnsupportedJwtToken           = "mindatory.error.security.unsupported_jwt_token"
-//        const val SecurityInvalidJwtContents            = "mindatory.error.security.invalid_jwt_contents"
+        const val SecurityInvalidJwtSignature           = "mindatory.error.security.invalid_jwt_signature"
+        const val SecurityInvalidJwtToken               = "mindatory.error.security.invalid_jwt_token"
+        const val SecurityExpiredJwtToken               = "mindatory.error.security.expired_jwt_token"
+        const val SecurityUnsupportedJwtToken           = "mindatory.error.security.unsupported_jwt_token"
+        const val SecurityInvalidJwtContents            = "mindatory.error.security.invalid_jwt_contents"
 
         // Authentication
-//        const val AuthenticationError                   = "mindatory.error.security.authentication_error"
-//        const val SecurityInvalidUsernameOrPassword     = "mindatory.error.security.invalid_username_or_password"
-//        const val SecurityCredentialsExpired            = "mindatory.error.security.credentials_expired"
-//        const val SecurityAccountDisabled               = "mindatory.error.security.account_disabled"
-//        const val SecurityAccountExpired                = "mindatory.error.security.account_expired"
-//        const val SecurityAccountLocked                 = "mindatory.error.security.account_locked"
+        const val AuthenticationError                   = "mindatory.error.security.authentication_error"
+        const val SecurityInvalidUsernameOrPassword     = "mindatory.error.security.invalid_username_or_password"
+        const val SecurityCredentialsExpired            = "mindatory.error.security.credentials_expired"
+        const val SecurityAccountDisabled               = "mindatory.error.security.account_disabled"
+        const val SecurityAccountExpired                = "mindatory.error.security.account_expired"
+        const val SecurityAccountLocked                 = "mindatory.error.security.account_locked"
 
         // Database Duplications
         const val DuplicateCompanyName                          = "mindatory.error.duplicate.company_name"
@@ -126,16 +130,9 @@ interface ApplicationErrorCodes {
         const val DuplicateArtifactTemplateName                 = "mindatory.error.duplicate.artifact_template_name"
         const val DuplicateAttributeTemplateIdentification      = "mindatory.error.duplicate.artifact_template_identification_version"
         const val DuplicateAttributeTemplateName                = "mindatory.error.duplicate.attribute_template_name"
-
-
-
-//        const val DuplicateSecurityUserUsername         = "mindatory.error.duplicate.security_user_username"
-//        const val DuplicateSecurityRoleName             = "mindatory.error.duplicate.security_role_name"
-//        const val DuplicateSecurityGroupName            = "mindatory.error.duplicate.security_group_name"
-//
-//
-//
-//        const val DuplicateProductCode                  = "mindatory.error.duplicate.product_code"
+        const val DuplicateSecurityUserUsername                 = "mindatory.error.duplicate.security_user_username"
+        const val DuplicateSecurityRoleName                     = "mindatory.error.duplicate.security_role_name"
+        const val DuplicateSecurityGroupName                    = "mindatory.error.duplicate.security_group_name"
 
     }
 }

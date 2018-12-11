@@ -43,23 +43,12 @@ import javax.validation.Valid
  */
 @CrossOrigin
 @RestController
-//@Transactional
-abstract class ApplicationBaseController<T : ApplicationEntityBase>(
-    protected val notAllowedMethods: MutableSet<HttpMethod> = mutableSetOf()
-) {
+abstract class ApplicationBaseController<T : ApplicationEntityBase> {
     protected val logger: Log = LogFactory.getLog(javaClass)
 
     protected abstract fun service() : ApplicationBaseService<T>
 
-    protected fun isMethodNotAllowed(method: HttpMethod): Boolean = notAllowedMethods.contains(method)
-
-    //@PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleView}')")
-    @GetMapping
-    @ResponseBody
-    fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest): Any {
-        if(isMethodNotAllowed(HttpMethod.GET))
-            throw HttpRequestMethodNotSupportedException(HttpMethod.GET.name)
-
+    protected fun doGetInternal(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest): Any {
         return when {
             request.parameterMap.isEmpty() -> service().findAll(null, null, null)
             request.parameterMap.containsKey("page") -> service().findAll(pageable, null, filter)
@@ -68,79 +57,50 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase>(
         }
     }
 
-    //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleView}')")
-    @GetMapping("{id}")
-    fun doGet(@PathVariable id: Long) : ResponseEntity<T> {
-        if(isMethodNotAllowed(HttpMethod.GET))
-            throw HttpRequestMethodNotSupportedException(HttpMethod.GET.name)
-
+    protected fun doGetInternal(@PathVariable id: Long) : ResponseEntity<T> {
         val result = service().findById(id)
         service().refresh(result)
         return ResponseEntity.ok(result)
     }
 
-    //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-    @PostMapping
-    fun doCreate(@Valid @RequestBody target: T, errors: Errors, response: HttpServletResponse) : ResponseEntity<T> {
-        if(isMethodNotAllowed(HttpMethod.POST))
-            throw HttpRequestMethodNotSupportedException(HttpMethod.POST.name)
-
+    protected fun doCreateInternal(@Valid @RequestBody target: T, errors: Errors, response: HttpServletResponse) : ResponseEntity<T> {
         if(errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)
 
-//        beforeCreate(target)
-
         val result = service().create(target)
-
-//        afterCreate(result)
-
         val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{Id}").buildAndExpand(result.id).toUri()
-
         return ResponseEntity.created(location).body(result)
     }
 
-    //@PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleModify}')")
-    @PutMapping
-    fun doUpdate(@Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest): ResponseEntity<T> {
-        if(isMethodNotAllowed(HttpMethod.PUT))
-            throw HttpRequestMethodNotSupportedException(HttpMethod.PUT.name)
-
+    protected fun doUpdateInternal(@Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest): ResponseEntity<T> {
         if (errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)
-
-//        beforeUpdate(target)
 
         val result = service().update(target)
         service().refresh(result)
 
-//        afterUpdate(result)
-
         return ResponseEntity.ok().body(result)
     }
 
-    //@PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleDelete}') and hasAuthority('${ApplicationSecurityPermissions.SecurityUserModify}')")
-    @DeleteMapping("{id}")
-    fun doDelete(@PathVariable id: Long) : ResponseEntity<Any> {
-        if(isMethodNotAllowed(HttpMethod.DELETE))
-            throw HttpRequestMethodNotSupportedException(HttpMethod.DELETE.name)
-
+    protected fun doDeleteInternal(@PathVariable id: Long) : ResponseEntity<Any> {
         val target = service().findById(id)
-
-//        beforeDelete(target)
-
         service().delete(target)
-
-//        afterDelete(target)
-
         return ResponseEntity.ok("")
     }
 
-//    fun beforeCreate(target: T) {}
-//    fun afterCreate(target: T) {}
-//
-//    fun beforeUpdate(target: T) {}
-//    fun afterUpdate(target: T) {}
-//
-//    fun beforeDelete(target: T) {}
-//    fun afterDelete(target: T) {}
+    @GetMapping
+    @ResponseBody
+    abstract fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest): Any
+
+    @GetMapping("{id}")
+    abstract fun doGet(@PathVariable id: Long) : ResponseEntity<T>
+
+    @PostMapping
+    abstract fun doCreate(@Valid @RequestBody target: T, errors: Errors, response: HttpServletResponse) : ResponseEntity<T>
+
+    @PutMapping
+    abstract fun doUpdate(@Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest): ResponseEntity<T>
+
+    @DeleteMapping("{id}")
+    abstract fun doDelete(@PathVariable id: Long) : ResponseEntity<Any>
 }

@@ -20,23 +20,20 @@
 
 package com.it4logic.mindatory.controllers.store
 
-import com.it4logic.mindatory.controllers.common.ApplicationBaseController
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
-import com.it4logic.mindatory.model.store.AttributeStore
-import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.store.AttributeStoreService
 import org.springframework.web.bind.annotation.*
 
-@CrossOrigin
-@RestController
-@RequestMapping(ApplicationControllerEntryPoints.ATTRIBUTE_STORES)
-class AttributeStoreController /*: ApplicationBaseController<AttributeStore>()*/ {
-
-  @Autowired
-  lateinit var attributeStoreService: AttributeStoreService
-
-//  override fun service(): ApplicationBaseService<AttributeStore> {
-//    return attributeStoreService
-//  }
-}
+//@CrossOrigin
+//@RestController
+//@RequestMapping(ApplicationControllerEntryPoints.AttributeStores)
+//class AttributeStoreController /*: ApplicationBaseController<AttributeStore>()*/ {
+//
+//  @Autowired
+//  lateinit var attributeStoreService: AttributeStoreService
+//
+////  override fun service(): ApplicationBaseService<AttributeStore> {
+////    return attributeStoreService
+////  }
+//}

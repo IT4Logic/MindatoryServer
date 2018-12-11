@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
-import java.util.HashSet
 import javax.persistence.EntityManager
 import javax.transaction.Transactional
 import javax.validation.ConstraintViolation
@@ -108,6 +107,8 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     validate(target)
     beforeCreate(target)
     val obj = repository().save(target)
+    repository().flush()
+    refresh(obj)
     afterCreate(obj)
     return obj
   }
@@ -124,6 +125,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     findById(target.id)
     beforeUpdate(target)
     val obj = repository().save(target)
+    repository().flush()
     refresh(obj)
     afterUpdate(obj)
     return obj
@@ -136,9 +138,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    */
   fun deleteById(id: Long) {
     val target = findById(id)
-    beforeDelete(target)
-    repository().delete(target)
-    afterDelete(target)
+    delete(target)
   }
 
   /**
@@ -147,7 +147,9 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    * @param target Object instance
    */
   fun delete(target: T) {
+    beforeDelete(target)
     repository().delete(target)
+    afterDelete(target)
   }
 
   fun beforeCreate(target: T) {}

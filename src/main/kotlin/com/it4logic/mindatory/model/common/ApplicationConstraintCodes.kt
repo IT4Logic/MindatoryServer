@@ -22,8 +22,6 @@ package com.it4logic.mindatory.model.common
 
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 
-//import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-
 /**
  * Application constraints codes that will be used to generate indexes and database error handling
  */
@@ -42,12 +40,9 @@ abstract class ApplicationConstraintCodes {
         const val AttributeTemplateIdentifierUniqueIndex        = "attribute_template_identifier_unq_idx"
         const val AttributeTemplateNameUniqueIndex              = "attribute_template_name_unq_idx"
         const val AttributeTemplateVersionUniqueIndex           = "attribute_template_ver_unq_idx"
-
-
-
-//        const val SecurityUserUsernameUniqueIndex       = "security_user_username_unq_idx"
-//        const val SecurityRoleNameUniqueIndex           = "security_role_name_unq_idx"
-//        const val SecurityGroupNameUniqueIndex          = "security_group_name_unq_idx"
+        const val SecurityUserUsernameUniqueIndex               = "security_user_username_unq_idx"
+        const val SecurityRoleNameUniqueIndex                   = "security_role_name_unq_idx"
+        const val SecurityGroupNameUniqueIndex                  = "security_group_name_unq_idx"
 
 
 
@@ -62,15 +57,10 @@ abstract class ApplicationConstraintCodes {
                 ArtifactTemplateIdentifierUniqueIndex to ApplicationErrorCodes.DuplicateArtifactTemplateIdentification,
                 ArtifactTemplateNameUniqueIndex to ApplicationErrorCodes.DuplicateArtifactTemplateName,
                 AttributeTemplateIdentifierUniqueIndex to ApplicationErrorCodes.DuplicateAttributeTemplateIdentification,
-                AttributeTemplateNameUniqueIndex to ApplicationErrorCodes.DuplicateAttributeTemplateName
-
-//                SecurityUserUsernameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityUserUsername,
-//                SecurityRoleNameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityRoleName,
-//                SecurityGroupNameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityGroupName
-
-
-
-
+                AttributeTemplateNameUniqueIndex to ApplicationErrorCodes.DuplicateAttributeTemplateName,
+                SecurityUserUsernameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityUserUsername,
+                SecurityRoleNameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityRoleName,
+                SecurityGroupNameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityGroupName
         )
     }
 }

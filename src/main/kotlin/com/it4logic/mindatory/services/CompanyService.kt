@@ -23,9 +23,14 @@ package com.it4logic.mindatory.services
 import com.it4logic.mindatory.model.Company
 import com.it4logic.mindatory.model.CompanyRepository
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
+import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
+import javax.transaction.NotSupportedException
 import javax.transaction.Transactional
 
 
@@ -39,7 +44,5 @@ class CompanyService : ApplicationBaseService<Company>() {
 
   override fun type(): Class<Company> = Company::class.java
 
-  fun findFirst(): Company {
-      return repository().findAll()[0]
-  }
+  fun findFirst(): Company = repository().findAll()[0]
 }

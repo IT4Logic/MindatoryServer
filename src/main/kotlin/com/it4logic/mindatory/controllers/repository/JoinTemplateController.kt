@@ -33,61 +33,61 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import javax.validation.Valid
 
-@CrossOrigin
-@RestController
-@RequestMapping(ApplicationControllerEntryPoints.JOIN_TEMPLATES)
-class JoinTemplateController : ApplicationBaseController<JoinTemplate>() {
-
-  @Autowired
-  lateinit var joinTemplateService: JoinTemplateService
-
-  override fun service(): ApplicationBaseService<JoinTemplate> {
-    return joinTemplateService
-  }
-
-  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-  @GetMapping("{id}/design-versions")
-  fun doGetDesignVersions(@PathVariable id: Long) : List<JoinTemplateVersion> {
-    return joinTemplateService.getAllDesignVersions(id)
-  }
-
-  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-  @GetMapping("{id}/design-versions/{verId}")
-  fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : JoinTemplateVersion {
-    return joinTemplateService.getDesignVersion(id, verId)
-  }
-
-  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-  @PostMapping("{id}/design-versions")
-  fun doCreateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: JoinTemplateVersion) : ResponseEntity<JoinTemplateVersion> {
-    val result = joinTemplateService.createVersion(id, target)
-    val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
-    return ResponseEntity.created(location).body(result)
-  }
-
-  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-  @PutMapping("{id}/design-versions")
-  fun doUpdateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: JoinTemplateVersion) : ResponseEntity<JoinTemplateVersion> {
-    val result = joinTemplateService.updateVersion(id, target)
-    return ResponseEntity.ok(result)
-  }
-
-  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-  @DeleteMapping("{id}/design-versions/{verId}")
-  fun doUpdateDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) {
-    joinTemplateService.deleteVersion(id, verId)
-  }
-
-  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-  @PostMapping("{id}/design-versions/{verId}")
-  fun doReleaseDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : ResponseEntity<JoinTemplateVersion> {
-    val result = joinTemplateService.releaseVersion(id, verId)
-    return ResponseEntity.ok(result)
-  }
-  
-  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-  @PostMapping("{id}/design-versions/{verId}/migrate-stores/{targetVerId}")
-  fun doStoresMigrate(@PathVariable id: Long, @PathVariable verId: Long, @PathVariable targetVerId: Long): List<JoinStore> {
-    return joinTemplateService.migrateStores(id, verId, targetVerId)
-  }
-}
+//@CrossOrigin
+//@RestController
+//@RequestMapping(ApplicationControllerEntryPoints.JoinTemplates)
+//class JoinTemplateController : ApplicationBaseController<JoinTemplate>() {
+//
+//  @Autowired
+//  lateinit var joinTemplateService: JoinTemplateService
+//
+//  override fun service(): ApplicationBaseService<JoinTemplate> {
+//    return joinTemplateService
+//  }
+//
+//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+//  @GetMapping("{id}/design-versions")
+//  fun doGetDesignVersions(@PathVariable id: Long) : List<JoinTemplateVersion> {
+//    return joinTemplateService.getAllDesignVersions(id)
+//  }
+//
+//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+//  @GetMapping("{id}/design-versions/{verId}")
+//  fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : JoinTemplateVersion {
+//    return joinTemplateService.getDesignVersion(id, verId)
+//  }
+//
+//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+//  @PostMapping("{id}/design-versions")
+//  fun doCreateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: JoinTemplateVersion) : ResponseEntity<JoinTemplateVersion> {
+//    val result = joinTemplateService.createVersion(id, target)
+//    val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
+//    return ResponseEntity.created(location).body(result)
+//  }
+//
+//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+//  @PutMapping("{id}/design-versions")
+//  fun doUpdateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: JoinTemplateVersion) : ResponseEntity<JoinTemplateVersion> {
+//    val result = joinTemplateService.updateVersion(id, target)
+//    return ResponseEntity.ok(result)
+//  }
+//
+//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+//  @DeleteMapping("{id}/design-versions/{verId}")
+//  fun doUpdateDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) {
+//    joinTemplateService.deleteVersion(id, verId)
+//  }
+//
+//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+//  @PostMapping("{id}/design-versions/{verId}")
+//  fun doReleaseDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : ResponseEntity<JoinTemplateVersion> {
+//    val result = joinTemplateService.releaseVersion(id, verId)
+//    return ResponseEntity.ok(result)
+//  }
+//
+//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
+//  @PostMapping("{id}/design-versions/{verId}/migrate-stores/{targetVerId}")
+//  fun doStoresMigrate(@PathVariable id: Long, @PathVariable verId: Long, @PathVariable targetVerId: Long): List<JoinStore> {
+//    return joinTemplateService.migrateStores(id, verId, targetVerId)
+//  }
+//}

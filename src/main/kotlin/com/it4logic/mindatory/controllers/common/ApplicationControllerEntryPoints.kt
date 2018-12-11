@@ -25,23 +25,26 @@ package com.it4logic.mindatory.controllers.common
  */
 interface ApplicationControllerEntryPoints {
     companion object {
-        const val COMPANY: String = "/api/company"
-        const val REPOSITORIES: String = "/api/repositories"
-        const val SOLUTIONS: String = "/api/solutions"
-        const val ARTIFACT_TEMPLATES: String = "/api/repository/artifact-templates"
-        const val ATTRIBUTE_TEMPLATES: String = "/api/repository/attribute-templates"
-        const val ATTRIBUTE_TEMPLATE_DATA_TYPES: String = "$ATTRIBUTE_TEMPLATES/data-types"
-        const val JOIN_TEMPLATES: String = "/api/repository/join-templates"
-        const val STEREOTYPES: String = "/api/repository/stereotypes"
-        const val ARTIFACT_STORES: String = "/api/store/artifacts"
-        const val ATTRIBUTE_STORES: String = "/api/store/attributes"
-        const val JOIN_STORES: String = "/api/store/joins"
-
         const val Authentication: String = "/auth/"
-        const val Companies: String = "/api/companies"
+        const val Company: String = "/api/company"
         const val SecurityRoles: String = "/api/security/roles/"
         const val SecurityGroups: String = "/api/security/groups/"
         const val SecurityUsers: String = "/api/security/users/"
         const val SecurityUserProfile: String = "/api/security/profile/"
+        const val SecurityAcl: String = "/api/security/acl/"
+        const val Repositories: String = "/api/repositories"
+
+
+        const val Solutions: String = "/api/solutions"
+        const val ArtifactTemplates: String = "/api/repository/artifact-templates"
+        const val AttributeTemplates: String = "/api/repository/attribute-templates"
+        const val AttributeTemplateDataTypes: String = "$AttributeTemplates/data-types"
+        const val JoinTemplates: String = "/api/repository/join-templates"
+        const val Stereotypes: String = "/api/repository/stereotypes"
+        const val ArtifactStores: String = "/api/store/artifacts"
+        const val AttributeStores: String = "/api/store/attributes"
+        const val JoinStores: String = "/api/store/joins"
+
+
     }
 }

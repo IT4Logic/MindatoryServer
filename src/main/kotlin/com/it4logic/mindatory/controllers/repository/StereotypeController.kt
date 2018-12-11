@@ -28,15 +28,15 @@ import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.repository.StereotypeService
 import org.springframework.web.bind.annotation.*
 
-@CrossOrigin
-@RestController
-@RequestMapping(ApplicationControllerEntryPoints.STEREOTYPES)
-class StereotypeController : ApplicationBaseController<Stereotype>() {
-
-  @Autowired
-  lateinit var stereotypeService: StereotypeService
-
-  override fun service(): ApplicationBaseService<Stereotype> {
-    return stereotypeService
-  }
-}
+//@CrossOrigin
+//@RestController
+//@RequestMapping(ApplicationControllerEntryPoints.Stereotypes)
+//class StereotypeController : ApplicationBaseController<Stereotype>() {
+//
+//  @Autowired
+//  lateinit var stereotypeService: StereotypeService
+//
+//  override fun service(): ApplicationBaseService<Stereotype> {
+//    return stereotypeService
+//  }
+//}

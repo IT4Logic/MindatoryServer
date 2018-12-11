@@ -61,7 +61,7 @@ open class ApplicationEntityBase {
     open var version: Long = 1
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     open var id: Long = -1
 }
 

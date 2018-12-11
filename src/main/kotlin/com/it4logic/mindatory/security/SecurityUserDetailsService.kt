@@ -18,25 +18,22 @@
 
  */
 
-package com.it4logic.mindatory.controllers.store
+package com.it4logic.mindatory.security
 
-import com.it4logic.mindatory.controllers.common.ApplicationBaseController
+import com.it4logic.mindatory.services.security.SecurityUserService
 import org.springframework.beans.factory.annotation.Autowired
-import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
-import com.it4logic.mindatory.model.store.JoinStore
-import com.it4logic.mindatory.services.common.ApplicationBaseService
-import com.it4logic.mindatory.services.store.JoinStoreService
-import org.springframework.web.bind.annotation.*
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.stereotype.Service
 
-//@CrossOrigin
-//@RestController
-//@RequestMapping(ApplicationControllerEntryPoints.JoinStores)
-//class JoinStoreController : ApplicationBaseController<JoinStore>() {
-//
-//  @Autowired
-//  lateinit var joinStoreService: JoinStoreService
-//
-//  override fun service(): ApplicationBaseService<JoinStore> {
-//    return joinStoreService
-//  }
-//}
+/**
+ * Service for implementing Spring Security [UserDetailsService] class
+ */
+@Service
+class SecurityUserDetailsService(@Autowired private val securityUserService: SecurityUserService) : UserDetailsService {
+
+    override fun loadUserByUsername(username: String): UserDetails {
+        val secUser = securityUserService.findByUsername(username)
+        return SecurityFactory.createUserDetails(secUser)
+    }
+}

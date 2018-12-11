@@ -28,15 +28,15 @@ import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.store.ArtifactStoreService
 import org.springframework.web.bind.annotation.*
 
-@CrossOrigin
-@RestController
-@RequestMapping(ApplicationControllerEntryPoints.ARTIFACT_STORES)
-class ArtifactStoreController : ApplicationBaseController<ArtifactStore>() {
-
-  @Autowired
-  lateinit var artifactStoreService: ArtifactStoreService
-
-  override fun service(): ApplicationBaseService<ArtifactStore> {
-    return artifactStoreService
-  }
-}
+//@CrossOrigin
+//@RestController
+//@RequestMapping(ApplicationControllerEntryPoints.ArtifactStores)
+//class ArtifactStoreController : ApplicationBaseController<ArtifactStore>() {
+//
+//  @Autowired
+//  lateinit var artifactStoreService: ArtifactStoreService
+//
+//  override fun service(): ApplicationBaseService<ArtifactStore> {
+//    return artifactStoreService
+//  }
+//}
