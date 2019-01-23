@@ -1,2 +1,17 @@
 ok - controller for ACL
-- acl unit tests
+ok - acl unit tests included in the other tests
+ok - solution before delete rules
+- move test data type to a separated plugin
+- protect root properties (e.g. id, create by, ..) and design version
+====================================
+multiple content languages
+---------------------------
+ok 1- language entity with default option
+ok 2- language controller
+ok 3- language service
+ok 4- set/get current language from language helper
+5- for entity part (ex. solution)
+    a- make the field transit
+    b- create new entity to hold the contents
+    c- direct link between entity and entity contents but not json ignore
+    d- before/after saving entity listener will be responsible for managing the contents

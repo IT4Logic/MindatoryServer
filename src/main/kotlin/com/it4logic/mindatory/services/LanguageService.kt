@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2017, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory Solution by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,11 +20,10 @@
 
 package com.it4logic.mindatory.services
 
-import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.exceptions.ApplicationValidationException
-import com.it4logic.mindatory.model.ApplicationRepositoryRepository
-import com.it4logic.mindatory.model.Solution
-import com.it4logic.mindatory.model.SolutionRepository
+//import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+//import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.languages.Language
+import com.it4logic.mindatory.languages.LanguageRepository
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.security.SecurityAclService
@@ -33,27 +32,27 @@ import org.springframework.stereotype.Service
 
 
 @Service
-class SolutionService : ApplicationBaseService<Solution>() {
+class LanguageService : ApplicationBaseService<Language>() {
   @Autowired
-  private lateinit var solutionRepository: SolutionRepository
-
-  @Autowired
-  private lateinit var repoRepository: ApplicationRepositoryRepository
+  private lateinit var languageRepository: LanguageRepository
 
   @Autowired
   protected lateinit var securityAclService: SecurityAclService
 
-  override fun repository(): ApplicationBaseRepository<Solution> = solutionRepository
+  override fun repository(): ApplicationBaseRepository<Language> = languageRepository
 
-  override fun type(): Class<Solution> = Solution::class.java
+  override fun type(): Class<Language> = Language::class.java
 
   override fun useAcl() : Boolean = true
 
   override fun securityAclService() : SecurityAclService? = securityAclService
 
-  override fun beforeDelete(target: Solution) {
-    val count = repoRepository.countBySolutionId(target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationSolutionHasRepository)
+  override fun beforeDelete(target: Language) {
+    // todo
+    // check if the language is default
+    // check if the language is used
+//    val count = repoRepository.countByLanguageId(target.id)
+//    if(count > 0)
+//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationLanguageHasRepository)
   }
 }

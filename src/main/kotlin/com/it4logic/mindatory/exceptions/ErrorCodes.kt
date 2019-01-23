@@ -43,6 +43,8 @@ interface ApplicationErrorCodes {
                 = "mindatory.error.validation.artifact_template_related_store_data"
         const val ValidationAttributeTemplateVersionHasRelatedStoreData
                 = "mindatory.error.validation.attribute_template_version_related_store_data"
+        const val ValidationArtifactTemplateVersionHasRelatedStoreData
+                = "mindatory.error.validation.artifact_template_version_related_store_data"
         const val ValidationJoinTemplateVersionHasRelatedStoreData
                 = "mindatory.error.validation.join_template_version_related_store_data"
         const val ValidationJoinTemplateHasRelatedStoreData
@@ -79,6 +81,8 @@ interface ApplicationErrorCodes {
                 = "mindatory.error.validation.cannot_add_none_released_attribute_to_artifact_template_version"
         const val ValidationCannotChangeReleasedAttributeTemplateVersion
                 = "mindatory.error.validation.cannot_change_released_attribute_template_version"
+        const val ValidationCannotChangeReleasedArtifactTemplateVersion
+                = "mindatory.error.validation.cannot_change_released_artifact_template_version"
         const val ValidationCannotChangeReleasedJoinTemplateVersion
                 = "mindatory.error.validation.cannot_change_released_join_template_version"
         const val ValidationCannotMigrateStoreObjectsToNoneReleasedVersion
@@ -95,6 +99,10 @@ interface ApplicationErrorCodes {
                 = "mindatory.error.validation.incorrect_user_password"
         const val ValidationChangeAnotherUserProfileNotAllowed
                 = "mindatory.error.validation.change_another_user_profile_not_allowed"
+        const val ValidationCannotCreateObjectWithExistingId
+                = "mindatory.error.validation.cannot_create_object_with_existing_id"
+        const val ValidationJoinTemplateHasInDesignVersion
+                = "mindatory.error.validation.join_template_has_in_design_version"
 
         // Data Not Found
         const val NotFoundAttributeTemplateDataType     = "mindatory.error.data.not_found_attribute_template_data_type"
@@ -119,13 +127,18 @@ interface ApplicationErrorCodes {
         const val SecurityAccountExpired                = "mindatory.error.security.account_expired"
         const val SecurityAccountLocked                 = "mindatory.error.security.account_locked"
 
+        // Authorization
+        const val AuthorizationError                   = "mindatory.error.security.authorization_error"
+
         // Database Duplications
+        const val DuplicateLanguageLocale                       = "mindatory.error.duplicate.language_locale"
+        const val DuplicateLanguageName                         = "mindatory.error.duplicate.language_name"
         const val DuplicateCompanyName                          = "mindatory.error.duplicate.company_name"
         const val DuplicateSolutionName                         = "mindatory.error.duplicate.solution_name"
         const val DuplicateApplicationRepositoryName            = "mindatory.error.duplicate.application_repository_name"
         const val DuplicateApplicationRepositorySolution        = "mindatory.error.duplicate.application_repository_solution"
         const val DuplicateStereotypeName                       = "mindatory.error.duplicate.stereotype_name"
-        const val DuplicateJoinTemplateName                     = "mindatory.error.duplicate.join_template_name"
+        const val DuplicateJoinTemplateIdentifier                     = "mindatory.error.duplicate.join_template_name"
         const val DuplicateArtifactTemplateIdentification       = "mindatory.error.duplicate.artifact_template_identification_version"
         const val DuplicateArtifactTemplateName                 = "mindatory.error.duplicate.artifact_template_name"
         const val DuplicateAttributeTemplateIdentification      = "mindatory.error.duplicate.artifact_template_identification_version"

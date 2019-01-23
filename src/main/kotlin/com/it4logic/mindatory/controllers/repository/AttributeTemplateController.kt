@@ -26,78 +26,124 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.model.repository.AttributeTemplate
 import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
+import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.services.repository.AttributeTemplateService
 import com.it4logic.mindatory.services.RepositoryManagerService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
-import org.springframework.http.ResponseEntity
+import org.springframework.data.domain.Pageable
+import org.springframework.data.rest.core.RepositoryConstraintViolationException
+import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PostAuthorize
+import org.springframework.security.access.prepost.PostFilter
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.validation.Errors
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import javax.validation.Valid
 
-//@CrossOrigin
-//@RestController
-//@RequestMapping(ApplicationControllerEntryPoints.AttributeTemplates)
-//class AttributeTemplateController : ApplicationBaseController<AttributeTemplate>() {
-//
-//  @Autowired
-//  lateinit var repositoryManagerService: RepositoryManagerService
-//
-//  @Autowired
-//  lateinit var attributeTemplatesService: AttributeTemplateService
-//
-//
-//  override fun service(): ApplicationBaseService<AttributeTemplate> {
-//    return attributeTemplatesService
-//  }
-//
-//  @GetMapping("/data-types")
-//  @ResponseBody
-//  fun doGetDataTypes(): List<AttributeTemplateDataType> {
-//      return repositoryManagerService.getAttributeTemplateDataTypes()
-//  }
-//
-//  @GetMapping("/data-types/{uuid}")
-//  fun doGetDataType(@PathVariable uuid: String) : ResponseEntity<AttributeTemplateDataType> {
-//    return ResponseEntity.ok(repositoryManagerService.getAttributeTemplateDataType(uuid))
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @GetMapping("{id}/design-versions")
-//  fun doGetDesignVersions(@PathVariable id: Long) : List<AttributeTemplateVersion> {
-//    return attributeTemplatesService.getAllDesignVersions(id)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @GetMapping("{id}/design-versions/{verId}")
-//  fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : AttributeTemplateVersion {
-//    return attributeTemplatesService.getDesignVersion(id, verId)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions")
-//  fun doCreateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: AttributeTemplateVersion) : ResponseEntity<AttributeTemplateVersion> {
-//    val result = attributeTemplatesService.createVersion(id, target)
-//    val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
-//    return ResponseEntity.created(location).body(result)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PutMapping("{id}/design-versions")
-//  fun doUpdateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: AttributeTemplateVersion) : ResponseEntity<AttributeTemplateVersion> {
-//    val result = attributeTemplatesService.updateVersion(id, target)
-//    return ResponseEntity.ok(result)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @DeleteMapping("{id}/design-versions/{verId}")
-//  fun doUpdateDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) {
-//    attributeTemplatesService.deleteVersion(id, verId)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions/{verId}")
-//  fun doReleaseDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : ResponseEntity<AttributeTemplateVersion> {
-//    val result = attributeTemplatesService.releaseVersion(id, verId)
-//    return ResponseEntity.ok(result)
-//  }
-//}
+@CrossOrigin
+@RestController
+@RequestMapping(ApplicationControllerEntryPoints.AttributeTemplates)
+class AttributeTemplateController : ApplicationBaseController<AttributeTemplate>() {
+
+    @Autowired
+    lateinit var repositoryManagerService: RepositoryManagerService
+
+    @Autowired
+    lateinit var attributeTemplatesService: AttributeTemplateService
+
+    override fun service(): ApplicationBaseService<AttributeTemplate> = attributeTemplatesService
+
+    override fun type(): Class<AttributeTemplate> = AttributeTemplate::class.java
+
+    // ====================================================== Basic operations ======================================================
+
+    @GetMapping
+    @ResponseBody
+    @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})")
+    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+            = doGetInternal(filter, pageable, request, response)
+
+    @GetMapping("{id}")
+    @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})")
+    override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
+            = doGetInternal(id, request, response)
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}')")
+    override fun doCreate(@Valid @RequestBody target: AttributeTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
+            = doCreateInternal(target, errors, request, response)
+
+    @PutMapping
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminModify}')" +
+            " or hasPermission(#target, ${ApplicationSecurityPermissions.PermissionModify})")
+    override fun doUpdate(@Valid @RequestBody target: AttributeTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
+            = doUpdateInternal(target, errors, request, response)
+
+    @DeleteMapping("{id}")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.AttributeTemplate', ${ApplicationSecurityPermissions.PermissionDelete})")
+    override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
+
+
+    // ====================================================== Data types ======================================================
+
+    @GetMapping("/data-types")
+    @ResponseBody
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')")
+    fun doGetDataTypes(): List<AttributeTemplateDataType> = repositoryManagerService.getAttributeTemplateDataTypes()
+
+    @GetMapping("/data-types/{uuid}")
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')")
+    fun doGetDataType(@PathVariable uuid: String): AttributeTemplateDataType = repositoryManagerService.getAttributeTemplateDataType(uuid)
+
+    // ====================================================== Design Versions ======================================================
+
+    @GetMapping("{id}/design-versions")
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.AttributeTemplate', ${ApplicationSecurityPermissions.PermissionView})")
+    fun doGetDesignVersions(@PathVariable id: Long): List<AttributeTemplateVersion> = attributeTemplatesService.getAllDesignVersions(id)
+
+    @GetMapping("{id}/design-versions/{verId}")
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.AttributeTemplate', ${ApplicationSecurityPermissions.PermissionView})")
+    fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long): AttributeTemplateVersion = attributeTemplatesService.getDesignVersion(id, verId)
+
+    @PostMapping("{id}/design-versions")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.AttributeTemplate', ${ApplicationSecurityPermissions.PermissionCreate})")
+    fun doCreateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: AttributeTemplateVersion, errors: Errors, response: HttpServletResponse): AttributeTemplateVersion {
+        if(errors.hasErrors())
+            throw RepositoryConstraintViolationException(errors)
+
+        val result = attributeTemplatesService.createVersion(id, target)
+        val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
+        response.status = HttpStatus.CREATED.value()
+        response.addHeader("Location", location.path)
+        return result
+    }
+
+    @PutMapping("{id}/design-versions")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminModify}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.AttributeTemplate', ${ApplicationSecurityPermissions.PermissionModify})")
+    fun doUpdateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: AttributeTemplateVersion, errors: Errors): AttributeTemplateVersion {
+        if(errors.hasErrors())
+            throw RepositoryConstraintViolationException(errors)
+
+        return attributeTemplatesService.updateVersion(id, target)
+    }
+
+    @DeleteMapping("{id}/design-versions/{verId}")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.AttributeTemplate', ${ApplicationSecurityPermissions.PermissionDelete})")
+    fun doDeleteDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) = attributeTemplatesService.deleteVersion(id, verId)
+
+    @PostMapping("{id}/design-versions/{verId}/release")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminModify}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.AttributeTemplate', ${ApplicationSecurityPermissions.PermissionModify})")
+    fun doReleaseDesignVersion(@PathVariable id: Long, @PathVariable verId: Long): AttributeTemplateVersion = attributeTemplatesService.releaseVersion(id, verId)
+}

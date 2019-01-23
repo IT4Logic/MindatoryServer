@@ -25,4 +25,6 @@ class ApplicationObjectNotFoundException (var id: Any, var errorCode: String) : 
 
 class ApplicationAuthenticationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
 
+class ApplicationAuthorizationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
+
 class ApplicationValidationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()

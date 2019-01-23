@@ -67,3 +67,7 @@ interface ApplicationRepositoryBaseRepository<T> : ApplicationSolutionBaseReposi
     fun countByRepositoryId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): Long
     fun countByRepositoryId(id: Long): Long
 }
+
+
+@NoRepositoryBean
+interface LanguageContentBaseRepository<T> : ApplicationBaseRepository<T>

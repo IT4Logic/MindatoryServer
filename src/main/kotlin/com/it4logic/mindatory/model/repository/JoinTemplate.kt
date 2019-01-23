@@ -21,27 +21,30 @@
 package com.it4logic.mindatory.model.repository
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationRepositoryEntityBase
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
 import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotNull
 import javax.validation.constraints.Size
 
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_join_templates", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.JoinTemplateNameUniqueIndex, columnNames = ["name"]))
+    (UniqueConstraint(name = ApplicationConstraintCodes.JoinTemplateIdentifierUniqueIndex, columnNames = ["identifier"]))
 ])
 data class JoinTemplate (
     @get: NotBlank
     @get: Size(min = 2, max = 100)
     @Column(nullable = false, length = 255)
-    var name: String,
+    var identifier: String,
 
     @get: Size(max = 255)
     @Column(length = 255)
@@ -49,9 +52,31 @@ data class JoinTemplate (
 
     @JsonIgnore
     @OneToMany(mappedBy = "joinTemplate", cascade = [CascadeType.ALL])
-    var versions: MutableList<JoinTemplateVersion> = mutableListOf()
+    var versions: MutableList<JoinTemplateVersion> = mutableListOf(),
 
-) : ApplicationRepositoryEntityBase()
+    @get: NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "repository_id", nullable = false)
+    var repository: ApplicationRepository? = null,
+
+    @ManyToOne(optional=true)
+    @JoinColumn(name = "solution_id")
+    var solution: Solution? = null
+
+) : ApplicationEntityBase() {
+    fun createDesignVersion(sourceStereotype: Stereotype, sourceArtifacts: MutableList<ArtifactTemplateVersion>,
+                            targetStereotype: Stereotype, targetArtifacts: MutableList<ArtifactTemplateVersion>): JoinTemplateVersion {
+        return JoinTemplateVersion (
+            sourceStereotype = sourceStereotype,
+            sourceArtifacts = sourceArtifacts,
+            targetStereotype = targetStereotype,
+            targetArtifacts = targetArtifacts,
+            joinTemplate = this,
+            repository = repository,
+            solution = solution
+        )
+    }
+}
 
 /**
  * Repository

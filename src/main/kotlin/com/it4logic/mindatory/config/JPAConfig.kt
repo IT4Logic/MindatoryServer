@@ -21,6 +21,7 @@
 package com.it4logic.mindatory.config
 
 //import com.it4logic.svs.security.SecurityFactory
+import com.it4logic.mindatory.security.SecurityFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing
@@ -54,9 +55,8 @@ class JpaConfig {
 class SpringSecurityAuditorAware : AuditorAware<String> {
 
     override fun getCurrentAuditor(): Optional<String> {
-        return Optional.of("internal")
-//        val username = SecurityFactory.getCurrentUsername()
-//        return if(username.isPresent) username else Optional.of("internal")
+        val username = SecurityFactory.getCurrentUsername()
+        return if(username.isPresent) username else Optional.of("internal")
     }
 
 }

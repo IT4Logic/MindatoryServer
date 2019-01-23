@@ -28,12 +28,14 @@ import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 abstract class ApplicationConstraintCodes {
 
     companion object {
+        const val LanguageLocaleUniqueIndex                     = "language_locale_unq_idx"
+        const val LanguageNameUniqueIndex                       = "language_name_unq_idx"
         const val CompanyNameUniqueIndex                        = "company_name_unq_idx"
         const val SolutionNameUniqueIndex                       = "solution_name_unq_idx"
         const val ApplicationRepositoryNameUniqueIndex          = "app_repo_name_unq_idx"
         const val ApplicationRepositorySolutionUniqueIndex      = "app_repo_solution_unq_idx"
         const val StereotypeNameUniqueIndex                     = "stereotype_name_unq_idx"
-        const val JoinTemplateNameUniqueIndex                   = "join_template_name_unq_idx"
+        const val JoinTemplateIdentifierUniqueIndex             = "join_template_identifier_unq_idx"
         const val ArtifactTemplateIdentifierUniqueIndex         = "artifact_template_identifier_unq_idx"
         const val ArtifactTemplateNameUniqueIndex               = "artifact_template_name_unq_idx"
         const val ArtifactTemplateVersionUniqueIndex            = "artifact_template_ver_unq_idx"
@@ -48,12 +50,14 @@ abstract class ApplicationConstraintCodes {
 
 
         val map: HashMap<String, String> = hashMapOf(
+                LanguageLocaleUniqueIndex to ApplicationErrorCodes.DuplicateLanguageLocale,
+                LanguageNameUniqueIndex to ApplicationErrorCodes.DuplicateLanguageName,
                 CompanyNameUniqueIndex to ApplicationErrorCodes.DuplicateCompanyName,
                 SolutionNameUniqueIndex to ApplicationErrorCodes.DuplicateSolutionName,
                 ApplicationRepositoryNameUniqueIndex to ApplicationErrorCodes.DuplicateApplicationRepositoryName,
                 ApplicationRepositorySolutionUniqueIndex to ApplicationErrorCodes.DuplicateApplicationRepositorySolution,
                 StereotypeNameUniqueIndex to ApplicationErrorCodes.DuplicateStereotypeName,
-                JoinTemplateNameUniqueIndex to ApplicationErrorCodes.DuplicateJoinTemplateName,
+                JoinTemplateIdentifierUniqueIndex to ApplicationErrorCodes.DuplicateJoinTemplateIdentifier,
                 ArtifactTemplateIdentifierUniqueIndex to ApplicationErrorCodes.DuplicateArtifactTemplateIdentification,
                 ArtifactTemplateNameUniqueIndex to ApplicationErrorCodes.DuplicateArtifactTemplateName,
                 AttributeTemplateIdentifierUniqueIndex to ApplicationErrorCodes.DuplicateAttributeTemplateIdentification,

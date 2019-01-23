@@ -20,14 +20,15 @@
 
 package com.it4logic.mindatory.model.repository
 
-import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationRepositoryEntityBase
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.common.*
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
 import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotNull
 import javax.validation.constraints.Size
 
 @Audited
@@ -44,9 +45,18 @@ data class Stereotype (
 
     @get: Size(max = 255)
     @Column(length = 255)
-    var description: String = ""
+    var description: String = "",
 
-) : ApplicationRepositoryEntityBase()
+    @get: NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "repository_id", nullable = false)
+    var repository: ApplicationRepository? = null,
+
+    @ManyToOne(optional=true)
+    @JoinColumn(name = "solution_id")
+    var solution: Solution? = null
+
+) : ApplicationEntityBase()
 
 /**
  * Repository

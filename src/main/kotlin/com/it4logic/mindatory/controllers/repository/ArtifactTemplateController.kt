@@ -26,75 +26,132 @@ import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoint
 import com.it4logic.mindatory.model.repository.ArtifactTemplate
 import com.it4logic.mindatory.model.repository.ArtifactTemplateVersion
 import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
-import com.it4logic.mindatory.model.store.ArtifactStore
+import com.it4logic.mindatory.security.ApplicationSecurityPermissions
+import com.it4logic.mindatory.services.RepositoryManagerService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.repository.ArtifactTemplateService
-import org.springframework.http.ResponseEntity
+import org.springframework.data.domain.Pageable
+import org.springframework.data.rest.core.RepositoryConstraintViolationException
+import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PostAuthorize
+import org.springframework.security.access.prepost.PostFilter
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.validation.Errors
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import javax.validation.Valid
 
 
-//@CrossOrigin
-//@RestController
-//@RequestMapping(ApplicationControllerEntryPoints.ArtifactTemplates)
-//class ArtifactTemplateController : ApplicationBaseController<ArtifactTemplate>() {
-//
-//  @Autowired
-//  lateinit var artifactTemplateService: ArtifactTemplateService
-//
-//  override fun service(): ApplicationBaseService<ArtifactTemplate> {
-//    return artifactTemplateService
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @GetMapping("{id}/design-versions")
-//  fun doGetDesignVersions(@PathVariable id: Long) : List<ArtifactTemplateVersion> {
-//    return artifactTemplateService.getAllDesignVersions(id)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @GetMapping("{id}/design-versions/{verId}")
-//  fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : ArtifactTemplateVersion {
-//    return artifactTemplateService.getDesignVersion(id, verId)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions/start")
-//  fun doStartDesignVersion(@PathVariable id: Long) : ResponseEntity<ArtifactTemplateVersion> {
-//    val result = artifactTemplateService.startNewDesignVersion(id)
-//    val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
-//    return ResponseEntity.created(location).body(result)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions/release")
-//  fun doReleaseDesignVersion(@PathVariable id: Long) : ResponseEntity<ArtifactTemplateVersion> {
-//    val result = artifactTemplateService.releaseDesignVersion(id)
-//    return ResponseEntity.ok(result)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @GetMapping("{id}/design-versions/attributes/{verId}")
-//  fun doGetAttributes(@PathVariable id: Long, @PathVariable verId: Long) : List<AttributeTemplateVersion> {
-//    return artifactTemplateService.getAllAttributes(id, verId)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions/{verId}/attributes/add")
-//  fun doAddAttribute(@PathVariable id: Long, @PathVariable verId: Long, @Valid @RequestBody target: AttributeTemplateVersion)  {
-//    artifactTemplateService.addAttribute(id, verId, target)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions/{verId}/attributes/{attributeId}/remove")
-//  fun doRemoveAttribute(@PathVariable id: Long, @PathVariable verId: Long, @PathVariable attributeId: Long)  {
-//    artifactTemplateService.removeAttribute(id, verId, attributeId)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions/{verId}/migrate-stores/{targetVerId}")
-//  fun doStoresMigrate(@PathVariable id: Long, @PathVariable verId: Long, @PathVariable targetVerId: Long): List<ArtifactStore> {
-//    return artifactTemplateService.migrateStores(id, verId, targetVerId)
-//  }
-//}
+@CrossOrigin
+@RestController
+@RequestMapping(ApplicationControllerEntryPoints.ArtifactTemplates)
+class ArtifactTemplateController : ApplicationBaseController<ArtifactTemplate>() {
+
+    @Autowired
+    lateinit var repositoryManagerService: RepositoryManagerService
+
+    @Autowired
+    lateinit var attributeTemplatesService: ArtifactTemplateService
+
+    override fun service(): ApplicationBaseService<ArtifactTemplate> = attributeTemplatesService
+
+    override fun type(): Class<ArtifactTemplate> = ArtifactTemplate::class.java
+
+    // ====================================================== Basic operations ======================================================
+
+    @GetMapping
+    @ResponseBody
+    @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminView}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})")
+    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+            = doGetInternal(filter, pageable, request, response)
+
+    @GetMapping("{id}")
+    @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminView}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})")
+    override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
+            = doGetInternal(id, request, response)
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}')")
+    override fun doCreate(@Valid @RequestBody target: ArtifactTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
+            = doCreateInternal(target, errors, request, response)
+
+    @PutMapping
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}')" +
+            " or hasPermission(#target, ${ApplicationSecurityPermissions.PermissionModify})")
+    override fun doUpdate(@Valid @RequestBody target: ArtifactTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
+            = doUpdateInternal(target, errors, request, response)
+
+    @DeleteMapping("{id}")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionDelete})")
+    override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
+
+
+    // ====================================================== Attributes ======================================================
+
+    @GetMapping("{id}/design-versions/{verId}/attributes")
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminView}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionView})")
+    fun doGetAttributes(@PathVariable id: Long, @PathVariable verId: Long): List<AttributeTemplateVersion> = attributeTemplatesService.getAllAttributes(id, verId)
+
+    @PostMapping("{id}/design-versions/{verId}/attributes/add")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionCreate})")
+    fun doAddAttributes(@PathVariable id: Long, @PathVariable verId: Long, @RequestBody attributesList : List<Long>, response: HttpServletResponse) = attributeTemplatesService.addAttributes(id, verId, attributesList)
+
+    @PostMapping("{id}/design-versions/{verId}/attributes/remove")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionCreate})")
+    fun doRemoveAttributes(@PathVariable id: Long, @PathVariable verId: Long, @RequestBody attributesList : List<Long>, response: HttpServletResponse) = attributeTemplatesService.removeAttributes(id, verId, attributesList)
+
+
+    // ====================================================== Design Versions ======================================================
+
+    @GetMapping("{id}/design-versions")
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminView}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionView})")
+    fun doGetDesignVersions(@PathVariable id: Long): List<ArtifactTemplateVersion> = attributeTemplatesService.getAllDesignVersions(id)
+
+    @GetMapping("{id}/design-versions/{verId}")
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminView}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionView})")
+    fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long): ArtifactTemplateVersion = attributeTemplatesService.getDesignVersion(id, verId)
+
+    @PostMapping("{id}/design-versions")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionCreate})")
+    fun doCreateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: ArtifactTemplateVersion, errors: Errors, response: HttpServletResponse): ArtifactTemplateVersion {
+        if(errors.hasErrors())
+            throw RepositoryConstraintViolationException(errors)
+
+        val result = attributeTemplatesService.createVersion(id, target)
+        val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
+        response.status = HttpStatus.CREATED.value()
+        response.addHeader("Location", location.path)
+        return result
+    }
+
+    @PutMapping("{id}/design-versions")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionModify})")
+    fun doUpdateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: ArtifactTemplateVersion, errors: Errors): ArtifactTemplateVersion {
+        if(errors.hasErrors())
+            throw RepositoryConstraintViolationException(errors)
+
+        return attributeTemplatesService.updateVersion(id, target)
+    }
+
+    @DeleteMapping("{id}/design-versions/{verId}")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionDelete})")
+    fun doDeleteDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) = attributeTemplatesService.deleteVersion(id, verId)
+
+    @PostMapping("{id}/design-versions/{verId}/release")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionModify})")
+    fun doReleaseDesignVersion(@PathVariable id: Long, @PathVariable verId: Long): ArtifactTemplateVersion = attributeTemplatesService.releaseVersion(id, verId)
+}

@@ -42,16 +42,16 @@ class AttributeStoreService {
   private lateinit var repositoryManagerService: RepositoryManagerService
 
   fun validate(target: AttributeStore) {
-    if(target.attributeTemplate.id != target.attributeTemplateVersion.attributeTemplate.id)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
+//    if(target.attributeTemplate.id != target.attributeTemplate.attributeTemplate.id)
+//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
 
-    if(target.attributeTemplateVersion.designStatus != DesignStatus.Released)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
+//    if(target.attributeTemplate.designStatus != DesignStatus.Released)
+//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
 
     val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(target.attributeTemplateVersion.typeUUID)
-    dataTypeManager.validateDataTypeContents(
-                                UUID.fromString(target.attributeTemplateVersion.typeUUID),
-                                target.attributeTemplateVersion.propertiesJson,
-                                target.contentsJson)
+//    dataTypeManager.validateDataTypeContents(
+//                                UUID.fromString(target.attributeTemplate.typeUUID),
+//                                target.attributeTemplate.propertiesJson,
+//                                target.contentsJson)
   }
 }

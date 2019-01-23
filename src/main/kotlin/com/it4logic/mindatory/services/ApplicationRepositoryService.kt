@@ -30,6 +30,7 @@ import com.it4logic.mindatory.model.store.ArtifactStoreRepository
 import com.it4logic.mindatory.model.store.AttributeStoreRepository
 import com.it4logic.mindatory.model.store.JoinStoreRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
+import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
@@ -56,9 +57,16 @@ class ApplicationRepositoryService : ApplicationBaseService<ApplicationRepositor
   @Autowired
   private lateinit var joinStoreRepository: JoinStoreRepository
 
+  @Autowired
+  protected lateinit var securityAclService: SecurityAclService
+
   override fun repository(): ApplicationBaseRepository<ApplicationRepository> = applicationRepositoryRepository
 
   override fun type(): Class<ApplicationRepository> = ApplicationRepository::class.java
+
+  override fun useAcl() : Boolean = true
+
+  override fun securityAclService() : SecurityAclService? = securityAclService
 
   override fun beforeDelete(target: ApplicationRepository) {
     // check if there are artifacts stores based on artifact templates from this repository

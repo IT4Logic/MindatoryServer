@@ -28,6 +28,7 @@ import com.it4logic.mindatory.model.repository.JoinTemplateVersionRepository
 import com.it4logic.mindatory.model.repository.Stereotype
 import com.it4logic.mindatory.model.repository.StereotypeRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
+import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
@@ -45,9 +46,16 @@ class StereotypeService : ApplicationBaseService<Stereotype>() {
   @Autowired
   private lateinit var joinTemplateVersionRepository: JoinTemplateVersionRepository
 
+  @Autowired
+  protected lateinit var securityAclService: SecurityAclService
+
   override fun repository(): ApplicationBaseRepository<Stereotype> = stereotypeRepository
 
   override fun type(): Class<Stereotype> = Stereotype::class.java
+
+  override fun useAcl() : Boolean = true
+
+  override fun securityAclService() : SecurityAclService? = securityAclService
 
   override fun beforeDelete(target: Stereotype) {
     var count = joinTemplateVersionRepository.countBySourceStereotypeId(target.id)

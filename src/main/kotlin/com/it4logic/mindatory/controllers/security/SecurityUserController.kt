@@ -30,7 +30,6 @@ import com.it4logic.mindatory.services.security.SecurityUserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
 import org.springframework.data.rest.core.RepositoryConstraintViolationException
-import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.Errors
 import org.springframework.web.bind.annotation.*
@@ -49,32 +48,35 @@ class SecurityUserController : ApplicationBaseController<SecurityUser>() {
 
     override fun service(): ApplicationBaseService<SecurityUser> = securityUserService
 
+    override fun type(): Class<SecurityUser> =  SecurityUser::class.java
+
     @GetMapping
     @ResponseBody
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminUpdate}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest): Any
-            = doGetInternal(filter, pageable, request)
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
+    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+            = doGetInternal(filter, pageable, request, response)
 
     @GetMapping("{id}")
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminUpdate}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-    override fun doGet(@PathVariable id: Long): ResponseEntity<SecurityUser> = doGetInternal(id)
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
+    override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
+            = doGetInternal(id, request, response)
 
     @PostMapping
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminCreate}')")
-    override fun doCreate(@Valid @RequestBody target: SecurityUser, errors: Errors, response: HttpServletResponse): ResponseEntity<SecurityUser>
-            = doCreateInternal(target, errors, response)
+    override fun doCreate(@Valid @RequestBody target: SecurityUser, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
+            = doCreateInternal(target, errors, request, response)
 
     @PutMapping
-    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminUpdate}')")
-    override fun doUpdate(@Valid @RequestBody target: SecurityUser, errors: Errors, request: HttpServletRequest): ResponseEntity<SecurityUser>
-            = doUpdateInternal(target, errors, request)
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminModify}')")
+    override fun doUpdate(@Valid @RequestBody target: SecurityUser, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
+            = doUpdateInternal(target, errors, request, response)
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-    override fun doDelete(@PathVariable id: Long): ResponseEntity<Any> = doDeleteInternal(id)
+    override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
     
     @PostMapping("{id}/change-password")
-    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminUpdate}')")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminModify}')")
     fun doChangeUserPassword(@PathVariable id: Long, @Valid @RequestBody changePasswordRequest: ChangePasswordRequest, errors: Errors) {
         if (errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)

@@ -20,22 +20,19 @@
 
 package com.it4logic.mindatory.services.repository
 
-import com.it4logic.mindatory.api.plugins.AttributeTemplateDataTypeManager
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.DesignStatus
-import com.it4logic.mindatory.model.common.StoreObjectStatus
 import com.it4logic.mindatory.model.repository.*
-import com.it4logic.mindatory.model.store.ArtifactStore
 import com.it4logic.mindatory.model.store.ArtifactStoreRepository
-import com.it4logic.mindatory.model.store.AttributeStore
 import com.it4logic.mindatory.services.RepositoryManagerService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
+import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
+import java.lang.Exception
 import javax.transaction.Transactional
 
 
@@ -57,15 +54,27 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
     @Autowired
     private lateinit var repositoryManagerService: RepositoryManagerService
 
+    @Autowired
+    private lateinit var attributeTemplateVersionRepository: AttributeTemplateVersionRepository
+
+    @Autowired
+    protected lateinit var securityAclService: SecurityAclService
+
     override fun repository(): ApplicationBaseRepository<ArtifactTemplate> = artifactTemplateRepository
 
     override fun type(): Class<ArtifactTemplate> = ArtifactTemplate::class.java
 
+    override fun useAcl() : Boolean = true
+
+    override fun securityAclService() : SecurityAclService? = securityAclService
+
     override fun beforeDelete(target: ArtifactTemplate) {
+        //todo check if the store to be related to version of artifact
         var count = artifactStoreRepository.countByArtifactTemplateId(target.id)
         if (count > 0)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateHasRelatedStoreData)
 
+        //todo check if the join to be related to version of artifact
         count = joinTemplateVersionRepository.countBySourceArtifacts_Id(target.id)
         if (count > 0)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateUsedInJoinTemplates)
@@ -91,158 +100,218 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
         throw ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
     }
 
-    fun startNewDesignVersion(id: Long): ArtifactTemplateVersion {
-        return startNewDesignVersion(findById(id))
+    fun createVersion(artifactTemplateId: Long, artifactTemplateVersion: ArtifactTemplateVersion): ArtifactTemplateVersion {
+        return createVersion(findById(artifactTemplateId), artifactTemplateVersion)
     }
 
-    fun startNewDesignVersion(target: ArtifactTemplate): ArtifactTemplateVersion {
+    fun createVersion(target: ArtifactTemplate, artifactTemplateVersion: ArtifactTemplateVersion): ArtifactTemplateVersion {
         // check if we have a current in-design version
         val result = artifactTemplateVersionRepository.findOneByArtifactTemplateIdAndDesignStatus(
             target.id,
             DesignStatus.InDesign
         )
+
         if (result.isPresent)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateHasInDesignVersion)
 
+        artifactTemplateVersion.repository = target.repository
+        artifactTemplateVersion.solution = target.solution
+
         val max = artifactTemplateVersionRepository.maxDesignVersion(target.id)
-        val newVersion = ArtifactTemplateVersion(artifactTemplate = target, designVersion = max + 1)
-        target.versions.add(newVersion)
+        artifactTemplateVersion.designVersion = max + 1
+        artifactTemplateVersion.designStatus = DesignStatus.InDesign
+        val ver = artifactTemplateVersionRepository.save(artifactTemplateVersion)
+        repository().flush()
+        entityManager.refresh(ver)
 
+        if(target.versions == null)
+            target.versions = mutableListOf()
+
+        target.versions.add(ver)
         update(target)
-
-        return newVersion
+        return ver
     }
 
-    fun releaseDesignVersion(id: Long): ArtifactTemplateVersion {
-        return releaseDesignVersion(findById(id))
+    fun updateVersion(artifactTemplateId: Long, artifactTemplateVersion: ArtifactTemplateVersion): ArtifactTemplateVersion {
+        val result = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(artifactTemplateVersion.id, artifactTemplateId).orElseThrow {
+            ApplicationObjectNotFoundException(artifactTemplateVersion.id, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
+        }
+
+        if(result.designStatus == DesignStatus.Released)
+            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedArtifactTemplateVersion)
+
+        val target = findById(artifactTemplateId)
+        artifactTemplateVersion.repository = target.repository
+        artifactTemplateVersion.solution = target.solution
+
+        val ver = artifactTemplateVersionRepository.save(artifactTemplateVersion)
+        repository().flush()
+        entityManager.refresh(ver)
+        return ver
     }
 
-    fun releaseDesignVersion(target: ArtifactTemplate): ArtifactTemplateVersion {
-        val result = artifactTemplateVersionRepository.findOneByArtifactTemplateIdAndDesignStatus(
-            target.id,
-            DesignStatus.InDesign
-        )
-        if (!result.isPresent)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateHasNoInDesignVersion)
-        val obj = result.get()
-        obj.designStatus = DesignStatus.Released
-        artifactTemplateVersionRepository.save(obj)
-        refresh(target)
-        return obj
+    fun releaseVersion(artifactTemplateId: Long, artifactTemplateVersionId: Long): ArtifactTemplateVersion {
+        val result = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(artifactTemplateVersionId, artifactTemplateId).orElseThrow {
+            ApplicationObjectNotFoundException(artifactTemplateVersionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
+        }
+        return releaseVersion(artifactTemplateId, result)
+    }
+
+    fun releaseVersion(artifactTemplateId: Long, artifactTemplateVersion: ArtifactTemplateVersion): ArtifactTemplateVersion {
+        val result = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(artifactTemplateVersion.id, artifactTemplateId).orElseThrow {
+            ApplicationObjectNotFoundException(artifactTemplateVersion.id, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
+        }
+
+        if(result.designStatus == DesignStatus.Released)
+            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedArtifactTemplateVersion)
+
+        artifactTemplateVersion.designStatus = DesignStatus.Released
+
+        val ver = artifactTemplateVersionRepository.save(artifactTemplateVersion)
+        repository().flush()
+        entityManager.refresh(ver)
+        return ver
+    }
+
+    fun deleteVersion(artifactTemplateId: Long, artifactTemplateVersionId: Long) {
+        val result = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(artifactTemplateVersionId, artifactTemplateId).orElseThrow {
+            ApplicationObjectNotFoundException(artifactTemplateVersionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
+        }
+        deleteVersion(artifactTemplateId, result)
+    }
+
+    fun deleteVersion(artifactTemplateId: Long, artifactTemplateVersion: ArtifactTemplateVersion) {
+        val result = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(artifactTemplateVersion.id, artifactTemplateId).orElseThrow {
+            ApplicationObjectNotFoundException(artifactTemplateVersion.id, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
+        }
+
+        var count = artifactStoreRepository.countByArtifactTemplateVersionId(artifactTemplateVersion.id)
+        if (count > 0)
+            throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateVersionHasRelatedStoreData)
+
+        //todo check if the join to be related to version of artifact
+//        count = joinTemplateVersionRepository.countBySourceArtifacts_Id(artifactTemplateVersion.artifactTemplate.id)
+//        if (count > 0)
+//            throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateUsedInJoinTemplates)
+//
+//        count = joinTemplateVersionRepository.countByTargetArtifacts_Id(artifactTemplateVersion.artifactTemplate.id)
+//        if (count > 0)
+//            throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateUsedInJoinTemplates)
+
+        artifactTemplateVersionRepository.delete(result)
     }
 
     // ================================================================================================================
 
-    fun getAllAttributes(artifactId: Long, versionId: Long): List<AttributeTemplateVersion> {
+    fun getAllAttributes(artifactId: Long, versionId: Long): MutableList<AttributeTemplateVersion> {
         val version = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(versionId,artifactId).orElseThrow {
             ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
         }
         return version.attributes
     }
 
-    fun addAttribute(artifactId: Long, versionId: Long, attributeTemplateVersion: AttributeTemplateVersion) {
+    fun addAttributes(artifactId: Long, versionId: Long, attributesList : List<Long>) {
         val version = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(versionId,artifactId).orElseThrow {
             ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
         }
+
         if(version.designStatus == DesignStatus.Released)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeAttributesInReleasedArtifactTemplateVersion)
 
-        if(attributeTemplateVersion.designStatus != DesignStatus.Released)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotAddNoneReleasedAttributeToArtifactTemplateVersion)
+        for(attributeId in attributesList) {
+            val attribute = attributeTemplateVersionRepository.findById(attributeId).orElseThrow { ApplicationObjectNotFoundException(attributeId, AttributeTemplateVersion::class.java.simpleName.toLowerCase()) }
+            if(attribute.designStatus != DesignStatus.Released)
+                throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotAddNoneReleasedAttributeToArtifactTemplateVersion, Exception(attribute.attributeTemplate.identifier))
 
-        for(attribute in version.attributes) {
-            if(attribute.id == attributeTemplateVersion.id)
+            val result = version.attributes.contains(attribute)
+            if(result)
                 throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeAlreadyAddedToThisArtifactTemplateVersion)
+
+            version.attributes.add(attribute)
         }
 
-        version.attributes.add(attributeTemplateVersion)
         artifactTemplateVersionRepository.save(version)
     }
 
-    fun removeAttribute(artifactId: Long, versionId: Long, attributeVersionId: Long) {
+    fun removeAttributes(artifactId: Long, versionId: Long, attributesList : List<Long>) {
         val version = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(versionId,artifactId).orElseThrow {
             ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
         }
 
-        if(version.designStatus == DesignStatus.Released)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeAttributesInReleasedArtifactTemplateVersion)
+        for(attributeId in attributesList) {
+            val attribute = attributeTemplateVersionRepository.findById(attributeId).orElseThrow { ApplicationObjectNotFoundException(attributeId, AttributeTemplateVersion::class.java.simpleName.toLowerCase()) }
 
-        for(attribute in version.attributes) {
-            if(attribute.id == attributeVersionId)
-                version.attributes.remove(attribute)
+            val result = version.attributes.contains(attribute)
+            if(!result)
+                continue
+
+            version.attributes.remove(attribute)
         }
+
         artifactTemplateVersionRepository.save(version)
     }
 
     // ================================================================================================================
 
-    private fun getAttributeTemplateVersion(source: AttributeStore, target: ArtifactTemplateVersion): AttributeTemplateVersion? {
-        for(attributeTemplateVersion in target.attributes) {
-            if(attributeTemplateVersion.attributeTemplate.id == source.attributeTemplate.id)
-                return attributeTemplateVersion
-        }
-        return null
-    }
+//    fun migrateStores(source: ArtifactTemplateVersion, target: ArtifactTemplateVersion): MutableList<ArtifactStore> {
+//        val versionsMap = mutableMapOf<Long, ArtifactTemplateVersion?>()
+//        val managersMap = mutableMapOf<String, ArtifactTemplateDataTypeManager?>()
+//        val sourceArtifactStores = artifactStoreRepository.findAllByArtifactTemplateVersionId(source.id)
+//        val targetArtifactStores = mutableListOf<ArtifactStore>()
+//
+//        for(store in sourceArtifactStores) {
+//            val targetArtifactStore = ArtifactStore(artifactTemplate = store.artifactTemplate, artifactTemplateVersion = target)
+//            targetArtifactStore.solution = store.solution
+//
+//            for(attributeStore in store.attributeStores) {
+//                var artifactTemplateVersion: ArtifactTemplateVersion?
+//                if(versionsMap.containsKey(attributeStore.artifactTemplate.id)) {
+//                    artifactTemplateVersion = versionsMap[attributeStore.artifactTemplate.id]
+//                } else {
+//                    artifactTemplateVersion = getArtifactTemplateVersion(attributeStore, target)
+//                    versionsMap[attributeStore.artifactTemplate.id] = artifactTemplateVersion
+//                }
+//
+//                if(artifactTemplateVersion != null) {
+//                    var manager: ArtifactTemplateDataTypeManager?
+//                    if(managersMap.containsKey(artifactTemplateVersion.typeUUID)) {
+//                        manager = managersMap[artifactTemplateVersion.typeUUID]
+//                    }
+//                    else {
+//                        manager = repositoryManagerService.getArtifactTemplateDataTypeManager(artifactTemplateVersion.typeUUID)
+//                        managersMap[artifactTemplateVersion.typeUUID] = manager
+//                    }
+//
+////                    val result = manager!!.migrateStoreContent(attributeStore.contentsJson, UUID.fromString(artifactTemplateVersion.typeUUID),
+////                                                                    artifactTemplateVersion.propertiesJson)
+////
+////                    val targetAttributeStore = AttributeStore(contents = "", contentsJson = result,
+////                                                    artifactTemplate = attributeStore.artifactTemplate,
+////                                                    artifactTemplateVersion = artifactTemplateVersion)
+////                    targetArtifactStore.attributeStores.add(targetAttributeStore)
+//                }
+//            }
+//
+//            store.storeStatus = StoreObjectStatus.Migrated
+//            targetArtifactStores.add(targetArtifactStore)
+//        }
+//
+//        artifactStoreRepository.saveAll(sourceArtifactStores)
+//        return artifactStoreRepository.saveAll(targetArtifactStores)
+//    }
 
-    fun migrateStores(source: ArtifactTemplateVersion, target: ArtifactTemplateVersion): MutableList<ArtifactStore> {
-        val versionsMap = mutableMapOf<Long, AttributeTemplateVersion?>()
-        val managersMap = mutableMapOf<String, AttributeTemplateDataTypeManager?>()
-        val sourceArtifactStores = artifactStoreRepository.findAllByArtifactTemplateVersionId(source.id)
-        val targetArtifactStores = mutableListOf<ArtifactStore>()
-
-        for(store in sourceArtifactStores) {
-            val targetArtifactStore = ArtifactStore(artifactTemplate = store.artifactTemplate, artifactTemplateVersion = target)
-            targetArtifactStore.solution = store.solution
-
-            for(attributeStore in store.attributeStores) {
-                var attributeTemplateVersion: AttributeTemplateVersion?
-                if(versionsMap.containsKey(attributeStore.attributeTemplate.id)) {
-                    attributeTemplateVersion = versionsMap[attributeStore.attributeTemplate.id]
-                } else {
-                    attributeTemplateVersion = getAttributeTemplateVersion(attributeStore, target)
-                    versionsMap[attributeStore.attributeTemplate.id] = attributeTemplateVersion
-                }
-
-                if(attributeTemplateVersion != null) {
-                    var manager: AttributeTemplateDataTypeManager?
-                    if(managersMap.containsKey(attributeTemplateVersion.typeUUID)) {
-                        manager = managersMap[attributeTemplateVersion.typeUUID]
-                    }
-                    else {
-                        manager = repositoryManagerService.getAttributeTemplateDataTypeManager(attributeTemplateVersion.typeUUID)
-                        managersMap[attributeTemplateVersion.typeUUID] = manager
-                    }
-
-                    val result = manager!!.migrateStoreContent(attributeStore.contentsJson, UUID.fromString(attributeTemplateVersion.typeUUID),
-                                                                    attributeTemplateVersion.propertiesJson)
-
-                    val targetAttributeStore = AttributeStore(contents = "", contentsJson = result,
-                                                    attributeTemplate = attributeStore.attributeTemplate,
-                                                    attributeTemplateVersion = attributeTemplateVersion)
-                    targetArtifactStore.attributeStores.add(targetAttributeStore)
-                }
-            }
-
-            store.storeStatus = StoreObjectStatus.Migrated
-            targetArtifactStores.add(targetArtifactStore)
-        }
-
-        artifactStoreRepository.saveAll(sourceArtifactStores)
-        return artifactStoreRepository.saveAll(targetArtifactStores)
-    }
-
-    fun migrateStores(artifactId: Long, versionId: Long, targetVersionId: Long): MutableList<ArtifactStore> {
-        val targetVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(targetVersionId,artifactId).orElseThrow {
-            ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
-        }
-
-        if(targetVersion.designStatus != DesignStatus.Released)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateStoreObjectsToNoneReleasedVersion)
-
-        val sourceVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(versionId,artifactId).orElseThrow {
-            ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
-        }
-
-        return migrateStores(sourceVersion, targetVersion)
-    }
+//    fun migrateStores(artifactId: Long, versionId: Long, targetVersionId: Long): MutableList<ArtifactStore> {
+//        val targetVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(targetVersionId,artifactId).orElseThrow {
+//            ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
+//        }
+//
+//        if(targetVersion.designStatus != DesignStatus.Released)
+//            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateStoreObjectsToNoneReleasedVersion)
+//
+//        val sourceVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(versionId,artifactId).orElseThrow {
+//            ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
+//        }
+//
+//        return migrateStores(sourceVersion, targetVersion)
+//    }
 }

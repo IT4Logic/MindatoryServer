@@ -20,7 +20,7 @@
 
 package com.it4logic.mindatory.config
 
-import com.it4logic.mindatory.model.common.ApplicationEntityBase
+import com.it4logic.mindatory.security.CustomDefaultPermissionGrantingStrategy
 import com.it4logic.mindatory.security.SecurityUserDetailsService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
@@ -40,12 +40,10 @@ import org.springframework.cache.ehcache.EhCacheFactoryBean
 import org.springframework.context.ApplicationContext
 import org.springframework.security.access.PermissionEvaluator
 import org.springframework.security.acls.domain.*
-import org.springframework.security.acls.model.ObjectIdentity
 import org.springframework.security.acls.model.ObjectIdentityRetrievalStrategy
 import org.springframework.security.acls.model.ObjectIdentityGenerator
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
-import java.io.Serializable
 
 
 /**
@@ -114,7 +112,7 @@ class MethodSecurityConfig {
 
     @Bean
     fun permissionGrantingStrategy(): PermissionGrantingStrategy {
-        return DefaultPermissionGrantingStrategy(ConsoleAuditLogger())
+        return CustomDefaultPermissionGrantingStrategy(ConsoleAuditLogger())
     }
 
     @Bean
@@ -133,20 +131,17 @@ class MethodSecurityConfig {
 
     @Bean
     fun aclService(): JdbcMutableAclService {
-        val jdbcMutableAclService = JdbcMutableAclService(dataSource, lookupStrategy(), aclCache())
-        jdbcMutableAclService.setClassIdentityQuery("SELECT @@IDENTITY")
-        jdbcMutableAclService.setSidIdentityQuery("SELECT @@IDENTITY")
-        return jdbcMutableAclService
+        return JdbcMutableAclService(dataSource, lookupStrategy(), aclCache())
     }
 
     @Bean
     fun objectIdentityRetrievalStrategy(): ObjectIdentityRetrievalStrategy {
-        return objectIdentityRetrievalStrategy //ObjectIdentityRetrievalStrategy { domainObject -> ObjectIdentityImpl(domainObject.javaClass, (domainObject as ApplicationEntityBase).id) }
+        return objectIdentityRetrievalStrategy
     }
 
     @Bean
     fun objectIdentityGenerator(): ObjectIdentityGenerator {
-        return objectIdentityRetrievalStrategy //ObjectIdentityGenerator { id, type -> ObjectIdentityImpl(Class.forName(type), id) }
+        return objectIdentityRetrievalStrategy
     }
 
 

@@ -20,21 +20,19 @@
 
 package com.it4logic.mindatory.model.repository
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
-import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationRepositoryEntityBase
-import com.it4logic.mindatory.model.common.DesignStatus
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.common.*
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import java.util.*
 import javax.persistence.*
-import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
+import kotlin.collections.HashMap
 
 
 @Audited
@@ -52,39 +50,36 @@ data class AttributeTemplateVersion (
     @get: NotNull
     var typeUUID: String,
 
-//    @Transient
-//    var type: AttributeTemplateDataType? = null,
-
-    @get: NotBlank
-    @Lob
-    var properties: String,
-
     @Transient
-    var propertiesJson: JsonNode,
+    @JsonIgnore
+    var type: AttributeTemplateDataType? = null,
+
+    @Lob
+    var properties: HashMap<String, Any> = hashMapOf(),
 
     var designStatus: DesignStatus = DesignStatus.InDesign,
 
-    var designVersion: Int = 1
+    var designVersion: Int = 1,
 
-) : ApplicationRepositoryEntityBase() {
-    @PrePersist
-    @PreUpdate
-    fun preSave() {
-        properties = ObjectMapper().writeValueAsString(propertiesJson)
-    }
+    @ManyToOne
+    @JoinColumn(name = "repository_id", nullable = false)
+    @JsonIgnore
+    var repository: ApplicationRepository? = null,
 
-    @PostLoad
-    fun postLoad() {
-        propertiesJson = ObjectMapper().readTree(properties)
-    }
-}
+    @ManyToOne
+    @JoinColumn(name = "solution_id")
+    @JsonIgnore
+    var solution: Solution? = null
+
+) : ApplicationEntityBase()
+
 
 @RepositoryRestResource(exported = false)
 interface AttributeTemplateVersionRepository : ApplicationRepositoryBaseRepository<AttributeTemplateVersion> {
     fun findOneByIdAndAttributeTemplateId(id: Long, id2: Long): Optional<AttributeTemplateVersion>
     fun findOneByAttributeTemplateIdAndDesignStatus(id: Long, designStatus: DesignStatus): Optional<AttributeTemplateVersion>
 
-    @Query("select max(designVersion) from AttributeTemplateVersion a where a.attributeTemplate.id = ?1")
+    @Query("select coalesce(max(designVersion),0) from AttributeTemplateVersion a where a.attributeTemplate.id = ?1")
     fun maxDesignVersion(id: Long): Int
 
 }

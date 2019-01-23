@@ -20,10 +20,9 @@
 
 package com.it4logic.mindatory.model.repository
 
-import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationRepositoryEntityBase
-import com.it4logic.mindatory.model.common.DesignStatus
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.common.*
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.jpa.repository.Query
@@ -36,9 +35,7 @@ import javax.validation.constraints.NotNull
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_join_templates", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.JoinTemplateNameUniqueIndex, columnNames = ["name"]))
-])
+@Table(name = "t_join_template_versions")
 data class JoinTemplateVersion (
     @get: NotNull
     @ManyToOne
@@ -52,7 +49,7 @@ data class JoinTemplateVersion (
 
     @ManyToMany()
     @JoinTable(name = "t_source_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
-    var sourceArtifacts: MutableList<ArtifactTemplate> = mutableListOf(),
+    var sourceArtifacts: MutableList<ArtifactTemplateVersion> = mutableListOf(),
 
     @get: NotNull
     @ManyToOne(optional = false)
@@ -61,13 +58,22 @@ data class JoinTemplateVersion (
 
     @ManyToMany()
     @JoinTable(name = "t_target_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
-    var targetArtifacts: MutableList<ArtifactTemplate> = mutableListOf(),
+    var targetArtifacts: MutableList<ArtifactTemplateVersion> = mutableListOf(),
 
     var designStatus: DesignStatus = DesignStatus.InDesign,
 
-    var designVersion: Int = 1
+    var designVersion: Int = 1,
 
-) : ApplicationRepositoryEntityBase()
+    @get: NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "repository_id", nullable = false)
+    var repository: ApplicationRepository? = null,
+
+    @ManyToOne(optional=true)
+    @JoinColumn(name = "solution_id")
+    var solution: Solution? = null
+
+) : ApplicationEntityBase()
 
 /**
  * Repository
@@ -89,6 +95,6 @@ interface JoinTemplateVersionRepository : ApplicationRepositoryBaseRepository<Jo
     fun findOneByJoinTemplateIdAndDesignStatus(id: Long, designStatus: DesignStatus): Optional<JoinTemplateVersion>
     fun findOneByIdAndJoinTemplateId(id1: Long, id2: Long): Optional<JoinTemplateVersion>
 
-    @Query("select max(designVersion) from JoinTemplateVersion a where a.joinTemplate.id = ?1")
+    @Query("select coalesce(max(designVersion),0) from JoinTemplateVersion a where a.joinTemplate.id = ?1")
     fun maxDesignVersion(id: Long): Int
 }

@@ -22,10 +22,9 @@ package com.it4logic.mindatory.model.repository
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationRepositoryEntityBase
-import com.it4logic.mindatory.model.common.DesignStatus
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.common.*
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -54,8 +53,19 @@ data class ArtifactTemplateVersion (
 
     var designStatus: DesignStatus = DesignStatus.InDesign,
 
-    var designVersion: Int = 1
-) : ApplicationRepositoryEntityBase()
+    var designVersion: Int = 1,
+
+    @ManyToOne
+    @JoinColumn(name = "repository_id", nullable = false)
+    @JsonIgnore
+    var repository: ApplicationRepository? = null,
+
+    @ManyToOne
+    @JoinColumn(name = "solution_id")
+    @JsonIgnore
+    var solution: Solution? = null
+
+) : ApplicationEntityBase()
 
 @RepositoryRestResource(exported = false)
 interface ArtifactTemplateVersionRepository : ApplicationRepositoryBaseRepository<ArtifactTemplateVersion> {
@@ -64,7 +74,7 @@ interface ArtifactTemplateVersionRepository : ApplicationRepositoryBaseRepositor
 
     fun findOneByArtifactTemplateIdAndDesignStatus(id: Long, designStatus: DesignStatus): Optional<ArtifactTemplateVersion>
 
-    @Query("select max(designVersion) from ArtifactTemplateVersion a where a.artifactTemplate.id = ?1")
+    @Query("select coalesce(max(designVersion),0) from ArtifactTemplateVersion a where a.artifactTemplate.id = ?1")
     fun maxDesignVersion(id: Long): Int
 
     fun findOneByIdAndArtifactTemplateId(versionId: Long, artifactId: Long): Optional<ArtifactTemplateVersion>

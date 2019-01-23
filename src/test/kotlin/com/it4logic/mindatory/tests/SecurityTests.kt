@@ -1,3 +1,23 @@
+/*
+    Copyright (c) 2017, IT4Logic.
+
+    This file is part of Mindatory solution by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
+
 package com.it4logic.mindatory.tests
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -28,6 +48,7 @@ import org.junit.FixMethodOrder
 import org.junit.runners.MethodSorters
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*
 import org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.*
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
@@ -36,6 +57,7 @@ import org.springframework.web.context.WebApplicationContext
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class SecurityTests {
 
     companion object {
@@ -146,7 +168,7 @@ class SecurityTests {
                 .andReturn().response.contentAsString
 
         roleUser = objectMapper.readValue(contents, SecurityRole::class.java)
-        roleUser.addPermission(ApplicationSecurityPermissions.SecurityRoleAdminUpdate)
+        roleUser.addPermission(ApplicationSecurityPermissions.SecurityRoleAdminModify)
         roleUser.removePermission(ApplicationSecurityPermissions.SecurityRoleAdminView)
         roleUser.addPermission(ApplicationSecurityPermissions.SecurityRoleAdminCreate)
         roleUser.description = "updated"
@@ -154,21 +176,21 @@ class SecurityTests {
         // Check update specific role
         mvc.perform(
                 put(ApplicationControllerEntryPoints.SecurityRoles)
-                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminUpdate}))
+                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminModify}))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(roleUser))
             )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.description", equalTo("updated")))
             .andExpect(jsonPath("$.permissions", hasSize<Any>(2)))
-            .andExpect(jsonPath("$.permissions", contains(ApplicationSecurityPermissions.SecurityRoleAdminUpdate,ApplicationSecurityPermissions.SecurityRoleAdminCreate)))
+            .andExpect(jsonPath("$.permissions", contains(ApplicationSecurityPermissions.SecurityRoleAdminModify,ApplicationSecurityPermissions.SecurityRoleAdminCreate)))
 
         // Check delete specific role
         mvc.perform(
                 delete("$roleUrl")
                 .with(user("super_admin").authorities(
                         GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminDelete},
-                        GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminUpdate}))
+                        GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminModify}))
             )
             .andExpect(status().isOk)
 
@@ -320,7 +342,7 @@ class SecurityTests {
         // Check update specific group
         mvc.perform(
                 put(ApplicationControllerEntryPoints.SecurityGroups)
-                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminUpdate}))
+                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminModify}))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userGroup))
         )
@@ -451,7 +473,7 @@ class SecurityTests {
             )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.username", equalTo("admin")))
-            .andReturn().response.contentAsString
+            .andReturn().response
 
         // Check for add user with duplication
         mvc.perform(
@@ -514,7 +536,7 @@ class SecurityTests {
         // Check update specific user
         mvc.perform(
                 put(ApplicationControllerEntryPoints.SecurityUsers)
-                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminUpdate}))
+                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminModify}))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(normalUser))
             )
@@ -622,8 +644,8 @@ class SecurityTests {
         mvc.perform(
                 post(ApplicationControllerEntryPoints.SecurityGroups + groupAdminId + "/users")
                         .with(user("super_admin").authorities(
-                                GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminUpdate},
-                                GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminUpdate}))
+                                GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminModify},
+                                GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminModify}))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userIdsList))
             )
@@ -656,8 +678,8 @@ class SecurityTests {
         mvc.perform(
                 post(ApplicationControllerEntryPoints.SecurityRoles + role.id + "/users")
                         .with(user("super_admin").authorities(
-                            GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminUpdate},
-                            GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminUpdate}))
+                            GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminModify},
+                            GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminModify}))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userIdsList))
                 )
@@ -668,7 +690,7 @@ class SecurityTests {
                 delete(ApplicationControllerEntryPoints.SecurityRoles + role.id)
                         .with(user("super_admin").authorities(
                                 GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminDelete},
-                                GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminUpdate}))
+                                GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminModify}))
                 )
                 .andExpect(status().isOk)
 
@@ -737,7 +759,7 @@ class SecurityTests {
         // change user password by id
         pwdReq = ChangePasswordRequest("password", "P@ssw0rd", "P@ssw0rd")
         mvc.perform(post(ApplicationControllerEntryPoints.SecurityUsers + "$normalUserId/change-password")
-                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminUpdate}))
+                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminModify}))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(pwdReq))
             )

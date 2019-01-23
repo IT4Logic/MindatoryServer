@@ -1,18 +1,19 @@
 package com.it4logic.mindatory.tests
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.ApplicationRepositoryRepository
 import com.it4logic.mindatory.model.Solution
-import com.it4logic.mindatory.model.repository.AttributeTemplate
-import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
+import com.it4logic.mindatory.model.repository.*
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.*
+import com.it4logic.mindatory.services.repository.ArtifactTemplateService
+import com.it4logic.mindatory.services.repository.AttributeTemplateService
+import com.it4logic.mindatory.services.repository.StereotypeService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
 import com.it4logic.mindatory.services.security.SecurityUserService
@@ -41,7 +42,7 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-class AttributeTemplateTests {
+class JoinTemplateTests {
     @Autowired
     private lateinit var context: WebApplicationContext
 
@@ -62,6 +63,15 @@ class AttributeTemplateTests {
     @Autowired
     private lateinit var securityUserService: SecurityUserService
 
+    @Autowired
+    private lateinit var artifactTemplateService: ArtifactTemplateService
+
+    @Autowired
+    private lateinit var attributeTemplateService: AttributeTemplateService
+
+    @Autowired
+    private lateinit var stereotypeService: StereotypeService
+
     private lateinit var roleAdmin: SecurityRole
     private lateinit var roleUser: SecurityRole
 
@@ -76,8 +86,23 @@ class AttributeTemplateTests {
 
     private lateinit var applicationRepository: ApplicationRepository
     private lateinit var solution: Solution
-    private lateinit var textDataType: AttributeTemplateDataType
+
+    private lateinit var firstSideArtifactTemplate: ArtifactTemplate
+    private lateinit var firstSideArtifactTemplateVersion: ArtifactTemplateVersion
+    private lateinit var secondSideArtifactTemplate: ArtifactTemplate
+    private lateinit var secondSideArtifactTemplateVersion: ArtifactTemplateVersion
+
+    private lateinit var firstSideStereotype: Stereotype
+    private lateinit var secondSideStereotype: Stereotype
+
+
     private lateinit var attributeCodeTemplate: AttributeTemplate
+    private lateinit var attributeCodeTemplateVersion: AttributeTemplateVersion
+    private lateinit var attributeNameTemplate: AttributeTemplate
+    private lateinit var attributeNameTemplateVersion: AttributeTemplateVersion
+    private lateinit var attributeVersions: MutableList<AttributeTemplateVersion>
+
+    private lateinit var joinTemplate: JoinTemplate
 
     private val testDataTypeUUID = "19bf955e-00c7-43d6-9b47-d286c20bd0da"
 
@@ -96,12 +121,14 @@ class AttributeTemplateTests {
         roleAdmin = securityRoleService.create(
             SecurityRole("ROLE_ADMIN", "Admins Role",
                 permissions = arrayListOf(
-                    ApplicationSecurityPermissions.AttributeTemplateAdminView,
-                    ApplicationSecurityPermissions.AttributeTemplateAdminCreate,
-                    ApplicationSecurityPermissions.AttributeTemplateAdminModify,
-                    ApplicationSecurityPermissions.AttributeTemplateAdminDelete,
+                    ApplicationSecurityPermissions.JoinTemplateAdminView,
+                    ApplicationSecurityPermissions.JoinTemplateAdminCreate,
+                    ApplicationSecurityPermissions.JoinTemplateAdminModify,
+                    ApplicationSecurityPermissions.JoinTemplateAdminDelete,
                     ApplicationSecurityPermissions.ApplicationRepositoryAdminCreate,
-                    ApplicationSecurityPermissions.SolutionAdminCreate
+                    ApplicationSecurityPermissions.SolutionAdminCreate,
+                    ApplicationSecurityPermissions.AttributeTemplateAdminCreate,
+                    ApplicationSecurityPermissions.ArtifactTemplateAdminCreate
                 ))
         )
         roleUser = securityRoleService.create(SecurityRole("ROLE_USER", "Users Role"))
@@ -161,292 +188,319 @@ class AttributeTemplateTests {
             .andExpect(jsonPath("$.name", equalTo("Solution A")))
             .andReturn().response.contentAsString
         solution = objectMapper.readValue(contents, Solution::class.java)
-    }
 
-    @Test
-    fun `Attribute Templates Tests`() {
-        dataTypes()
-        basicOperations()
-        designVersions()
-    }
-
-    fun dataTypes() {
-        mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplateDataTypes)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-            )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$", not<Any>(empty<Any>())))
-
-        val contents = mvc.perform(get(ApplicationControllerEntryPoints.AttributeTemplateDataTypes + "/" + testDataTypeUUID)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                )
-                .andExpect(status().isOk)
-                .andReturn().response.contentAsString
-        textDataType = objectMapper.readValue(contents, AttributeTemplateDataType::class.java)
-    }
-
-    fun basicOperations() {
+        // create attributes
         attributeCodeTemplate = AttributeTemplate(identifier = "mindatory.code", name = "Mindatory Code", repository = applicationRepository)
-        var attributeTemplate2 = AttributeTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository, solution = solution)
-        val attributeTemplate3 = AttributeTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository)
-
-        // create Attribute Templates
-        mvc.perform(post(ApplicationControllerEntryPoints.AttributeTemplates).with(SecurityMockMvcRequestPostProcessors.anonymous()))
-            .andExpect(status().isUnauthorized)
-
-        var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(attributeCodeTemplate))
-            )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.identifier", equalTo("mindatory.code")))
-            .andReturn().response.contentAsString
-        attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplate::class.java)
+        attributeNameTemplate = AttributeTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository, solution = solution)
 
         contents = mvc.perform(
             post(ApplicationControllerEntryPoints.AttributeTemplates)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(attributeTemplate2))
-            )
+                .content(objectMapper.writeValueAsString(attributeCodeTemplate))
+        )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.identifier", equalTo("mindatory.name")))
             .andReturn().response.contentAsString
-        attributeTemplate2 = objectMapper.readValue(contents, AttributeTemplate::class.java)
+
+        attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplate::class.java)
+        attributeCodeTemplateVersion = attributeCodeTemplate.createDesignVersion(testDataTypeUUID, hashMapOf(Pair("length", 50), Pair("nullable",false)))
+        attributeCodeTemplateVersion = attributeTemplateService.createVersion(attributeCodeTemplate,attributeCodeTemplateVersion)
+        attributeCodeTemplateVersion = attributeTemplateService.releaseVersion(attributeCodeTemplate.id,attributeCodeTemplateVersion)
+
+        contents = mvc.perform(
+            post(ApplicationControllerEntryPoints.AttributeTemplates)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(attributeNameTemplate))
+        )
+            .andExpect(status().isCreated)
+            .andReturn().response.contentAsString
+        attributeNameTemplate = objectMapper.readValue(contents, AttributeTemplate::class.java)
+        attributeNameTemplateVersion = attributeNameTemplate.createDesignVersion(testDataTypeUUID, hashMapOf(Pair("length", 55), Pair("nullable",true)))
+        attributeNameTemplateVersion = attributeTemplateService.createVersion(attributeNameTemplate, attributeNameTemplateVersion)
+        attributeNameTemplateVersion = attributeTemplateService.releaseVersion(attributeNameTemplate.id, attributeNameTemplateVersion)
+
+        attributeVersions = mutableListOf(attributeCodeTemplateVersion, attributeNameTemplateVersion)
+
+        // first side artifact
+        // create artifact
+        firstSideArtifactTemplate = ArtifactTemplate(identifier = "mindatory.first-side", name = "Mindatory First Side", repository = applicationRepository)
+        contents = mvc.perform(
+            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(firstSideArtifactTemplate))
+        )
+            .andExpect(status().isCreated)
+            .andReturn().response.contentAsString
+        firstSideArtifactTemplate = objectMapper.readValue(contents, ArtifactTemplate::class.java)
+        firstSideArtifactTemplateVersion = firstSideArtifactTemplate.createDesignVersion(attributeVersions)
+        firstSideArtifactTemplateVersion = artifactTemplateService.createVersion(firstSideArtifactTemplate, firstSideArtifactTemplateVersion)
+
+        // second side artifact
+        // create artifact
+        secondSideArtifactTemplate = ArtifactTemplate(identifier = "mindatory.second-side", name = "Mindatory Second Side", repository = applicationRepository)
+        contents = mvc.perform(
+            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(secondSideArtifactTemplate))
+        )
+            .andExpect(status().isCreated)
+            .andReturn().response.contentAsString
+        secondSideArtifactTemplate = objectMapper.readValue(contents, ArtifactTemplate::class.java)
+        secondSideArtifactTemplateVersion = secondSideArtifactTemplate.createDesignVersion(attributeVersions)
+        secondSideArtifactTemplateVersion = artifactTemplateService.createVersion(secondSideArtifactTemplate, secondSideArtifactTemplateVersion)
+
+        firstSideStereotype = stereotypeService.create(Stereotype(name = "Bridge", repository = applicationRepository))
+        secondSideStereotype = stereotypeService.create(Stereotype(name = "Link", repository = applicationRepository))
+    }
+
+    @Test
+    fun `Artifact Templates Tests`() {
+        basicOperations()
+        designVersions()
+    }
+
+    fun basicOperations() {
+        // create Join Templates
+        mvc.perform(post(ApplicationControllerEntryPoints.JoinTemplates).with(SecurityMockMvcRequestPostProcessors.anonymous()))
+            .andExpect(status().isUnauthorized)
+
+        var contents = mvc.perform(
+            post(ApplicationControllerEntryPoints.JoinTemplates)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(JoinTemplate(identifier = "mindatory.first-second", repository = applicationRepository)))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.identifier", equalTo("mindatory.first-second")))
+            .andReturn().response.contentAsString
+        joinTemplate = objectMapper.readValue(contents, JoinTemplate::class.java)
 
         // duplicate check
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            post(ApplicationControllerEntryPoints.JoinTemplates)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(attributeTemplate2))
-            )
-            .andExpect(status().isNotAcceptable)
-            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotCreateObjectWithExistingId)))
-
-        mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(attributeTemplate3))
-            )
+                .content(objectMapper.writeValueAsString(JoinTemplate(identifier = "mindatory.first-second", repository = applicationRepository)))
+        )
             .andExpect(status().isNotAcceptable)
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.DataIntegrityError)))
-            .andExpect(jsonPath("$.errorData", anyOf(
-                equalTo(ApplicationErrorCodes.DuplicateAttributeTemplateIdentification),
-                equalTo(ApplicationErrorCodes.DuplicateAttributeTemplateName))))
+            .andExpect(jsonPath("$.errorData", anyOf(equalTo(ApplicationErrorCodes.DuplicateJoinTemplateIdentifier))))
 
-        // load solution
-        mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+        contents = mvc.perform(
+            post(ApplicationControllerEntryPoints.JoinTemplates)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-            )
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(JoinTemplate(identifier = "mindatory.dummy", repository = applicationRepository)))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.identifier", equalTo("mindatory.dummy")))
+            .andReturn().response.contentAsString
+        val joinTemplate2 = objectMapper.readValue(contents, JoinTemplate::class.java)
+
+        // load
+        mvc.perform(
+            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+        )
             .andExpect(status().isOk)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(attributeTemplate2))
-            )
-            .andExpect(status().isForbidden)
-
-        mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+        )
             .andExpect(status().isForbidden)
 
         var aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View, ApplicationPermission.Modify)))
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id + "/permissions/add")
+            post(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id + "/permissions/add")
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
-            )
+        )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id + "/permissions/add")
+            post(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id + "/permissions/add")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
-            )
+        )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.identifier", equalTo("mindatory.code")))
+            .andExpect(jsonPath("$.identifier", equalTo("mindatory.first-second")))
 
         aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View)))
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id + "/permissions/remove")
+            post(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id + "/permissions/remove")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
-            )
+        )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+        )
             .andExpect(status().isForbidden)
 
         // update
-        attributeCodeTemplate.description = "updated"
+        joinTemplate.description = "updated"
 
         contents = mvc.perform(
-            put(ApplicationControllerEntryPoints.AttributeTemplates)
+            put(ApplicationControllerEntryPoints.JoinTemplates)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(attributeCodeTemplate))
-            )
+                .content(objectMapper.writeValueAsString(joinTemplate))
+        )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.description", equalTo("updated")))
             .andReturn().response.contentAsString
-        attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplate::class.java)
+        joinTemplate = objectMapper.readValue(contents, JoinTemplate::class.java)
 
         // change the owner
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id)
+            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+        )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id + "/permissions/change-owner/user")
+            post(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id + "/permissions/change-owner/user")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id)
+            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.identifier", equalTo("mindatory.name")))
+            .andExpect(jsonPath("$.identifier", equalTo("mindatory.dummy")))
 
         // delete
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+            delete(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+        )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id)
+            delete(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id)
+            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+        )
             .andExpect(status().isNotFound)
     }
 
     fun designVersions() {
         // get design versions
-        val attributeTemplateDesignVersions = "${ApplicationControllerEntryPoints.AttributeTemplates}/${attributeCodeTemplate.id}/design-versions"
+        val joinTemplateDesignVersions = "${ApplicationControllerEntryPoints.JoinTemplates}/${joinTemplate.id}/design-versions"
 
-        mvc.perform(get(attributeTemplateDesignVersions).with(SecurityMockMvcRequestPostProcessors.anonymous()))
+        mvc.perform(get(joinTemplateDesignVersions).with(SecurityMockMvcRequestPostProcessors.anonymous()))
             .andExpect(status().isUnauthorized)
 
         mvc.perform(
-            get(attributeTemplateDesignVersions)
+            get(joinTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$", hasSize<Any>(0)))
 
         // create design version
-        var designVersion1 = attributeCodeTemplate.createDesignVersion(testDataTypeUUID, hashMapOf(Pair("length", 50), Pair("nullable",false)))
+        var designVersion1 = joinTemplate.createDesignVersion(firstSideStereotype, mutableListOf(firstSideArtifactTemplateVersion),
+                                        secondSideStereotype, mutableListOf(secondSideArtifactTemplateVersion))
         var contents = mvc.perform(
-            post(attributeTemplateDesignVersions)
+            post(joinTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(designVersion1))
-            )
+        )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.designVersion", equalTo(1)))
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, JoinTemplateVersion::class.java)
 
         // create another design version for the same attribute
-        var designVersion2 = attributeCodeTemplate.createDesignVersion(testDataTypeUUID, hashMapOf(Pair("length", 55), Pair("nullable",false)))
+        var designVersion2 = joinTemplate.createDesignVersion(firstSideStereotype, mutableListOf(firstSideArtifactTemplateVersion),
+                                        secondSideStereotype, mutableListOf(secondSideArtifactTemplateVersion))
         mvc.perform(
-            post(attributeTemplateDesignVersions)
+            post(joinTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(designVersion2))
-            )
+        )
             .andExpect(status().isNotAcceptable)
-            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationAttributeTemplateHasInDesignVersion)))
+            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationJoinTemplateHasInDesignVersion)))
 
         // modify the created design version
-        designVersion1.properties["pattern"] = "999999.99"
         contents = mvc.perform(
-            put(attributeTemplateDesignVersions)
+            put(joinTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(designVersion1))
-            )
+        )
             .andExpect(status().isOk)
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, JoinTemplateVersion::class.java)
 
         // release the design version
         contents = mvc.perform(
-            post("$attributeTemplateDesignVersions/${designVersion1.id}/release")
+            post("$joinTemplateDesignVersions/${designVersion1.id}/release")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, JoinTemplateVersion::class.java)
 
         // modify the released version
         mvc.perform(
-            put(attributeTemplateDesignVersions)
+            put(joinTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(designVersion1))
-            )
+        )
             .andExpect(status().isNotAcceptable)
-            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotChangeReleasedAttributeTemplateVersion)))
+            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotChangeReleasedJoinTemplateVersion)))
 
         // add another design version
         contents = mvc.perform(
-            post(attributeTemplateDesignVersions)
+            post(joinTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(designVersion2))
-            )
+        )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.designVersion", equalTo(2)))
             .andReturn().response.contentAsString
-        designVersion2 = objectMapper.readValue(contents, AttributeTemplateVersion::class.java)
+        designVersion2 = objectMapper.readValue(contents, JoinTemplateVersion::class.java)
 
         // delete the released design version
         mvc.perform(
-            delete("$attributeTemplateDesignVersions/${designVersion1.id}")
+            delete("$joinTemplateDesignVersions/${designVersion1.id}")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
 
         // delete the non-released design version
         mvc.perform(
-        delete("$attributeTemplateDesignVersions/${designVersion2.id}")
+            delete("$joinTemplateDesignVersions/${designVersion2.id}")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
     }
 }

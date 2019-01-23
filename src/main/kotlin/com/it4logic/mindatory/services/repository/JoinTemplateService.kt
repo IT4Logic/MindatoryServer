@@ -30,6 +30,7 @@ import com.it4logic.mindatory.model.repository.*
 import com.it4logic.mindatory.model.store.JoinStore
 import com.it4logic.mindatory.model.store.JoinStoreRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
+import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
@@ -46,9 +47,16 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
   @Autowired
   private lateinit var joinStoreRepository: JoinStoreRepository
 
+  @Autowired
+  protected lateinit var securityAclService: SecurityAclService
+
   override fun repository(): ApplicationBaseRepository<JoinTemplate> = joinTemplateRepository
 
   override fun type(): Class<JoinTemplate> = JoinTemplate::class.java
+
+  override fun useAcl() : Boolean = true
+
+  override fun securityAclService() : SecurityAclService? = securityAclService
 
   override fun beforeDelete(target: JoinTemplate) {
     val count = joinStoreRepository.countByJoinTemplateVersionId(target.id)
@@ -84,16 +92,24 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
     )
 
     if (result.isPresent)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateHasInDesignVersion)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationJoinTemplateHasInDesignVersion)
+
+    joinTemplateVersion.repository = target.repository
+    joinTemplateVersion.solution = target.solution
 
     val max = joinTemplateVersionRepository.maxDesignVersion(target.id)
     joinTemplateVersion.designVersion = max + 1
     joinTemplateVersion.designStatus = DesignStatus.InDesign
-    target.versions.add(joinTemplateVersion)
+    val ver = joinTemplateVersionRepository.save(joinTemplateVersion)
+    repository().flush()
+    entityManager.refresh(ver)
 
+    if(target.versions == null)
+      target.versions = mutableListOf()
+
+    target.versions.add(ver)
     update(target)
-
-    return joinTemplateVersion
+    return ver
   }
 
   fun updateVersion(joinTemplateId: Long, joinTemplateVersion: JoinTemplateVersion): JoinTemplateVersion {
@@ -104,7 +120,13 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
     if(result.designStatus == DesignStatus.Released)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedJoinTemplateVersion)
 
-    return joinTemplateVersionRepository.save(joinTemplateVersion)
+    val target = findById(joinTemplateId)
+    joinTemplateVersion.repository = target.repository
+    joinTemplateVersion.solution = target.solution
+    val ver = joinTemplateVersionRepository.save(joinTemplateVersion)
+    repository().flush()
+    entityManager.refresh(ver)
+    return ver
   }
 
   fun releaseVersion(joinTemplateId: Long, joinTemplateVersionId: Long): JoinTemplateVersion {
@@ -124,7 +146,10 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
 
     joinTemplateVersion.designStatus = DesignStatus.Released
 
-    return joinTemplateVersionRepository.save(joinTemplateVersion)
+    val ver = joinTemplateVersionRepository.save(joinTemplateVersion)
+    repository().flush()
+    entityManager.refresh(ver)
+    return ver
   }
 
   fun deleteVersion(joinTemplateId: Long, joinTemplateVersionId: Long) {
@@ -139,7 +164,7 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
       ApplicationObjectNotFoundException(joinTemplateVersion.id, JoinTemplateVersion::class.java.simpleName.toLowerCase())
     }
 
-    var count = joinStoreRepository.countByJoinTemplateVersionId(joinTemplateVersion.id)
+    val count = joinStoreRepository.countByJoinTemplateVersionId(joinTemplateVersion.id)
     if (count > 0)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationJoinTemplateVersionHasRelatedStoreData)
 
@@ -148,9 +173,9 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
 
   // ================================================================================================================
 
-  fun isArtifactExists(targetArtifact: ArtifactTemplate, lookupList: List<ArtifactTemplate>): Boolean {
+  fun isArtifactExists(targetArtifactVersion: ArtifactTemplateVersion, lookupList: List<ArtifactTemplateVersion>): Boolean {
     for(obj in lookupList) {
-      if(targetArtifact.id == obj.id)
+      if(targetArtifactVersion.id == obj.id)
         return true
     }
     return false

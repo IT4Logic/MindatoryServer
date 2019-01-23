@@ -80,6 +80,13 @@ class ApplicationResponseEntityExceptionHandler : ResponseEntityExceptionHandler
         return ResponseEntity(error, HttpStatus.UNAUTHORIZED)
     }
 
+    @ExceptionHandler(ApplicationAuthorizationException::class)
+    fun handleAuthenticationException(exception: ApplicationAuthorizationException, request: WebRequest): ResponseEntity<Any> {
+        val message = if(exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
+        val error = ApiError(HttpStatus.UNAUTHORIZED, exception.errorCode, message?:"")
+        return ResponseEntity(error, HttpStatus.FORBIDDEN)
+    }
+
     @ExceptionHandler(ApplicationValidationException::class)
     fun handleValidationException(exception: ApplicationValidationException, request: WebRequest): ResponseEntity<Any> {
         val message = if(exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message

@@ -24,17 +24,18 @@ import com.it4logic.mindatory.controllers.common.ApplicationBaseController
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.model.Solution
-import com.it4logic.mindatory.security.ApplicationSecurityPermissions
+import com.it4logic.mindatory.security.*
 import com.it4logic.mindatory.services.SolutionService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.data.domain.Pageable
-import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PostAuthorize
+import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.Errors
 import org.springframework.web.bind.annotation.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import javax.validation.Valid
 
 @CrossOrigin
 @RestController
@@ -46,31 +47,34 @@ class SolutionController : ApplicationBaseController<Solution>() {
 
   override fun service(): ApplicationBaseService<Solution> = solutionService
 
+  override fun type(): Class<Solution> =  Solution::class.java
+
   @GetMapping
   @ResponseBody
-  @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SolutionAdminView}', '${ApplicationSecurityPermissions.SolutionAdminCreate}', '${ApplicationSecurityPermissions.SolutionAdminUpdate}', '${ApplicationSecurityPermissions.SolutionAdminDelete}')" +
-          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionRead})")
-  override fun doGet(filter: String?, pageable: Pageable, request: HttpServletRequest): Any
-          = doGetInternal(filter, pageable, request)
+  @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.SolutionAdminView}', '${ApplicationSecurityPermissions.SolutionAdminCreate}', '${ApplicationSecurityPermissions.SolutionAdminModify}', '${ApplicationSecurityPermissions.SolutionAdminDelete}')" +
+          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})")
+  override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+          = doGetInternal(filter, pageable, request, response)
 
   @GetMapping("{id}")
-  @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SolutionAdminView}', '${ApplicationSecurityPermissions.SolutionAdminCreate}', '${ApplicationSecurityPermissions.SolutionAdminUpdate}', '${ApplicationSecurityPermissions.SolutionAdminDelete}')" +
-          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionRead})")
-  override fun doGet(id: Long): ResponseEntity<Solution> = doGetInternal(id)
+  @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SolutionAdminView}', '${ApplicationSecurityPermissions.SolutionAdminCreate}', '${ApplicationSecurityPermissions.SolutionAdminModify}', '${ApplicationSecurityPermissions.SolutionAdminDelete}')" +
+          " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})")
+  override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): Solution
+          = doGetInternal(id, request, response)
 
   @PostMapping
   @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SolutionAdminCreate}')")
-  override fun doCreate(target: Solution, errors: Errors, response: HttpServletResponse): ResponseEntity<Solution>
-          = doCreateInternal(target, errors, response)
+  override fun doCreate(@Valid @RequestBody target: Solution, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Solution
+          = doCreateInternal(target, errors, request, response)
 
   @PutMapping
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SolutionAdminUpdate}')" +
-          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionUpdate})")
-  override fun doUpdate(target: Solution, errors: Errors, request: HttpServletRequest): ResponseEntity<Solution>
-          = doUpdateInternal(target, errors, request)
+  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SolutionAdminModify}')" +
+          " or hasPermission(#target, ${ApplicationSecurityPermissions.PermissionModify})")
+  override fun doUpdate(@Valid @RequestBody target: Solution, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Solution
+          = doUpdateInternal(target, errors, request, response)
 
   @DeleteMapping("{id}")
   @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SolutionAdminDelete}')" +
-          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionDelete})")
-  override fun doDelete(id: Long): ResponseEntity<Any> = doDeleteInternal(id)
+          " or hasPermission(#id, 'com.it4logic.mindatory.model.Solution', ${ApplicationSecurityPermissions.PermissionDelete})")
+  override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
 }

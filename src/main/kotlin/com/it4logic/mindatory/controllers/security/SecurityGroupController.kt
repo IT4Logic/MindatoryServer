@@ -29,7 +29,6 @@ import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
-import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.Errors
 import org.springframework.web.bind.annotation.*
@@ -47,33 +46,36 @@ class SecurityGroupController : ApplicationBaseController<SecurityGroup>() {
 
     override fun service(): ApplicationBaseService<SecurityGroup> = securityGroupService
 
+    override fun type(): Class<SecurityGroup> =  SecurityGroup::class.java
+
     @GetMapping
     @ResponseBody
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminView}', '${ApplicationSecurityPermissions.SecurityGroupAdminCreate}', '${ApplicationSecurityPermissions.SecurityGroupAdminUpdate}', '${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')")
-    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest): Any
-            = doGetInternal(filter, pageable, request)
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminView}', '${ApplicationSecurityPermissions.SecurityGroupAdminCreate}', '${ApplicationSecurityPermissions.SecurityGroupAdminModify}', '${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')")
+    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+            = doGetInternal(filter, pageable, request, response)
 
     @GetMapping("{id}")
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminView}', '${ApplicationSecurityPermissions.SecurityGroupAdminCreate}', '${ApplicationSecurityPermissions.SecurityGroupAdminUpdate}', '${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')")
-    override fun doGet(@PathVariable id: Long): ResponseEntity<SecurityGroup> = doGetInternal(id)
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminView}', '${ApplicationSecurityPermissions.SecurityGroupAdminCreate}', '${ApplicationSecurityPermissions.SecurityGroupAdminModify}', '${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')")
+    override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): SecurityGroup
+            = doGetInternal(id, request, response)
 
     @PostMapping
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminCreate}')")
-    override fun doCreate(@Valid @RequestBody target: SecurityGroup, errors: Errors, response: HttpServletResponse): ResponseEntity<SecurityGroup>
-            = doCreateInternal(target, errors, response)
+    override fun doCreate(@Valid @RequestBody target: SecurityGroup, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityGroup
+            = doCreateInternal(target, errors, request, response)
 
     @PutMapping
-    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminUpdate}')")
-    override fun doUpdate(@Valid @RequestBody target: SecurityGroup, errors: Errors, request: HttpServletRequest): ResponseEntity<SecurityGroup>
-            = doUpdateInternal(target, errors, request)
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminModify}')")
+    override fun doUpdate(@Valid @RequestBody target: SecurityGroup, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityGroup
+            = doUpdateInternal(target, errors, request, response)
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')")
-    override fun doDelete(@PathVariable id: Long): ResponseEntity<Any> = doDeleteInternal(id)
+    override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
 
     @GetMapping("{id}/users")
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminView}', '${ApplicationSecurityPermissions.SecurityGroupAdminCreate}', '${ApplicationSecurityPermissions.SecurityGroupAdminUpdate}', '${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')" +
-            " and hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminUpdate}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminView}', '${ApplicationSecurityPermissions.SecurityGroupAdminCreate}', '${ApplicationSecurityPermissions.SecurityGroupAdminModify}', '${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')" +
+            " and hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
     fun doGetGroupUsers(@PathVariable id: Long) : MutableList<SecurityUser> = securityGroupService.getGroupUsers(id)
 
     @PostMapping("{id}/users")

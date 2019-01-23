@@ -44,13 +44,13 @@ class CompanyController {
 
   @GetMapping
   @ResponseBody
-  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.CompanyAdminView}', '${ApplicationSecurityPermissions.CompanyAdminCreate}', '${ApplicationSecurityPermissions.CompanyAdminUpdate}', '${ApplicationSecurityPermissions.CompanyAdminDelete}')")
+  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.CompanyAdminView}', '${ApplicationSecurityPermissions.CompanyAdminCreate}', '${ApplicationSecurityPermissions.CompanyAdminModify}', '${ApplicationSecurityPermissions.CompanyAdminDelete}')")
   fun doGet() : ResponseEntity<Company> {
     return ResponseEntity.ok().body(companyService.findFirst())
   }
 
   @PutMapping
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.CompanyAdminUpdate}')")
+  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.CompanyAdminModify}')")
   fun doUpdate(@Valid @RequestBody target: Company, errors: Errors, request: HttpServletRequest): ResponseEntity<Company> {
     if (errors.hasErrors())
       throw RepositoryConstraintViolationException(errors)

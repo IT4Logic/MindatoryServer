@@ -1,3 +1,23 @@
+/*
+    Copyright (c) 2017, IT4Logic.
+
+    This file is part of Mindatory solution by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
+
 package com.it4logic.mindatory.tests
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -26,6 +46,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.hamcrest.Matchers.*
 import org.junit.FixMethodOrder
 import org.junit.runners.MethodSorters
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
@@ -34,6 +55,7 @@ import org.springframework.web.context.WebApplicationContext
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class AuthenticationTests {
 
     @Autowired

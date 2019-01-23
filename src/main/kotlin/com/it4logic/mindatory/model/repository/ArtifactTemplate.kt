@@ -22,15 +22,18 @@ package com.it4logic.mindatory.model.repository
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationRepositoryEntityBase
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.Size
 import javax.persistence.*
+import javax.validation.constraints.NotNull
 
 
 @Audited
@@ -57,10 +60,28 @@ data class ArtifactTemplate (
 
     @JsonIgnore
     @OneToMany(mappedBy = "artifactTemplate", cascade = [CascadeType.ALL])
-    var versions: MutableList<ArtifactTemplateVersion> = mutableListOf()
+    var versions: MutableList<ArtifactTemplateVersion> = mutableListOf(),
 
-) : ApplicationRepositoryEntityBase()
+    @get: NotNull
+    @ManyToOne
+    @JoinColumn(name = "repository_id", nullable = false)
+    var repository: ApplicationRepository,
 
+    @ManyToOne
+    @JoinColumn(name = "solution_id")
+    var solution: Solution? = null
+
+) : ApplicationEntityBase() {
+
+    fun createDesignVersion(attributes: MutableList<AttributeTemplateVersion>): ArtifactTemplateVersion {
+        return ArtifactTemplateVersion (
+            artifactTemplate = this,
+            attributes = attributes,
+            repository = repository,
+            solution = solution
+        )
+    }
+}
 
 /**
  * Repository

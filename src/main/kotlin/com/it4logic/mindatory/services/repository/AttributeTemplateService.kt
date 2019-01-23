@@ -29,6 +29,7 @@ import com.it4logic.mindatory.model.repository.*
 import com.it4logic.mindatory.model.store.AttributeStoreRepository
 import com.it4logic.mindatory.services.RepositoryManagerService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
+import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -51,14 +52,18 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
     private lateinit var attributeStoreRepository: AttributeStoreRepository
 
     @Autowired
-    private lateinit var artifactTemplateRepository: ArtifactTemplateRepository
+    private lateinit var artifactTemplateVersionRepository: ArtifactTemplateVersionRepository
 
     @Autowired
-    private lateinit var artifactTemplateVersionRepository: ArtifactTemplateVersionRepository
+    protected lateinit var securityAclService: SecurityAclService
 
     override fun repository(): ApplicationBaseRepository<AttributeTemplate> = attributeTemplateRepository
 
     override fun type(): Class<AttributeTemplate> = AttributeTemplate::class.java
+
+    override fun useAcl() : Boolean = true
+
+    override fun securityAclService() : SecurityAclService? = securityAclService
 
     // ================================================================================================================
 
@@ -90,17 +95,25 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
         if (result.isPresent)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateHasInDesignVersion)
 
+        attributeTemplateVersion.repository = target.repository
+        attributeTemplateVersion.solution = target.solution
+
         val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(attributeTemplateVersion.typeUUID)
-        dataTypeManager.validateDataTypeProperties(UUID.fromString(attributeTemplateVersion.typeUUID), attributeTemplateVersion.propertiesJson)
+        dataTypeManager.validateDataTypeProperties(UUID.fromString(attributeTemplateVersion.typeUUID), attributeTemplateVersion.properties)
 
         val max = attributeTemplateVersionRepository.maxDesignVersion(target.id)
         attributeTemplateVersion.designVersion = max + 1
         attributeTemplateVersion.designStatus = DesignStatus.InDesign
-        target.versions.add(attributeTemplateVersion)
+        val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
+        repository().flush()
+        entityManager.refresh(ver)
 
+        if(target.versions == null)
+            target.versions = mutableListOf()
+
+        target.versions.add(ver)
         update(target)
-
-        return attributeTemplateVersion
+        return ver
     }
 
     fun updateVersion(attributeTemplateId: Long, attributeTemplateVersion: AttributeTemplateVersion): AttributeTemplateVersion {
@@ -111,10 +124,17 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
         if(result.designStatus == DesignStatus.Released)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedAttributeTemplateVersion)
 
-        val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(attributeTemplateVersion.typeUUID)
-        dataTypeManager.validateDataTypeProperties(UUID.fromString(attributeTemplateVersion.typeUUID), attributeTemplateVersion.propertiesJson)
+        val target = findById(attributeTemplateId)
+        attributeTemplateVersion.repository = target.repository
+        attributeTemplateVersion.solution = target.solution
 
-        return attributeTemplateVersionRepository.save(attributeTemplateVersion)
+        val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(attributeTemplateVersion.typeUUID)
+        dataTypeManager.validateDataTypeProperties(UUID.fromString(attributeTemplateVersion.typeUUID), attributeTemplateVersion.properties)
+
+        val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
+        repository().flush()
+        entityManager.refresh(ver)
+        return ver
     }
 
     fun releaseVersion(attributeTemplateId: Long, attributeTemplateVersionId: Long): AttributeTemplateVersion {
@@ -134,7 +154,10 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 
         attributeTemplateVersion.designStatus = DesignStatus.Released
 
-        return attributeTemplateVersionRepository.save(attributeTemplateVersion)
+        val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
+        repository().flush()
+        entityManager.refresh(ver)
+        return ver
     }
 
     fun deleteVersion(attributeTemplateId: Long, attributeTemplateVersionId: Long) {
@@ -162,4 +185,11 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
     }
 
     // ================================================================================================================
+
+    override fun beforeDelete(target: AttributeTemplate) {
+        // check if there are attribute stores based on attribute templates from this repository
+        val count = attributeStoreRepository.countByAttributeTemplateRepositoryId(target.id)
+        if(count > 0)
+            throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasAttributeTemplatesRelatedStoreData)
+    }
 }

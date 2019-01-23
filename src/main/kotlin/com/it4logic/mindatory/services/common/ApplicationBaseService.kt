@@ -20,13 +20,19 @@
 
 package com.it4logic.mindatory.services.common
 
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
+import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.query.QueryService
+import com.it4logic.mindatory.security.ApplicationPermission
+import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.http.SecurityHeaders
 import org.springframework.stereotype.Service
 import javax.persistence.EntityManager
 import javax.transaction.Transactional
@@ -49,6 +55,10 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
   protected abstract fun repository() : ApplicationBaseRepository<T>
 
   protected abstract fun type() : Class<T>
+
+  protected fun useAcl() : Boolean = false
+
+  protected fun securityAclService() : SecurityAclService? = null
 
   fun validate(target: T) {
     val result = validator.validate(target)
@@ -104,10 +114,17 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    * @return Created Objects object
    */
   fun create(target: T): T {
+    val result = repository().findById(target.id)
+    if(result.isPresent)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotCreateObjectWithExistingId)
+
     validate(target)
     beforeCreate(target)
     val obj = repository().save(target)
     repository().flush()
+    if(useAcl() && SecurityContextHolder.getContext().authentication != null) {
+      securityAclService()?.createAcl(obj, SecurityContextHolder.getContext().authentication)
+    }
     refresh(obj)
     afterCreate(obj)
     return obj
@@ -147,8 +164,12 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    * @param target Object instance
    */
   fun delete(target: T) {
+    if(useAcl() && SecurityContextHolder.getContext().authentication != null) {
+      securityAclService()?.deleteAcl(target)
+    }
     beforeDelete(target)
     repository().delete(target)
+    repository().flush()
     afterDelete(target)
   }
 

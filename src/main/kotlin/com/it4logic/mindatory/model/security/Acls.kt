@@ -10,7 +10,7 @@ import javax.validation.constraints.Size
 ])
 data class AclSid (
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long,
 
     @get: NotNull
@@ -29,7 +29,7 @@ data class AclSid (
 ])
 data class AclClass (
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long,
 
     @get: NotNull
@@ -45,7 +45,7 @@ data class AclClass (
 ])
 data class AclObjectIdentity (
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long,
 
     @get: NotNull
@@ -77,7 +77,7 @@ data class AclObjectIdentity (
 ])
 data class AclEntry (
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long,
 
     @get: NotNull

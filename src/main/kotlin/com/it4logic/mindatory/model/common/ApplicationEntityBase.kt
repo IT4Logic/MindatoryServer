@@ -22,14 +22,17 @@ package com.it4logic.mindatory.model.common
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.languages.Language
 import com.it4logic.mindatory.model.Solution
 import org.hibernate.annotations.DynamicUpdate
+import org.hibernate.annotations.GenericGenerator
 import org.springframework.data.annotation.CreatedBy
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedBy
 import org.springframework.data.annotation.LastModifiedDate
 import java.util.*
 import javax.persistence.*
+import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
 
@@ -61,7 +64,8 @@ open class ApplicationEntityBase {
     open var version: Long = 1
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GenericGenerator(name = "UseExistingOrGenerateIdGenerator", strategy = "com.it4logic.mindatory.helpers.UseExistingOrGenerateIdGenerator")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "UseExistingOrGenerateIdGenerator")
     open var id: Long = -1
 }
 
@@ -104,6 +108,28 @@ open class ApplicationRepositoryEntityBase (
     open var repository: ApplicationRepository? = null
 
 ) : ApplicationSolutionEntityBase()
+
+/**
+ * Base entity class for solution common entity functionaries
+ */
+@MappedSuperclass
+@DynamicUpdate
+open class LanguageContentEntityBase (
+    @get: NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "language_id", nullable = false)
+    open var language: Language? = null,
+
+    @get: NotBlank
+    @Column(nullable = false, length = 255)
+    open var fieldName: String = "",
+
+    @get: NotNull
+    @Lob
+    open var contents: String = ""
+
+) : ApplicationEntityBase()
+
 
 enum class DesignStatus(private val status: Int) {
     InDesign(1),

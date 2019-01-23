@@ -20,9 +20,8 @@
 
 package com.it4logic.mindatory.model
 
-import com.it4logic.mindatory.model.common.ApplicationCompanyBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationCompanyEntityBase
-import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
+import com.it4logic.mindatory.languages.*
+import com.it4logic.mindatory.model.common.*
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -37,14 +36,17 @@ import javax.persistence.*
  */
 @Audited
 @Entity
-@EntityListeners(AuditingEntityListener::class)
+@EntityListeners(AuditingEntityListener::class, MultipleLanguageContentEntityListener::class)
+@MultipleLanguageContentEntity(SolutionMultipleLanguageContent::class, SolutionLanguageContentRepository::class)
 @Table(name = "t_solutions", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.SolutionNameUniqueIndex, columnNames = ["name"]))
+//    (UniqueConstraint(name = ApplicationConstraintCodes.SolutionNameUniqueIndex, columnNames = ["name"]))
 ])
 data class Solution (
         @get: NotBlank
         @get: Size(min = 2, max = 100)
-        @Column(nullable = false, length = 255)
+//        @Column(nullable = false, length = 255)
+        @Transient
+        @MultipleLanguageContent
         var name: String,
 
         @get: Size(max = 255)
@@ -58,3 +60,23 @@ data class Solution (
  */
 @RepositoryRestResource(exported = false)
 interface SolutionRepository : ApplicationCompanyBaseRepository<Solution>
+
+/**
+ * Multiple Language Content support entity
+  */
+
+@Audited
+@Entity
+@EntityListeners(AuditingEntityListener::class, MultipleLanguageContentEntityListener::class)
+@Table(name = "t_solution_mlcs", uniqueConstraints = [
+        (UniqueConstraint(name = ApplicationConstraintCodes.SolutionNameUniqueIndex, columnNames = ["solution_id", "language_id", "fieldName"]))
+])
+class SolutionMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+
+/**
+ * Multiple Language Content support Repository
+ */
+@RepositoryRestResource(exported = false)
+interface SolutionLanguageContentRepository : MultipleLanguageContentBaseEntityRepository<SolutionMultipleLanguageContent> {
+
+}

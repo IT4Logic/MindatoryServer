@@ -23,71 +23,104 @@ package com.it4logic.mindatory.controllers.repository
 import com.it4logic.mindatory.controllers.common.ApplicationBaseController
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
-import com.it4logic.mindatory.model.repository.JoinTemplate
 import com.it4logic.mindatory.model.repository.JoinTemplateVersion
+import com.it4logic.mindatory.model.repository.JoinTemplate
 import com.it4logic.mindatory.model.store.JoinStore
+import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.repository.JoinTemplateService
-import org.springframework.http.ResponseEntity
+import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PostAuthorize
+import org.springframework.security.access.prepost.PostFilter
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.validation.Errors
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import javax.validation.Valid
 
-//@CrossOrigin
-//@RestController
-//@RequestMapping(ApplicationControllerEntryPoints.JoinTemplates)
-//class JoinTemplateController : ApplicationBaseController<JoinTemplate>() {
-//
-//  @Autowired
-//  lateinit var joinTemplateService: JoinTemplateService
-//
-//  override fun service(): ApplicationBaseService<JoinTemplate> {
-//    return joinTemplateService
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @GetMapping("{id}/design-versions")
-//  fun doGetDesignVersions(@PathVariable id: Long) : List<JoinTemplateVersion> {
-//    return joinTemplateService.getAllDesignVersions(id)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @GetMapping("{id}/design-versions/{verId}")
-//  fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : JoinTemplateVersion {
-//    return joinTemplateService.getDesignVersion(id, verId)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions")
-//  fun doCreateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: JoinTemplateVersion) : ResponseEntity<JoinTemplateVersion> {
-//    val result = joinTemplateService.createVersion(id, target)
-//    val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
-//    return ResponseEntity.created(location).body(result)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PutMapping("{id}/design-versions")
-//  fun doUpdateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: JoinTemplateVersion) : ResponseEntity<JoinTemplateVersion> {
-//    val result = joinTemplateService.updateVersion(id, target)
-//    return ResponseEntity.ok(result)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @DeleteMapping("{id}/design-versions/{verId}")
-//  fun doUpdateDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) {
-//    joinTemplateService.deleteVersion(id, verId)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions/{verId}")
-//  fun doReleaseDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : ResponseEntity<JoinTemplateVersion> {
-//    val result = joinTemplateService.releaseVersion(id, verId)
-//    return ResponseEntity.ok(result)
-//  }
-//
-//  //  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdd}')")
-//  @PostMapping("{id}/design-versions/{verId}/migrate-stores/{targetVerId}")
-//  fun doStoresMigrate(@PathVariable id: Long, @PathVariable verId: Long, @PathVariable targetVerId: Long): List<JoinStore> {
-//    return joinTemplateService.migrateStores(id, verId, targetVerId)
-//  }
-//}
+@CrossOrigin
+@RestController
+@RequestMapping(ApplicationControllerEntryPoints.JoinTemplates)
+class JoinTemplateController : ApplicationBaseController<JoinTemplate>() {
+    @Autowired
+    lateinit var joinTemplateService: JoinTemplateService
+
+    override fun service(): ApplicationBaseService<JoinTemplate> = joinTemplateService
+
+    override fun type(): Class<JoinTemplate> =  JoinTemplate::class.java
+
+    @GetMapping
+    @ResponseBody
+    @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminView}', '${ApplicationSecurityPermissions.JoinTemplateAdminCreate}', '${ApplicationSecurityPermissions.JoinTemplateAdminModify}', '${ApplicationSecurityPermissions.JoinTemplateAdminDelete}')" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})")
+    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+            = doGetInternal(filter, pageable, request, response)
+
+    @GetMapping("{id}")
+    @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminView}', '${ApplicationSecurityPermissions.JoinTemplateAdminCreate}', '${ApplicationSecurityPermissions.JoinTemplateAdminModify}', '${ApplicationSecurityPermissions.JoinTemplateAdminDelete}')" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})")
+    override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): JoinTemplate
+            = doGetInternal(id, request, response)
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminCreate}')")
+    override fun doCreate(@Valid @RequestBody target: JoinTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): JoinTemplate
+            = doCreateInternal(target, errors, request, response)
+
+    @PutMapping
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminModify}')" +
+            " or hasPermission(#target, ${ApplicationSecurityPermissions.PermissionModify})")
+    override fun doUpdate(@Valid @RequestBody target: JoinTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): JoinTemplate
+            = doUpdateInternal(target, errors, request, response)
+
+    @DeleteMapping("{id}")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.JoinTemplate', ${ApplicationSecurityPermissions.PermissionDelete})")
+    override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
+
+    // Design Versions
+
+    @GetMapping("{id}/design-versions")
+    @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminView}', '${ApplicationSecurityPermissions.JoinTemplateAdminCreate}', '${ApplicationSecurityPermissions.JoinTemplateAdminModify}', '${ApplicationSecurityPermissions.JoinTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.JoinTemplate', ${ApplicationSecurityPermissions.PermissionView})")
+    fun doGetDesignVersions(@PathVariable id: Long) : List<JoinTemplateVersion> = joinTemplateService.getAllDesignVersions(id)
+
+    @GetMapping("{id}/design-versions/{verId}")
+    @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminView}', '${ApplicationSecurityPermissions.JoinTemplateAdminCreate}', '${ApplicationSecurityPermissions.JoinTemplateAdminModify}', '${ApplicationSecurityPermissions.JoinTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.JoinTemplate', ${ApplicationSecurityPermissions.PermissionView})")
+    fun doGetDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : JoinTemplateVersion = joinTemplateService.getDesignVersion(id, verId)
+
+    @PostMapping("{id}/design-versions")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminCreate}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.JoinTemplate', ${ApplicationSecurityPermissions.PermissionCreate})")
+    fun doCreateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: JoinTemplateVersion, response: HttpServletResponse) : JoinTemplateVersion {
+        val result = joinTemplateService.createVersion(id, target)
+        val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/design-versions/{id}").buildAndExpand(result.id).toUri()
+        response.status = HttpStatus.CREATED.value()
+        response.addHeader("Location", location.path)
+        return result
+    }
+
+    @PutMapping("{id}/design-versions")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminModify}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.JoinTemplate', ${ApplicationSecurityPermissions.PermissionModify})")
+    fun doUpdateDesignVersion(@PathVariable id: Long, @Valid @RequestBody target: JoinTemplateVersion) : JoinTemplateVersion = joinTemplateService.updateVersion(id, target)
+
+    @DeleteMapping("{id}/design-versions/{verId}")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminDelete}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.JoinTemplate', ${ApplicationSecurityPermissions.PermissionDelete})")
+    fun doDeleteDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) = joinTemplateService.deleteVersion(id, verId)
+
+    @PostMapping("{id}/design-versions/{verId}/release")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.JoinTemplateAdminModify}')" +
+            " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.JoinTemplate', ${ApplicationSecurityPermissions.PermissionModify})")
+    fun doReleaseDesignVersion(@PathVariable id: Long, @PathVariable verId: Long) : JoinTemplateVersion = joinTemplateService.releaseVersion(id, verId)
+
+    @PostMapping("{id}/design-versions/{verId}/migrate-stores/{targetVerId}")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.JoinTemplateStoreAdminModify}')")
+    fun doStoresMigrate(@PathVariable id: Long, @PathVariable verId: Long, @PathVariable targetVerId: Long): List<JoinStore>
+            = joinTemplateService.migrateStores(id, verId, targetVerId)
+}

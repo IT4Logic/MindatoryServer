@@ -20,6 +20,9 @@
 
 package com.it4logic.mindatory.security
 
+import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
+import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.acls.model.Permission
 import javax.validation.constraints.*
 
 data class LoginRequest (
@@ -51,43 +54,32 @@ data class ChangePasswordRequest (
         var confirmPassword: String
 )
 
-enum class ApplicationPermission(private val permission: Int) {
-        Read(1),
-        Write(2),
-        Create(3),
-        Delete(4),
-        Administration(5)
+enum class ApplicationPermission(private val permission: Permission) {
+        View(BasePermission.READ),
+        Create(BasePermission.CREATE),
+        Modify(BasePermission.WRITE),
+        Delete(BasePermission.DELETE),
+        Administration(BasePermission.ADMINISTRATION);
+
+        companion object {
+            fun fromPermission(permission: Permission): ApplicationPermission {
+                    return when(permission) {
+                            BasePermission.READ -> View
+                            BasePermission.CREATE -> Create
+                            BasePermission.WRITE -> Modify
+                            BasePermission.DELETE -> Delete
+                            BasePermission.ADMINISTRATION -> Administration
+                            else -> throw ApplicationObjectNotFoundException(permission.mask, "ApplicationPermission")
+                    }
+            }
+        }
+        fun toPermission(): Permission = permission
 }
 
-data class ApplicationAclRequest (
-        @get: NotBlank
-        var domainClass: String,
-
-        @get: NotNull
-        var id: Long
-)
-
-data class ApplicationAclOwnerRequest (
-        @get: NotBlank
-        var domainClass: String,
-
-        @get: NotNull
-        var id: Long,
-
-        @get: NotBlank
-        var owner: String
-)
-
 data class ApplicationAclPermissionRequest (
-        @get: NotBlank
-        var domainClass: String,
-
-        @get: NotNull
-        var id: Long,
-
         @get: NotBlank
         var recipient: String,
 
         @get: NotNull
-        var permission: ApplicationPermission
+        var permissions: List<ApplicationPermission>
 )
