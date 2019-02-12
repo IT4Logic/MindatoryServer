@@ -23,22 +23,24 @@ package com.it4logic.mindatory.services.common
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import com.it4logic.mindatory.mlc.MultipleLanguageContentService
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.query.QueryService
-import com.it4logic.mindatory.security.ApplicationPermission
 import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.web.http.SecurityHeaders
 import org.springframework.stereotype.Service
 import javax.persistence.EntityManager
 import javax.transaction.Transactional
 import javax.validation.ConstraintViolation
 import javax.validation.ConstraintViolationException
 import javax.validation.Validator
+import kotlin.reflect.KClass
 
 /**
  * Base class for application services
@@ -52,6 +54,9 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
   @Autowired
   protected lateinit var entityManager: EntityManager
 
+  @Autowired
+  protected lateinit var multipleLanguageContentService: MultipleLanguageContentService
+
   protected abstract fun repository() : ApplicationBaseRepository<T>
 
   protected abstract fun type() : Class<T>
@@ -59,6 +64,18 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
   protected fun useAcl() : Boolean = false
 
   protected fun securityAclService() : SecurityAclService? = null
+
+  protected fun multipleLanguageContentRepository() : MultipleLanguageContentBaseEntityRepository<*>? = null
+
+  protected fun multipleLanguageContentType() : KClass<*>? = null
+
+  protected fun mlcService() : MultipleLanguageContentService? {
+    if(multipleLanguageContentRepository() == null || multipleLanguageContentType() == null)
+      return null
+    multipleLanguageContentService.repository = multipleLanguageContentRepository() as MultipleLanguageContentBaseEntityRepository<MultipleLanguageContentBaseEntity>?
+    multipleLanguageContentService.type = multipleLanguageContentType()
+    return multipleLanguageContentService
+  }
 
   fun validate(target: T) {
     val result = validator.validate(target)
@@ -100,7 +117,9 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    * @return Objectobject, or ApplicationObjectNotFoundException in case if the object Id doesn't exist
    */
   fun findById(id: Long) : T {
-    return repository().findById(id).orElseThrow { ApplicationObjectNotFoundException(id, type().simpleName.toLowerCase()) }
+    val target = repository().findById(id).orElseThrow { ApplicationObjectNotFoundException(id, type().simpleName.toLowerCase()) }
+    mlcService()?.load(target)
+    return target
   }
 
   fun refresh(target: T) {
@@ -121,6 +140,8 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     validate(target)
     beforeCreate(target)
     val obj = repository().save(target)
+    mlcService()?.save(obj.id, target)
+    mlcService()?.load(obj)
     repository().flush()
     if(useAcl() && SecurityContextHolder.getContext().authentication != null) {
       securityAclService()?.createAcl(obj, SecurityContextHolder.getContext().authentication)
@@ -142,6 +163,8 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     findById(target.id)
     beforeUpdate(target)
     val obj = repository().save(target)
+    mlcService()?.save(obj.id, target)
+    mlcService()?.load(obj)
     repository().flush()
     refresh(obj)
     afterUpdate(obj)
@@ -169,6 +192,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     }
     beforeDelete(target)
     repository().delete(target)
+    mlcService()?.delete(target)
     repository().flush()
     afterDelete(target)
   }

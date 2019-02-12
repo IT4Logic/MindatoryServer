@@ -20,8 +20,10 @@
 
 package com.it4logic.mindatory.model
 
-import com.it4logic.mindatory.languages.*
+import com.it4logic.mindatory.mlc.*
 import com.it4logic.mindatory.model.common.*
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -36,17 +38,14 @@ import javax.persistence.*
  */
 @Audited
 @Entity
-@EntityListeners(AuditingEntityListener::class, MultipleLanguageContentEntityListener::class)
-@MultipleLanguageContentEntity(SolutionMultipleLanguageContent::class, SolutionLanguageContentRepository::class)
-@Table(name = "t_solutions", uniqueConstraints = [
-//    (UniqueConstraint(name = ApplicationConstraintCodes.SolutionNameUniqueIndex, columnNames = ["name"]))
-])
+@EntityListeners(AuditingEntityListener::class)
+@MultipleLanguageContentEntity
+@Table(name = "t_solutions", uniqueConstraints = [])
 data class Solution (
         @get: NotBlank
         @get: Size(min = 2, max = 100)
-//        @Column(nullable = false, length = 255)
+        @get: MultipleLanguageContent
         @Transient
-        @MultipleLanguageContent
         var name: String,
 
         @get: Size(max = 255)
@@ -67,9 +66,9 @@ interface SolutionRepository : ApplicationCompanyBaseRepository<Solution>
 
 @Audited
 @Entity
-@EntityListeners(AuditingEntityListener::class, MultipleLanguageContentEntityListener::class)
+@EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_solution_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SolutionNameUniqueIndex, columnNames = ["solution_id", "language_id", "fieldName"]))
+        (UniqueConstraint(name = ApplicationConstraintCodes.SolutionMCLUniqueIndex, columnNames = ["parentId", "language_id", "fieldName"]))
 ])
 class SolutionMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
@@ -77,6 +76,5 @@ class SolutionMultipleLanguageContent : MultipleLanguageContentBaseEntity()
  * Multiple Language Content support Repository
  */
 @RepositoryRestResource(exported = false)
-interface SolutionLanguageContentRepository : MultipleLanguageContentBaseEntityRepository<SolutionMultipleLanguageContent> {
-
-}
+interface SolutionLanguageContentRepository :
+        MultipleLanguageContentBaseEntityRepository<SolutionMultipleLanguageContent>

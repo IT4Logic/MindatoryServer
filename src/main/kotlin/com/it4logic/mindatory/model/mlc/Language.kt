@@ -18,7 +18,7 @@
 
  */
 
-package com.it4logic.mindatory.languages
+package com.it4logic.mindatory.model.mlc
 
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes

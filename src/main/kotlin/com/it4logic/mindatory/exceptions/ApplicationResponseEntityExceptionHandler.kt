@@ -81,16 +81,22 @@ class ApplicationResponseEntityExceptionHandler : ResponseEntityExceptionHandler
     }
 
     @ExceptionHandler(ApplicationAuthorizationException::class)
-    fun handleAuthenticationException(exception: ApplicationAuthorizationException, request: WebRequest): ResponseEntity<Any> {
+    fun handleAuthorizationException(exception: ApplicationAuthorizationException, request: WebRequest): ResponseEntity<Any> {
         val message = if(exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
-        val error = ApiError(HttpStatus.UNAUTHORIZED, exception.errorCode, message?:"")
+        val error = ApiError(HttpStatus.FORBIDDEN, exception.errorCode, message?:"")
         return ResponseEntity(error, HttpStatus.FORBIDDEN)
     }
 
     @ExceptionHandler(ApplicationValidationException::class)
     fun handleValidationException(exception: ApplicationValidationException, request: WebRequest): ResponseEntity<Any> {
         val message = if(exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
-        val error = ApiError(HttpStatus.UNAUTHORIZED, exception.errorCode, message?:"")
+        val error = ApiError(HttpStatus.NOT_ACCEPTABLE,  exception.errorCode, message?:"")
+        return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
+    }
+
+    @ExceptionHandler(ApplicationDataIntegrityViolationException::class)
+    fun handleApplicationDataIntegrityViolationException(exception: ApplicationDataIntegrityViolationException, request: WebRequest): ResponseEntity<Any> {
+        val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.DataIntegrityError, exception.errorCode)
         return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
     }
 }

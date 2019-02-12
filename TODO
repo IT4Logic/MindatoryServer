@@ -10,8 +10,13 @@ ok 1- language entity with default option
 ok 2- language controller
 ok 3- language service
 ok 4- set/get current language from language helper
-5- for entity part (ex. solution)
-    a- make the field transit
-    b- create new entity to hold the contents
-    c- direct link between entity and entity contents but not json ignore
-    d- before/after saving entity listener will be responsible for managing the contents
+ok 5- for entity part (ex. solution)
+    ok a- make the field transit
+    ok b- create new entity to hold the contents
+    ok c- direct link between entity and entity contents but not json ignore
+    ok d- before/after saving entity listener will be responsible for managing the contents
+6- validate existing translations before delete languages
+7- have force delete language with translation
+8- don't delete default language
+9- system must have at least one language
+10- exception if no default language

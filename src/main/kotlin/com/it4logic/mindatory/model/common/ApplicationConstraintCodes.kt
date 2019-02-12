@@ -31,7 +31,7 @@ abstract class ApplicationConstraintCodes {
         const val LanguageLocaleUniqueIndex                     = "language_locale_unq_idx"
         const val LanguageNameUniqueIndex                       = "language_name_unq_idx"
         const val CompanyNameUniqueIndex                        = "company_name_unq_idx"
-        const val SolutionNameUniqueIndex                       = "solution_name_unq_idx"
+        //const val SolutionNameUniqueIndex                       = "solution_name_unq_idx"
         const val ApplicationRepositoryNameUniqueIndex          = "app_repo_name_unq_idx"
         const val ApplicationRepositorySolutionUniqueIndex      = "app_repo_solution_unq_idx"
         const val StereotypeNameUniqueIndex                     = "stereotype_name_unq_idx"
@@ -46,6 +46,7 @@ abstract class ApplicationConstraintCodes {
         const val SecurityRoleNameUniqueIndex                   = "security_role_name_unq_idx"
         const val SecurityGroupNameUniqueIndex                  = "security_group_name_unq_idx"
 
+        const val SolutionMCLUniqueIndex                        = "solution_mcl_unq_idx"
 
 
 
@@ -53,7 +54,7 @@ abstract class ApplicationConstraintCodes {
                 LanguageLocaleUniqueIndex to ApplicationErrorCodes.DuplicateLanguageLocale,
                 LanguageNameUniqueIndex to ApplicationErrorCodes.DuplicateLanguageName,
                 CompanyNameUniqueIndex to ApplicationErrorCodes.DuplicateCompanyName,
-                SolutionNameUniqueIndex to ApplicationErrorCodes.DuplicateSolutionName,
+                //SolutionNameUniqueIndex to ApplicationErrorCodes.DuplicateSolutionName,
                 ApplicationRepositoryNameUniqueIndex to ApplicationErrorCodes.DuplicateApplicationRepositoryName,
                 ApplicationRepositorySolutionUniqueIndex to ApplicationErrorCodes.DuplicateApplicationRepositorySolution,
                 StereotypeNameUniqueIndex to ApplicationErrorCodes.DuplicateStereotypeName,
@@ -64,7 +65,9 @@ abstract class ApplicationConstraintCodes {
                 AttributeTemplateNameUniqueIndex to ApplicationErrorCodes.DuplicateAttributeTemplateName,
                 SecurityUserUsernameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityUserUsername,
                 SecurityRoleNameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityRoleName,
-                SecurityGroupNameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityGroupName
+                SecurityGroupNameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityGroupName,
+
+                SolutionMCLUniqueIndex to ApplicationErrorCodes.DuplicateSolutionMCL
         )
     }
 }

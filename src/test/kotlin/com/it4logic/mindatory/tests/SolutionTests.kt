@@ -23,12 +23,14 @@ package com.it4logic.mindatory.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.*
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
 import com.it4logic.mindatory.services.security.SecurityUserService
@@ -74,6 +76,9 @@ class SolutionTests {
     @Autowired
     private lateinit var securityUserService: SecurityUserService
 
+    @Autowired
+    private lateinit var languageService: LanguageService
+
     private lateinit var mvc: MockMvc
 
     private lateinit var roleAdmin: SecurityRole
@@ -95,7 +100,13 @@ class SolutionTests {
                 .apply<DefaultMockMvcBuilder>(springSecurity())
                 .build()
 
+        setupLanguageData()
         setupSecurityData()
+    }
+
+    fun setupLanguageData() {
+        languageService.create(Language("en", "English", true))
+        languageService.create(Language("ar", "عربي", false))
     }
 
     fun setupSecurityData() {

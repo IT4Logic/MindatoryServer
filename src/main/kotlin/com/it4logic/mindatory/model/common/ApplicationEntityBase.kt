@@ -22,7 +22,7 @@ package com.it4logic.mindatory.model.common
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.it4logic.mindatory.model.ApplicationRepository
-import com.it4logic.mindatory.languages.Language
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.Solution
 import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.GenericGenerator

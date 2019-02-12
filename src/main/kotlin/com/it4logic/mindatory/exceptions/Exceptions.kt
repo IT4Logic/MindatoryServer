@@ -28,3 +28,5 @@ class ApplicationAuthenticationException (var errorCode: String, override var ca
 class ApplicationAuthorizationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
 
 class ApplicationValidationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
+
+class ApplicationDataIntegrityViolationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()

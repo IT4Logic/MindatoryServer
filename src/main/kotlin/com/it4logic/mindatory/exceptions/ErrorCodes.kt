@@ -138,7 +138,7 @@ interface ApplicationErrorCodes {
         const val DuplicateApplicationRepositoryName            = "mindatory.error.duplicate.application_repository_name"
         const val DuplicateApplicationRepositorySolution        = "mindatory.error.duplicate.application_repository_solution"
         const val DuplicateStereotypeName                       = "mindatory.error.duplicate.stereotype_name"
-        const val DuplicateJoinTemplateIdentifier                     = "mindatory.error.duplicate.join_template_name"
+        const val DuplicateJoinTemplateIdentifier               = "mindatory.error.duplicate.join_template_name"
         const val DuplicateArtifactTemplateIdentification       = "mindatory.error.duplicate.artifact_template_identification_version"
         const val DuplicateArtifactTemplateName                 = "mindatory.error.duplicate.artifact_template_name"
         const val DuplicateAttributeTemplateIdentification      = "mindatory.error.duplicate.artifact_template_identification_version"
@@ -146,6 +146,9 @@ interface ApplicationErrorCodes {
         const val DuplicateSecurityUserUsername                 = "mindatory.error.duplicate.security_user_username"
         const val DuplicateSecurityRoleName                     = "mindatory.error.duplicate.security_role_name"
         const val DuplicateSecurityGroupName                    = "mindatory.error.duplicate.security_group_name"
+
+
+        const val DuplicateSolutionMCL                          = "mindatory.error.duplicate.solution_mcl"
 
     }
 }

@@ -23,7 +23,7 @@ package com.it4logic.mindatory.controllers
 import com.it4logic.mindatory.controllers.common.ApplicationBaseController
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
-import com.it4logic.mindatory.languages.Language
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.security.*
 import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
@@ -75,6 +75,6 @@ class LanguageController : ApplicationBaseController<Language>() {
 
   @DeleteMapping("{id}")
   @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminDelete}')" +
-          " or hasPermission(#id, 'com.it4logic.mindatory.languages.Language', ${ApplicationSecurityPermissions.PermissionDelete})")
+          " or hasPermission(#id, 'com.it4logic.mindatory.model.mlc.Language', ${ApplicationSecurityPermissions.PermissionDelete})")
   override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
 }

@@ -20,16 +20,17 @@
 
 package com.it4logic.mindatory.services
 
+import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
-import com.it4logic.mindatory.model.ApplicationRepositoryRepository
-import com.it4logic.mindatory.model.Solution
-import com.it4logic.mindatory.model.SolutionRepository
+import com.it4logic.mindatory.mlc.LanguageManager
+import com.it4logic.mindatory.model.*
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import kotlin.reflect.KClass
 
 
 @Service
@@ -41,7 +42,13 @@ class SolutionService : ApplicationBaseService<Solution>() {
   private lateinit var repoRepository: ApplicationRepositoryRepository
 
   @Autowired
+  private lateinit var mlcRepository: SolutionLanguageContentRepository
+
+  @Autowired
   protected lateinit var securityAclService: SecurityAclService
+
+  @Autowired
+  protected lateinit var languageManager: LanguageManager
 
   override fun repository(): ApplicationBaseRepository<Solution> = solutionRepository
 
@@ -50,6 +57,24 @@ class SolutionService : ApplicationBaseService<Solution>() {
   override fun useAcl() : Boolean = true
 
   override fun securityAclService() : SecurityAclService? = securityAclService
+
+  override fun multipleLanguageContentRepository() : SolutionLanguageContentRepository = mlcRepository
+
+  override fun multipleLanguageContentType() : KClass<*> = SolutionMultipleLanguageContent::class
+
+  override fun beforeCreate(target: Solution) {
+    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+    if(result.isNotEmpty()) {
+      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSolutionName)
+    }
+  }
+
+  override fun beforeUpdate(target: Solution) {
+    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+    if(result.isNotEmpty()) {
+      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSolutionName)
+    }
+  }
 
   override fun beforeDelete(target: Solution) {
     val count = repoRepository.countBySolutionId(target.id)

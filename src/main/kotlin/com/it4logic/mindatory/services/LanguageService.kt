@@ -22,8 +22,8 @@ package com.it4logic.mindatory.services
 
 //import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 //import com.it4logic.mindatory.exceptions.ApplicationValidationException
-import com.it4logic.mindatory.languages.Language
-import com.it4logic.mindatory.languages.LanguageRepository
+import com.it4logic.mindatory.model.mlc.Language
+import com.it4logic.mindatory.model.mlc.LanguageRepository
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.security.SecurityAclService

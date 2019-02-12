@@ -1,9 +1,9 @@
-package com.it4logic.mindatory.languages
+package com.it4logic.mindatory.model.mlc
 
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import org.hibernate.annotations.DynamicUpdate
-import org.springframework.data.rest.core.annotation.RepositoryRestResource
+import org.springframework.data.repository.NoRepositoryBean
 import java.util.*
 import javax.persistence.*
 import javax.validation.constraints.NotBlank
@@ -29,17 +29,20 @@ open class MultipleLanguageContentBaseEntity (
     open var contents: String = "",
 
     @get: NotNull
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "parent_id", nullable = false)
-    open var parent: Any? = null
+    @Column(nullable = false)
+    open var parentId: Long = 0
+
 ) : ApplicationEntityBase()
 
 /**
  * Repository
  */
-@RepositoryRestResource(exported = false)
-interface MultipleLanguageContentBaseEntityRepository<T> : ApplicationBaseRepository<T> {
+@NoRepositoryBean
+interface MultipleLanguageContentBaseEntityRepository<T : MultipleLanguageContentBaseEntity> : ApplicationBaseRepository<T> {
     fun findOneByLanguageIdAndFieldNameAndParentId(langId: Long, fieldName: String, parentId: Long): Optional<T>
+    fun findAllByLanguageIdAndFieldNameAndContents(langId: Long, fieldName: String, contents: String): List<T>
+    fun findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(langId: Long, fieldName: String, contents: String, parentId: Long): List<T>
+    fun findAllByParentId(parentId: Long): List<T>
 }
 
 
