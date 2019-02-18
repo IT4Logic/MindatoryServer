@@ -30,10 +30,12 @@ import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
 
 @Service
+@Transactional
 class SolutionService : ApplicationBaseService<Solution>() {
   @Autowired
   private lateinit var solutionRepository: SolutionRepository
@@ -42,7 +44,7 @@ class SolutionService : ApplicationBaseService<Solution>() {
   private lateinit var repoRepository: ApplicationRepositoryRepository
 
   @Autowired
-  private lateinit var mlcRepository: SolutionLanguageContentRepository
+  private lateinit var mlcRepository: SolutionMLCRepository
 
   @Autowired
   protected lateinit var securityAclService: SecurityAclService
@@ -58,7 +60,7 @@ class SolutionService : ApplicationBaseService<Solution>() {
 
   override fun securityAclService() : SecurityAclService? = securityAclService
 
-  override fun multipleLanguageContentRepository() : SolutionLanguageContentRepository = mlcRepository
+  override fun multipleLanguageContentRepository() : SolutionMLCRepository = mlcRepository
 
   override fun multipleLanguageContentType() : KClass<*> = SolutionMultipleLanguageContent::class
 

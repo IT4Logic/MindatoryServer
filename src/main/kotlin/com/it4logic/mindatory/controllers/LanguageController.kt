@@ -28,6 +28,7 @@ import com.it4logic.mindatory.security.*
 import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
@@ -39,11 +40,8 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.Languages)
+@RequestMapping(path = [ApplicationControllerEntryPoints.Languages, ApplicationControllerEntryPoints.Languages + "{locale}/"])
 class LanguageController : ApplicationBaseController<Language>() {
-
-  @Autowired
-  lateinit var languageService: LanguageService
 
   override fun service(): ApplicationBaseService<Language> = languageService
 
@@ -51,30 +49,35 @@ class LanguageController : ApplicationBaseController<Language>() {
 
   @GetMapping
   @ResponseBody
-  @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.LanguageAdminView}', '${ApplicationSecurityPermissions.LanguageAdminCreate}', '${ApplicationSecurityPermissions.LanguageAdminModify}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')" +
-          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})")
-  override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
-          = doGetInternal(filter, pageable, request, response)
+  @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.LanguageAdminView}', '${ApplicationSecurityPermissions.LanguageAdminCreate}', '${ApplicationSecurityPermissions.LanguageAdminModify}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')" )
+  override fun doGet(@PathVariable(required = false) locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+          = doGetInternal(locale,filter, pageable, request, response)
 
   @GetMapping("{id}")
-  @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.LanguageAdminView}', '${ApplicationSecurityPermissions.LanguageAdminCreate}', '${ApplicationSecurityPermissions.LanguageAdminModify}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')" +
-          " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})")
-  override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): Language
-          = doGetInternal(id, request, response)
+  @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.LanguageAdminView}', '${ApplicationSecurityPermissions.LanguageAdminCreate}', '${ApplicationSecurityPermissions.LanguageAdminModify}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')" )
+  override fun doGet(@PathVariable(required = false) locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): Language
+          = doGetInternal(locale,id, request, response)
 
   @PostMapping
   @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminCreate}')")
-  override fun doCreate(@Valid @RequestBody target: Language, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Language
-          = doCreateInternal(target, errors, request, response)
+  override fun doCreate(@PathVariable(required = false) locale: String, @Valid @RequestBody target: Language, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Language
+          = doCreateInternal(locale,target, errors, request, response)
 
   @PutMapping
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminModify}')" +
-          " or hasPermission(#target, ${ApplicationSecurityPermissions.PermissionModify})")
-  override fun doUpdate(@Valid @RequestBody target: Language, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Language
-          = doUpdateInternal(target, errors, request, response)
+  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminModify}')")
+  override fun doUpdate(@PathVariable(required = false) locale: String, @Valid @RequestBody target: Language, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Language
+          = doUpdateInternal(locale,target, errors, request, response)
 
   @DeleteMapping("{id}")
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminDelete}')" +
-          " or hasPermission(#id, 'com.it4logic.mindatory.model.mlc.Language', ${ApplicationSecurityPermissions.PermissionDelete})")
-  override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
+  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminDelete}')")
+  override fun doDelete(@PathVariable(required = false) locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
+          = doDeleteInternal(locale,id, request, response)
+
+  @DeleteMapping("{id}/force")
+  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminDelete}')")
+  fun doForceDelete(@PathVariable(required = false) locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) {
+    val target = service().findById(id)
+    languageService.forceDelete(target)
+    response.status = HttpStatus.OK.value()
+  }
 }

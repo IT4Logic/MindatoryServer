@@ -6,11 +6,13 @@ import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.ApplicationRepositoryRepository
 import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.repository.*
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.*
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.repository.ArtifactTemplateService
 import com.it4logic.mindatory.services.repository.AttributeTemplateService
 import com.it4logic.mindatory.services.repository.StereotypeService
@@ -72,6 +74,9 @@ class JoinTemplateTests {
     @Autowired
     private lateinit var stereotypeService: StereotypeService
 
+    @Autowired
+    private lateinit var languageService: LanguageService
+
     private lateinit var roleAdmin: SecurityRole
     private lateinit var roleUser: SecurityRole
 
@@ -106,6 +111,12 @@ class JoinTemplateTests {
 
     private val testDataTypeUUID = "19bf955e-00c7-43d6-9b47-d286c20bd0da"
 
+    private val _joinTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.JoinTemplates + "en/"
+    private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
+    private val _solutionsEntryPointEn: String = ApplicationControllerEntryPoints.Solutions + "en/"
+    private val _attributeTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.AttributeTemplates + "en/"
+    private val _artifactTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.ArtifactTemplates + "en/"
+
     @Before
     fun setup() {
         mvc = MockMvcBuilders
@@ -113,8 +124,14 @@ class JoinTemplateTests {
             .apply<DefaultMockMvcBuilder>(SecurityMockMvcConfigurers.springSecurity())
             .build()
 
+        setupLanguageData()
         setupSecurityData()
         setupBasicData()
+    }
+
+    fun setupLanguageData() {
+        languageService.create(Language("en", "English", true))
+        languageService.create(Language("ar", "عربي", false))
     }
 
     fun setupSecurityData() {
@@ -168,7 +185,7 @@ class JoinTemplateTests {
 
     fun setupBasicData() {
         var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A")))
@@ -179,7 +196,7 @@ class JoinTemplateTests {
         applicationRepository = objectMapper.readValue(contents, ApplicationRepository::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Solutions)
+            post(_solutionsEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Solution("Solution A")))
@@ -194,7 +211,7 @@ class JoinTemplateTests {
         attributeNameTemplate = AttributeTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository, solution = solution)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            post(_attributeTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeCodeTemplate))
@@ -208,7 +225,7 @@ class JoinTemplateTests {
         attributeCodeTemplateVersion = attributeTemplateService.releaseVersion(attributeCodeTemplate.id,attributeCodeTemplateVersion)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            post(_attributeTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeNameTemplate))
@@ -226,7 +243,7 @@ class JoinTemplateTests {
         // create artifact
         firstSideArtifactTemplate = ArtifactTemplate(identifier = "mindatory.first-side", name = "Mindatory First Side", repository = applicationRepository)
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+            post(_artifactTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(firstSideArtifactTemplate))
@@ -241,7 +258,7 @@ class JoinTemplateTests {
         // create artifact
         secondSideArtifactTemplate = ArtifactTemplate(identifier = "mindatory.second-side", name = "Mindatory Second Side", repository = applicationRepository)
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+            post(_artifactTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(secondSideArtifactTemplate))
@@ -264,11 +281,11 @@ class JoinTemplateTests {
 
     fun basicOperations() {
         // create Join Templates
-        mvc.perform(post(ApplicationControllerEntryPoints.JoinTemplates).with(SecurityMockMvcRequestPostProcessors.anonymous()))
+        mvc.perform(post(_joinTemplatesEntryPointEn).with(SecurityMockMvcRequestPostProcessors.anonymous()))
             .andExpect(status().isUnauthorized)
 
         var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.JoinTemplates)
+            post(_joinTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(JoinTemplate(identifier = "mindatory.first-second", repository = applicationRepository)))
@@ -280,7 +297,7 @@ class JoinTemplateTests {
 
         // duplicate check
         mvc.perform(
-            post(ApplicationControllerEntryPoints.JoinTemplates)
+            post(_joinTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(JoinTemplate(identifier = "mindatory.first-second", repository = applicationRepository)))
@@ -290,7 +307,7 @@ class JoinTemplateTests {
             .andExpect(jsonPath("$.errorData", anyOf(equalTo(ApplicationErrorCodes.DuplicateJoinTemplateIdentifier))))
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.JoinTemplates)
+            post(_joinTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(JoinTemplate(identifier = "mindatory.dummy", repository = applicationRepository)))
@@ -302,13 +319,13 @@ class JoinTemplateTests {
 
         // load
         mvc.perform(
-            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
+            get(_joinTemplatesEntryPointEn + joinTemplate.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
         )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
+            get(_joinTemplatesEntryPointEn + joinTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isForbidden)
@@ -316,7 +333,7 @@ class JoinTemplateTests {
         var aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View, ApplicationPermission.Modify)))
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id + "/permissions/add")
+            post(_joinTemplatesEntryPointEn + joinTemplate.id + "/permissions/add")
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -324,7 +341,7 @@ class JoinTemplateTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id + "/permissions/add")
+            post(_joinTemplatesEntryPointEn + joinTemplate.id + "/permissions/add")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -332,7 +349,7 @@ class JoinTemplateTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
+            get(_joinTemplatesEntryPointEn + joinTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isOk)
@@ -340,7 +357,7 @@ class JoinTemplateTests {
 
         aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View)))
         mvc.perform(
-            post(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id + "/permissions/remove")
+            post(_joinTemplatesEntryPointEn + joinTemplate.id + "/permissions/remove")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -348,16 +365,16 @@ class JoinTemplateTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
+            get(_joinTemplatesEntryPointEn + joinTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
-            .andExpect(status().isForbidden)
+            .andExpect(status().isOk    )
 
         // update
         joinTemplate.description = "updated"
 
         contents = mvc.perform(
-            put(ApplicationControllerEntryPoints.JoinTemplates)
+            put(_joinTemplatesEntryPointEn)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(joinTemplate))
@@ -369,19 +386,19 @@ class JoinTemplateTests {
 
         // change the owner
         mvc.perform(
-            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id)
+            get(_joinTemplatesEntryPointEn + joinTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id + "/permissions/change-owner/user")
+            post(_joinTemplatesEntryPointEn + joinTemplate2.id + "/permissions/change-owner/user")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
         )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id)
+            get(_joinTemplatesEntryPointEn + joinTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isOk)
@@ -389,19 +406,19 @@ class JoinTemplateTests {
 
         // delete
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate.id)
+            delete(_joinTemplatesEntryPointEn + joinTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id)
+            delete(_joinTemplatesEntryPointEn + joinTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.JoinTemplates + joinTemplate2.id)
+            get(_joinTemplatesEntryPointEn + joinTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isNotFound)
@@ -409,7 +426,7 @@ class JoinTemplateTests {
 
     fun designVersions() {
         // get design versions
-        val joinTemplateDesignVersions = "${ApplicationControllerEntryPoints.JoinTemplates}/${joinTemplate.id}/design-versions"
+        val joinTemplateDesignVersions = "${_joinTemplatesEntryPointEn}/${joinTemplate.id}/design-versions"
 
         mvc.perform(get(joinTemplateDesignVersions).with(SecurityMockMvcRequestPostProcessors.anonymous()))
             .andExpect(status().isUnauthorized)

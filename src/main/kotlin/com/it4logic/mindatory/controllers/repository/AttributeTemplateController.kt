@@ -20,7 +20,6 @@
 
 package com.it4logic.mindatory.controllers.repository
 
-import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
 import com.it4logic.mindatory.controllers.common.ApplicationBaseController
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
@@ -28,7 +27,6 @@ import com.it4logic.mindatory.model.repository.AttributeTemplate
 import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
 import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.services.repository.AttributeTemplateService
-import com.it4logic.mindatory.services.RepositoryManagerService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.data.domain.Pageable
 import org.springframework.data.rest.core.RepositoryConstraintViolationException
@@ -45,11 +43,8 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.AttributeTemplates)
+@RequestMapping(ApplicationControllerEntryPoints.AttributeTemplates + "{locale}/")
 class AttributeTemplateController : ApplicationBaseController<AttributeTemplate>() {
-
-    @Autowired
-    lateinit var repositoryManagerService: RepositoryManagerService
 
     @Autowired
     lateinit var attributeTemplatesService: AttributeTemplateService
@@ -63,43 +58,38 @@ class AttributeTemplateController : ApplicationBaseController<AttributeTemplate>
     @GetMapping
     @ResponseBody
     @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
-            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})")
-    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
-            = doGetInternal(filter, pageable, request, response)
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionCreate})" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionModify})" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionDelete})" )
+    override fun doGet(@PathVariable locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+            = doGetInternal(locale,filter, pageable, request, response)
 
     @GetMapping("{id}")
     @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
-            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})")
-    override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
-            = doGetInternal(id, request, response)
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionCreate})" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionModify})" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionDelete})" )
+    override fun doGet(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
+            = doGetInternal(locale,id, request, response)
 
     @PostMapping
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}')")
-    override fun doCreate(@Valid @RequestBody target: AttributeTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
-            = doCreateInternal(target, errors, request, response)
+    override fun doCreate(@PathVariable locale: String, @Valid @RequestBody target: AttributeTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
+            = doCreateInternal(locale,target, errors, request, response)
 
     @PutMapping
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminModify}')" +
             " or hasPermission(#target, ${ApplicationSecurityPermissions.PermissionModify})")
-    override fun doUpdate(@Valid @RequestBody target: AttributeTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
-            = doUpdateInternal(target, errors, request, response)
+    override fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: AttributeTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): AttributeTemplate
+            = doUpdateInternal(locale,target, errors, request, response)
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')" +
             " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.AttributeTemplate', ${ApplicationSecurityPermissions.PermissionDelete})")
-    override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
-
-
-    // ====================================================== Data types ======================================================
-
-    @GetMapping("/data-types")
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')")
-    fun doGetDataTypes(): List<AttributeTemplateDataType> = repositoryManagerService.getAttributeTemplateDataTypes()
-
-    @GetMapping("/data-types/{uuid}")
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')")
-    fun doGetDataType(@PathVariable uuid: String): AttributeTemplateDataType = repositoryManagerService.getAttributeTemplateDataType(uuid)
+    override fun doDelete(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
+            = doDeleteInternal(locale,id, request, response)
 
     // ====================================================== Design Versions ======================================================
 

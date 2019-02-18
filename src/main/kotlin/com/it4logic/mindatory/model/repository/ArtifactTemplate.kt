@@ -22,11 +22,14 @@ package com.it4logic.mindatory.model.repository
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -40,8 +43,7 @@ import javax.validation.constraints.NotNull
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_artifact_templates", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateIdentifierUniqueIndex, columnNames = ["identifier"])),
-    (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateNameUniqueIndex, columnNames = ["name"]))
+    (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateIdentifierUniqueIndex, columnNames = ["identifier"]))
 ])
 data class ArtifactTemplate (
     @get: NotBlank
@@ -51,11 +53,13 @@ data class ArtifactTemplate (
 
     @get: NotBlank
     @get: Size(min = 2, max = 100)
-    @Column(nullable = false, length = 255)
+    @get: MultipleLanguageContent
+    @Transient
     var name: String,
 
     @get: Size(max = 255)
-    @Column(length = 255)
+    @get: MultipleLanguageContent
+    @Transient
     var description: String = "",
 
     @JsonIgnore
@@ -63,10 +67,12 @@ data class ArtifactTemplate (
     var versions: MutableList<ArtifactTemplateVersion> = mutableListOf(),
 
     @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne
     @JoinColumn(name = "repository_id", nullable = false)
     var repository: ApplicationRepository,
 
+    @get: MultipleLanguageContent
     @ManyToOne
     @JoinColumn(name = "solution_id")
     var solution: Solution? = null
@@ -88,3 +94,21 @@ data class ArtifactTemplate (
  */
 @RepositoryRestResource(exported = false)
 interface ArtifactTemplateRepository : ApplicationRepositoryBaseRepository<ArtifactTemplate>
+
+
+/**
+ * Multiple Language Content support entity
+ */
+@Audited
+@Entity
+@EntityListeners(AuditingEntityListener::class)
+@Table(name = "t_artifact_template_mlcs", uniqueConstraints = [
+    (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+])
+class ArtifactTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+
+/**
+ * Multiple Language Content support Repository
+ */
+@RepositoryRestResource(exported = false)
+interface ArtifactTemplateMLCRepository : MultipleLanguageContentBaseEntityRepository<ArtifactTemplateMultipleLanguageContent>

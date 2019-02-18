@@ -22,9 +22,11 @@ package com.it4logic.mindatory.controllers
 
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
+import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.Company
 import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.services.CompanyService
+import com.it4logic.mindatory.services.LanguageService
 import org.springframework.data.rest.core.RepositoryConstraintViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -36,22 +38,35 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.Company)
+@RequestMapping(ApplicationControllerEntryPoints.Company + "{locale}/")
 class CompanyController {
 
   @Autowired
   lateinit var companyService: CompanyService
 
+  @Autowired
+  lateinit var languageService: LanguageService
+
+  @Autowired
+  lateinit var languageManager: LanguageManager
+
+  protected fun propagateLanguage(locale: String?) {
+    val language = languageService.findLanguageByLocaleOrDefault(locale)
+    languageManager.currentLanguage = language
+  }
+
   @GetMapping
   @ResponseBody
   @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.CompanyAdminView}', '${ApplicationSecurityPermissions.CompanyAdminCreate}', '${ApplicationSecurityPermissions.CompanyAdminModify}', '${ApplicationSecurityPermissions.CompanyAdminDelete}')")
-  fun doGet() : ResponseEntity<Company> {
+  fun doGet(@PathVariable locale: String) : ResponseEntity<Company> {
+    propagateLanguage(locale)
     return ResponseEntity.ok().body(companyService.findFirst())
   }
 
   @PutMapping
   @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.CompanyAdminModify}')")
-  fun doUpdate(@Valid @RequestBody target: Company, errors: Errors, request: HttpServletRequest): ResponseEntity<Company> {
+  fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: Company, errors: Errors, request: HttpServletRequest): ResponseEntity<Company> {
+    propagateLanguage(locale)
     if (errors.hasErrors())
       throw RepositoryConstraintViolationException(errors)
 

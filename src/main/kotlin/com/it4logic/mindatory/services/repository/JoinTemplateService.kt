@@ -23,6 +23,7 @@ package com.it4logic.mindatory.services.repository
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.DesignStatus
 import com.it4logic.mindatory.model.common.StoreObjectStatus
@@ -34,6 +35,7 @@ import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
+import kotlin.reflect.KClass
 
 @Service
 @Transactional
@@ -50,6 +52,12 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
   @Autowired
   protected lateinit var securityAclService: SecurityAclService
 
+  @Autowired
+  private lateinit var mlcRepository: JoinTemplateMLCRepository
+
+  @Autowired
+  protected lateinit var languageManager: LanguageManager
+
   override fun repository(): ApplicationBaseRepository<JoinTemplate> = joinTemplateRepository
 
   override fun type(): Class<JoinTemplate> = JoinTemplate::class.java
@@ -57,6 +65,10 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
   override fun useAcl() : Boolean = true
 
   override fun securityAclService() : SecurityAclService? = securityAclService
+
+  override fun multipleLanguageContentRepository() : JoinTemplateMLCRepository = mlcRepository
+
+  override fun multipleLanguageContentType() : KClass<*> = JoinTemplateMultipleLanguageContent::class
 
   override fun beforeDelete(target: JoinTemplate) {
     val count = joinStoreRepository.countByJoinTemplateVersionId(target.id)
@@ -94,6 +106,7 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
     if (result.isPresent)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationJoinTemplateHasInDesignVersion)
 
+    joinTemplateVersion.joinTemplate = target
     joinTemplateVersion.repository = target.repository
     joinTemplateVersion.solution = target.solution
 
@@ -109,6 +122,9 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
 
     target.versions.add(ver)
     update(target)
+
+    multipleLanguageContentService.load(ver)
+
     return ver
   }
 
@@ -121,11 +137,15 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedJoinTemplateVersion)
 
     val target = findById(joinTemplateId)
+    joinTemplateVersion.joinTemplate = target
     joinTemplateVersion.repository = target.repository
     joinTemplateVersion.solution = target.solution
     val ver = joinTemplateVersionRepository.save(joinTemplateVersion)
     repository().flush()
     entityManager.refresh(ver)
+
+    multipleLanguageContentService.load(ver)
+
     return ver
   }
 
@@ -149,6 +169,9 @@ class JoinTemplateService : ApplicationBaseService<JoinTemplate>() {
     val ver = joinTemplateVersionRepository.save(joinTemplateVersion)
     repository().flush()
     entityManager.refresh(ver)
+
+    multipleLanguageContentService.load(ver)
+
     return ver
   }
 

@@ -21,8 +21,10 @@
 package com.it4logic.mindatory.controllers.security
 
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
+import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.ChangePasswordRequest
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.security.SecurityUserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.rest.core.RepositoryConstraintViolationException
@@ -36,19 +38,34 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.SecurityUserProfile)
+@RequestMapping(ApplicationControllerEntryPoints.SecurityUserProfile + "{locale}/")
 class SecurityUserProfileController {
 
     @Autowired
     lateinit var securityUserService: SecurityUserService
 
+    @Autowired
+    lateinit var languageService: LanguageService
+
+    @Autowired
+    lateinit var languageManager: LanguageManager
+
+    protected fun propagateLanguage(locale: String?) {
+        val language = languageService.findLanguageByLocaleOrDefault(locale)
+        languageManager.currentLanguage = language
+    }
+
     @PreAuthorize("isFullyAuthenticated()")
     @GetMapping
-    fun doGetCurrentUserProfile() : ResponseEntity<SecurityUser> = ResponseEntity.ok(securityUserService.getCurrentSecurityUser())
+    fun doGetCurrentUserProfile(@PathVariable locale: String) : ResponseEntity<SecurityUser> {
+        propagateLanguage(locale)
+        return ResponseEntity.ok(securityUserService.getCurrentSecurityUser())
+    }
 
     @PutMapping
     @PreAuthorize("isFullyAuthenticated()")
-    fun doUpdateUserProfile(@Valid @RequestBody user: SecurityUser, errors: Errors, request: HttpServletRequest): ResponseEntity<SecurityUser> {
+    fun doUpdateUserProfile(@PathVariable locale: String, @Valid @RequestBody user: SecurityUser, errors: Errors, request: HttpServletRequest): ResponseEntity<SecurityUser> {
+        propagateLanguage(locale)
         if (errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)
         return ResponseEntity.ok().body(securityUserService.updateCurrentSecurityUser(user))
@@ -56,7 +73,8 @@ class SecurityUserProfileController {
 
     @PostMapping("change-password")
     @PreAuthorize("isFullyAuthenticated()")
-    fun doChangeCurrentUserPassword(@Valid @RequestBody changePasswordRequest: ChangePasswordRequest, errors: Errors, request: HttpServletRequest) {
+    fun doChangeCurrentUserPassword(@PathVariable locale: String, @Valid @RequestBody changePasswordRequest: ChangePasswordRequest, errors: Errors, request: HttpServletRequest) {
+        propagateLanguage(locale)
         if (errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)
         securityUserService.changeCurrentUserPassword(changePasswordRequest)

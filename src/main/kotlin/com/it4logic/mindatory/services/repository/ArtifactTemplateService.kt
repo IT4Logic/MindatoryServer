@@ -20,9 +20,11 @@
 
 package com.it4logic.mindatory.services.repository
 
+import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.DesignStatus
 import com.it4logic.mindatory.model.repository.*
@@ -34,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.lang.Exception
 import javax.transaction.Transactional
+import kotlin.reflect.KClass
 
 
 @Service
@@ -60,6 +63,12 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
     @Autowired
     protected lateinit var securityAclService: SecurityAclService
 
+    @Autowired
+    private lateinit var mlcRepository: ArtifactTemplateMLCRepository
+
+    @Autowired
+    protected lateinit var languageManager: LanguageManager
+
     override fun repository(): ApplicationBaseRepository<ArtifactTemplate> = artifactTemplateRepository
 
     override fun type(): Class<ArtifactTemplate> = ArtifactTemplate::class.java
@@ -67,6 +76,24 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
     override fun useAcl() : Boolean = true
 
     override fun securityAclService() : SecurityAclService? = securityAclService
+
+    override fun multipleLanguageContentRepository() : ArtifactTemplateMLCRepository = mlcRepository
+
+    override fun multipleLanguageContentType() : KClass<*> = ArtifactTemplateMultipleLanguageContent::class
+
+    override fun beforeCreate(target: ArtifactTemplate) {
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+        if(result.isNotEmpty()) {
+            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateArtifactTemplateName)
+        }
+    }
+
+    override fun beforeUpdate(target: ArtifactTemplate) {
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+        if(result.isNotEmpty()) {
+            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateArtifactTemplateName)
+        }
+    }
 
     override fun beforeDelete(target: ArtifactTemplate) {
         //todo check if the store to be related to version of artifact
@@ -114,6 +141,7 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
         if (result.isPresent)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationArtifactTemplateHasInDesignVersion)
 
+        artifactTemplateVersion.artifactTemplate = target
         artifactTemplateVersion.repository = target.repository
         artifactTemplateVersion.solution = target.solution
 
@@ -129,6 +157,9 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
 
         target.versions.add(ver)
         update(target)
+
+        multipleLanguageContentService.load(ver)
+
         return ver
     }
 
@@ -141,12 +172,16 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedArtifactTemplateVersion)
 
         val target = findById(artifactTemplateId)
+        artifactTemplateVersion.artifactTemplate = target
         artifactTemplateVersion.repository = target.repository
         artifactTemplateVersion.solution = target.solution
 
         val ver = artifactTemplateVersionRepository.save(artifactTemplateVersion)
         repository().flush()
         entityManager.refresh(ver)
+
+        multipleLanguageContentService.load(ver)
+
         return ver
     }
 
@@ -170,6 +205,9 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
         val ver = artifactTemplateVersionRepository.save(artifactTemplateVersion)
         repository().flush()
         entityManager.refresh(ver)
+
+        multipleLanguageContentService.load(ver)
+
         return ver
     }
 

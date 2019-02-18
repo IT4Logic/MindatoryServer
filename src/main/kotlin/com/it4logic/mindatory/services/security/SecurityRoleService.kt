@@ -20,14 +20,16 @@
 
 package com.it4logic.mindatory.services.security
 
+import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.security.SecurityRole
-import com.it4logic.mindatory.model.security.SecurityRoleRepository
-import com.it4logic.mindatory.model.security.SecurityUser
+import com.it4logic.mindatory.model.security.*
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
+import kotlin.reflect.KClass
 
 
 @Service
@@ -39,9 +41,41 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
     @Autowired
     private lateinit var securityUserService: SecurityUserService
 
+    @Autowired
+    private lateinit var mlcRepository: SecurityRoleMLCRepository
+
+    @Autowired
+    protected lateinit var languageManager: LanguageManager
+
     override fun repository(): ApplicationBaseRepository<SecurityRole> = roleRepository
 
     override fun type(): Class<SecurityRole> = SecurityRole::class.java
+
+    override fun multipleLanguageContentRepository() : SecurityRoleMLCRepository = mlcRepository
+
+    override fun multipleLanguageContentType() : KClass<*> = SecurityRoleMultipleLanguageContent::class
+
+    override fun beforeCreate(target: SecurityRole) {
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+        if(result.isNotEmpty()) {
+            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
+        }
+    }
+
+    override fun beforeUpdate(target: SecurityRole) {
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+        if(result.isNotEmpty()) {
+            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
+        }
+    }
+
+    override fun beforeDelete(target: SecurityRole) {
+        val users = securityUserService.findAllByRoleId(target.id)
+        for(user in users) {
+            user.removeRole(target)
+            securityUserService.update(user)
+        }
+    }
 
     fun getRoleUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByRoleId(id)
 
@@ -59,14 +93,6 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
         for(uid in userIdsList) {
             val user = securityUserService.findById(uid)
             user.removeRole(role)
-            securityUserService.update(user)
-        }
-    }
-
-    override fun beforeDelete(target: SecurityRole) {
-        val users = securityUserService.findAllByRoleId(target.id)
-        for(user in users) {
-            user.removeRole(target)
             securityUserService.update(user)
         }
     }

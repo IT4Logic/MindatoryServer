@@ -20,9 +20,11 @@
 
 package com.it4logic.mindatory.services.repository
 
+import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.DesignStatus
 import com.it4logic.mindatory.model.repository.*
@@ -34,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
 import javax.transaction.Transactional
+import kotlin.reflect.KClass
 
 
 @Service
@@ -57,6 +60,12 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
     @Autowired
     protected lateinit var securityAclService: SecurityAclService
 
+    @Autowired
+    private lateinit var mlcRepository: AttributeTemplateMLCRepository
+
+    @Autowired
+    protected lateinit var languageManager: LanguageManager
+
     override fun repository(): ApplicationBaseRepository<AttributeTemplate> = attributeTemplateRepository
 
     override fun type(): Class<AttributeTemplate> = AttributeTemplate::class.java
@@ -64,6 +73,10 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
     override fun useAcl() : Boolean = true
 
     override fun securityAclService() : SecurityAclService? = securityAclService
+
+    override fun multipleLanguageContentRepository() : AttributeTemplateMLCRepository = mlcRepository
+
+    override fun multipleLanguageContentType() : KClass<*> = AttributeTemplateMultipleLanguageContent::class
 
     // ================================================================================================================
 
@@ -95,6 +108,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
         if (result.isPresent)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateHasInDesignVersion)
 
+        attributeTemplateVersion.attributeTemplate = target
         attributeTemplateVersion.repository = target.repository
         attributeTemplateVersion.solution = target.solution
 
@@ -113,6 +127,9 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 
         target.versions.add(ver)
         update(target)
+
+        multipleLanguageContentService.load(ver)
+
         return ver
     }
 
@@ -125,6 +142,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedAttributeTemplateVersion)
 
         val target = findById(attributeTemplateId)
+        attributeTemplateVersion.attributeTemplate = target
         attributeTemplateVersion.repository = target.repository
         attributeTemplateVersion.solution = target.solution
 
@@ -134,6 +152,9 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
         val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
         repository().flush()
         entityManager.refresh(ver)
+
+        multipleLanguageContentService.load(ver)
+
         return ver
     }
 
@@ -157,6 +178,9 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
         val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
         repository().flush()
         entityManager.refresh(ver)
+
+        multipleLanguageContentService.load(ver)
+
         return ver
     }
 
@@ -185,6 +209,20 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
     }
 
     // ================================================================================================================
+
+    override fun beforeCreate(target: AttributeTemplate) {
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+        if(result.isNotEmpty()) {
+            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
+        }
+    }
+
+    override fun beforeUpdate(target: AttributeTemplate) {
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+        if(result.isNotEmpty()) {
+            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
+        }
+    }
 
     override fun beforeDelete(target: AttributeTemplate) {
         // check if there are attribute stores based on attribute templates from this repository

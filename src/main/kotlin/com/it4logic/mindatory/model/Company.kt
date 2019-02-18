@@ -20,9 +20,12 @@
 
 package com.it4logic.mindatory.model
 
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -33,25 +36,27 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_companies", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.CompanyNameUniqueIndex, columnNames = ["name"]))
-])
+@Table(name = "t_companies", uniqueConstraints = [])
 data class Company (
         @get: NotBlank
         @get: Size(min = 2, max = 255)
-        @Column(nullable = false, length = 255)
+        @get: MultipleLanguageContent
+        @Transient
         var name: String,
 
         @get: Size(max = 255)
-        @Column(length = 255)
+        @get: MultipleLanguageContent
+        @Transient
         var street: String = "",
 
         @get: Size(max = 100)
-        @Column(length = 100)
+        @get: MultipleLanguageContent
+        @Transient
         var city: String = "",
 
         @get: Size(max = 100)
-        @Column(length = 100)
+        @get: MultipleLanguageContent
+        @Transient
         var state: String = "",
 
         @get: Size(max = 20)
@@ -59,7 +64,8 @@ data class Company (
         var zipCode: String = "",
 
         @get: Size(max = 100)
-        @Column(length = 100)
+        @get: MultipleLanguageContent
+        @Transient
         var country: String = "",
 
         @get: Size(max = 20)
@@ -83,3 +89,22 @@ data class Company (
  */
 @RepositoryRestResource(exported = false)
 interface CompanyRepository : ApplicationBaseRepository<Company>
+
+
+/**
+ * Multiple Language Content support entity
+ */
+
+@Audited
+@Entity
+@EntityListeners(AuditingEntityListener::class)
+@Table(name = "t_company_mlcs", uniqueConstraints = [
+        (UniqueConstraint(name = ApplicationConstraintCodes.CompanyMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+])
+class CompanyMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+
+/**
+ * Multiple Language Content support Repository
+ */
+@RepositoryRestResource(exported = false)
+interface CompanyMLCRepository : MultipleLanguageContentBaseEntityRepository<CompanyMultipleLanguageContent>

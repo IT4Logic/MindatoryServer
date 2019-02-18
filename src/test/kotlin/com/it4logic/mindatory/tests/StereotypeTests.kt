@@ -25,11 +25,13 @@ import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoint
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.repository.Stereotype
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.*
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
 import com.it4logic.mindatory.services.security.SecurityUserService
@@ -75,6 +77,9 @@ class StereotypeTests {
     @Autowired
     private lateinit var securityUserService: SecurityUserService
 
+    @Autowired
+    private lateinit var languageService: LanguageService
+
     private lateinit var mvc: MockMvc
 
     private lateinit var roleAdmin: SecurityRole
@@ -93,6 +98,10 @@ class StereotypeTests {
 
     private lateinit var solution: Solution
 
+    private val _stereotypesEntryPointEn: String = ApplicationControllerEntryPoints.Stereotypes + "en/"
+    private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
+    private val _solutionsEntryPointEn: String = ApplicationControllerEntryPoints.Solutions + "en/"
+
     @Before
     fun setup() {
         mvc = MockMvcBuilders
@@ -100,7 +109,13 @@ class StereotypeTests {
                 .apply<DefaultMockMvcBuilder>(springSecurity())
                 .build()
 
+        setupLanguageData()
         setupSecurityData()
+    }
+
+    fun setupLanguageData() {
+        languageService.create(Language("en", "English", true))
+        languageService.create(Language("ar", "عربي", false))
     }
 
     fun setupSecurityData() {
@@ -143,7 +158,7 @@ class StereotypeTests {
         userLogin = objectMapper.readValue(contents, JwtAuthenticationResponse::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A")))
@@ -154,7 +169,7 @@ class StereotypeTests {
         applicationRepository = objectMapper.readValue(contents, ApplicationRepository::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Solutions)
+            post(_solutionsEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Solution("Solution A")))
@@ -172,11 +187,11 @@ class StereotypeTests {
         val stereotype3 = Stereotype("Stereotype B", repository = applicationRepository)
 
         // create stereotypes
-        mvc.perform(post(ApplicationControllerEntryPoints.Stereotypes).with(anonymous()))
+        mvc.perform(post(_stereotypesEntryPointEn).with(anonymous()))
             .andExpect(status().isUnauthorized)
 
         var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes)
+            post(_stereotypesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(stereotype1))
@@ -187,7 +202,7 @@ class StereotypeTests {
         stereotype1 = objectMapper.readValue(contents, Stereotype::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes)
+            post(_stereotypesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(stereotype2))
@@ -199,7 +214,7 @@ class StereotypeTests {
 
         // duplicate check
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes)
+            post(_stereotypesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(stereotype2))
@@ -208,7 +223,7 @@ class StereotypeTests {
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotCreateObjectWithExistingId)))
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes)
+            post(_stereotypesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(stereotype3))
@@ -219,13 +234,13 @@ class StereotypeTests {
 
         // load stereotype
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Stereotypes + stereotype1.id)
+            get(_stereotypesEntryPointEn + stereotype1.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes)
+            post(_stereotypesEntryPointEn)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(stereotype2))
@@ -233,14 +248,14 @@ class StereotypeTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Stereotypes + stereotype1.id)
+            get(_stereotypesEntryPointEn + stereotype1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         var aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View, ApplicationPermission.Modify)))
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes + stereotype1.id + "/permissions/add")
+            post(_stereotypesEntryPointEn + stereotype1.id + "/permissions/add")
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -248,7 +263,7 @@ class StereotypeTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes + stereotype1.id + "/permissions/add")
+            post(_stereotypesEntryPointEn + stereotype1.id + "/permissions/add")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -256,7 +271,7 @@ class StereotypeTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Stereotypes + stereotype1.id)
+            get(_stereotypesEntryPointEn + stereotype1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
@@ -264,7 +279,7 @@ class StereotypeTests {
 
         aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View)))
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes + stereotype1.id + "/permissions/remove")
+            post(_stereotypesEntryPointEn + stereotype1.id + "/permissions/remove")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -272,16 +287,16 @@ class StereotypeTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Stereotypes + stereotype1.id)
+            get(_stereotypesEntryPointEn + stereotype1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
-            .andExpect(status().isForbidden)
+            .andExpect(status().isOk)
 
         // update
         stereotype1.description = "updated"
 
         contents = mvc.perform(
-            put(ApplicationControllerEntryPoints.Stereotypes)
+            put(_stereotypesEntryPointEn)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(stereotype1))
@@ -293,19 +308,19 @@ class StereotypeTests {
 
         // change the owner
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Stereotypes + stereotype2.id)
+            get(_stereotypesEntryPointEn + stereotype2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Stereotypes + stereotype2.id + "/permissions/change-owner/user")
+            post(_stereotypesEntryPointEn + stereotype2.id + "/permissions/change-owner/user")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Stereotypes + stereotype2.id)
+            get(_stereotypesEntryPointEn + stereotype2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
@@ -313,19 +328,19 @@ class StereotypeTests {
 
         // delete
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.Stereotypes + stereotype1.id)
+            delete(_stereotypesEntryPointEn + stereotype1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.Stereotypes + stereotype2.id)
+            delete(_stereotypesEntryPointEn + stereotype2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Stereotypes + stereotype2.id)
+            get(_stereotypesEntryPointEn + stereotype2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isNotFound)

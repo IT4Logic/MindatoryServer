@@ -41,9 +41,9 @@ import javax.validation.constraints.NotNull
     (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateVersionUniqueIndex, columnNames = ["artifact_template_id", "designVersion"]))
 ])
 data class ArtifactTemplateVersion (
-    @get: NotNull
     @ManyToOne
     @JoinColumn(name = "artifact_template_id", nullable = false)
+    @JsonIgnore
     var artifactTemplate: ArtifactTemplate,
 
     @ManyToMany

@@ -59,4 +59,6 @@ data class Language (
 @RepositoryRestResource(exported = false)
 interface LanguageRepository : ApplicationBaseRepository<Language> {
         fun findOneByDefault(value: Boolean) : Optional<Language>
+        fun findOneByLocale(locale: String) : Optional<Language>
+        fun findAllByDefault(value: Boolean): List<Language>
 }

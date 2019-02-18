@@ -42,9 +42,9 @@ import kotlin.collections.HashMap
     (UniqueConstraint(name = ApplicationConstraintCodes.AttributeTemplateVersionUniqueIndex, columnNames = ["attribute_template_id", "designVersion"]))
 ])
 data class AttributeTemplateVersion (
-    @get: NotNull
     @ManyToOne
     @JoinColumn(name = "attribute_template_id", nullable = false)
+    @JsonIgnore
     var attributeTemplate: AttributeTemplate,
 
     @get: NotNull

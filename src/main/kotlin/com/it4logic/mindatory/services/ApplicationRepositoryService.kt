@@ -20,10 +20,11 @@
 
 package com.it4logic.mindatory.services
 
+import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
-import com.it4logic.mindatory.model.ApplicationRepository
-import com.it4logic.mindatory.model.ApplicationRepositoryRepository
+import com.it4logic.mindatory.mlc.LanguageManager
+import com.it4logic.mindatory.model.*
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.repository.*
 import com.it4logic.mindatory.model.store.ArtifactStoreRepository
@@ -34,6 +35,7 @@ import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
+import kotlin.reflect.KClass
 
 
 @Service
@@ -60,6 +62,12 @@ class ApplicationRepositoryService : ApplicationBaseService<ApplicationRepositor
   @Autowired
   protected lateinit var securityAclService: SecurityAclService
 
+  @Autowired
+  private lateinit var mlcRepository: ApplicationRepositoryMLCRepository
+  
+  @Autowired
+  protected lateinit var languageManager: LanguageManager
+  
   override fun repository(): ApplicationBaseRepository<ApplicationRepository> = applicationRepositoryRepository
 
   override fun type(): Class<ApplicationRepository> = ApplicationRepository::class.java
@@ -67,6 +75,24 @@ class ApplicationRepositoryService : ApplicationBaseService<ApplicationRepositor
   override fun useAcl() : Boolean = true
 
   override fun securityAclService() : SecurityAclService? = securityAclService
+
+  override fun multipleLanguageContentRepository() : ApplicationRepositoryMLCRepository = mlcRepository
+
+  override fun multipleLanguageContentType() : KClass<*> = ApplicationRepositoryMultipleLanguageContent::class
+
+  override fun beforeCreate(target: ApplicationRepository) {
+    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+    if(result.isNotEmpty()) {
+      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateApplicationRepositoryName)
+    }
+  }
+
+  override fun beforeUpdate(target: ApplicationRepository) {
+    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+    if(result.isNotEmpty()) {
+      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateApplicationRepositoryName)
+    }
+  }
 
   override fun beforeDelete(target: ApplicationRepository) {
     // check if there are artifacts stores based on artifact templates from this repository

@@ -7,6 +7,7 @@ import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.ApplicationRepositoryRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.DesignStatus
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.repository.ArtifactTemplate
 import com.it4logic.mindatory.model.repository.ArtifactTemplateVersion
 import com.it4logic.mindatory.model.repository.AttributeTemplate
@@ -15,6 +16,7 @@ import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.*
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.repository.AttributeTemplateService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
@@ -68,6 +70,9 @@ class ArtifactTemplateTests {
     @Autowired
     private lateinit var attributeTemplateService: AttributeTemplateService
 
+    @Autowired
+    private lateinit var languageService: LanguageService
+
     private lateinit var roleAdmin: SecurityRole
     private lateinit var roleUser: SecurityRole
 
@@ -95,6 +100,10 @@ class ArtifactTemplateTests {
 
     private val testDataTypeUUID = "19bf955e-00c7-43d6-9b47-d286c20bd0da"
 
+    private val _artifactTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.ArtifactTemplates + "en/"
+    private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
+    private val _solutionsEntryPointEn: String = ApplicationControllerEntryPoints.Solutions + "en/"
+
     @Before
     fun setup() {
         mvc = MockMvcBuilders
@@ -102,8 +111,14 @@ class ArtifactTemplateTests {
             .apply<DefaultMockMvcBuilder>(SecurityMockMvcConfigurers.springSecurity())
             .build()
 
+        setupLanguageData()
         setupSecurityData()
         setupBasicData()
+    }
+
+    fun setupLanguageData() {
+        languageService.create(Language("en", "English", true))
+        languageService.create(Language("ar", "عربي", false))
     }
 
     fun setupSecurityData() {
@@ -155,7 +170,7 @@ class ArtifactTemplateTests {
 
     fun setupBasicData() {
         var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A")))
@@ -166,7 +181,7 @@ class ArtifactTemplateTests {
         applicationRepository = objectMapper.readValue(contents, ApplicationRepository::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Solutions)
+            post(_solutionsEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Solution("Solution A")))
@@ -210,11 +225,11 @@ class ArtifactTemplateTests {
         val attributeTemplate3 = ArtifactTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository)
 
         // create Attribute Templates
-        mvc.perform(post(ApplicationControllerEntryPoints.ArtifactTemplates).with(SecurityMockMvcRequestPostProcessors.anonymous()))
+        mvc.perform(post(_artifactTemplatesEntryPointEn).with(SecurityMockMvcRequestPostProcessors.anonymous()))
             .andExpect(status().isUnauthorized)
 
         var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+            post(_artifactTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(artifactTemplate))
@@ -225,7 +240,7 @@ class ArtifactTemplateTests {
         artifactTemplate = objectMapper.readValue(contents, ArtifactTemplate::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+            post(_artifactTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeTemplate2))
@@ -237,7 +252,7 @@ class ArtifactTemplateTests {
 
         // duplicate check
         mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+            post(_artifactTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeTemplate2))
@@ -246,7 +261,7 @@ class ArtifactTemplateTests {
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotCreateObjectWithExistingId)))
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+            post(_artifactTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeTemplate3))
@@ -259,13 +274,13 @@ class ArtifactTemplateTests {
 
         // load solution
         mvc.perform(
-            get(ApplicationControllerEntryPoints.ArtifactTemplates + artifactTemplate.id)
+            get(_artifactTemplatesEntryPointEn + artifactTemplate.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
         )
             .andExpect(status().isOk)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates)
+            post(_artifactTemplatesEntryPointEn)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeTemplate2))
@@ -273,7 +288,7 @@ class ArtifactTemplateTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.ArtifactTemplates + artifactTemplate.id)
+            get(_artifactTemplatesEntryPointEn + artifactTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isForbidden)
@@ -281,7 +296,7 @@ class ArtifactTemplateTests {
         var aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View, ApplicationPermission.Modify)))
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates + artifactTemplate.id + "/permissions/add")
+            post(_artifactTemplatesEntryPointEn + artifactTemplate.id + "/permissions/add")
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -289,7 +304,7 @@ class ArtifactTemplateTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates + artifactTemplate.id + "/permissions/add")
+            post(_artifactTemplatesEntryPointEn + artifactTemplate.id + "/permissions/add")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -297,7 +312,7 @@ class ArtifactTemplateTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.ArtifactTemplates + artifactTemplate.id)
+            get(_artifactTemplatesEntryPointEn + artifactTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isOk)
@@ -305,7 +320,7 @@ class ArtifactTemplateTests {
 
         aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View)))
         mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates + artifactTemplate.id + "/permissions/remove")
+            post(_artifactTemplatesEntryPointEn + artifactTemplate.id + "/permissions/remove")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -313,16 +328,16 @@ class ArtifactTemplateTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.ArtifactTemplates + artifactTemplate.id)
+            get(_artifactTemplatesEntryPointEn + artifactTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
-            .andExpect(status().isForbidden)
+            .andExpect(status().isOk)
 
         // update
         artifactTemplate.description = "updated"
 
         contents = mvc.perform(
-            put(ApplicationControllerEntryPoints.ArtifactTemplates)
+            put(_artifactTemplatesEntryPointEn)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(artifactTemplate))
@@ -334,19 +349,19 @@ class ArtifactTemplateTests {
 
         // change the owner
         mvc.perform(
-            get(ApplicationControllerEntryPoints.ArtifactTemplates + attributeTemplate2.id)
+            get(_artifactTemplatesEntryPointEn + attributeTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.ArtifactTemplates + attributeTemplate2.id + "/permissions/change-owner/user")
+            post(_artifactTemplatesEntryPointEn + attributeTemplate2.id + "/permissions/change-owner/user")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
         )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.ArtifactTemplates + attributeTemplate2.id)
+            get(_artifactTemplatesEntryPointEn + attributeTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isOk)
@@ -354,19 +369,19 @@ class ArtifactTemplateTests {
 
         // delete
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.ArtifactTemplates + artifactTemplate.id)
+            delete(_artifactTemplatesEntryPointEn + artifactTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.ArtifactTemplates + attributeTemplate2.id)
+            delete(_artifactTemplatesEntryPointEn + attributeTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.ArtifactTemplates + attributeTemplate2.id)
+            get(_artifactTemplatesEntryPointEn + attributeTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
         )
             .andExpect(status().isNotFound)
@@ -374,7 +389,7 @@ class ArtifactTemplateTests {
 
     fun designVersions() {
         // get design versions
-        val attributeTemplateDesignVersions = "${ApplicationControllerEntryPoints.ArtifactTemplates}/${artifactTemplate.id}/design-versions"
+        val attributeTemplateDesignVersions = "${_artifactTemplatesEntryPointEn}/${artifactTemplate.id}/design-versions"
 
         mvc.perform(get(attributeTemplateDesignVersions).with(SecurityMockMvcRequestPostProcessors.anonymous()))
             .andExpect(status().isUnauthorized)
@@ -478,7 +493,7 @@ class ArtifactTemplateTests {
     }
 
     fun attributes() {
-        val attributeTemplateDesignVersion = "${ApplicationControllerEntryPoints.ArtifactTemplates}/${artifactTemplate.id}/design-versions/${artifactTemplateVersion.id}/attributes"
+        val attributeTemplateDesignVersion = "${_artifactTemplatesEntryPointEn}/${artifactTemplate.id}/design-versions/${artifactTemplateVersion.id}/attributes"
 
         // get attributes count
         mvc.perform(get(attributeTemplateDesignVersion).with(SecurityMockMvcRequestPostProcessors.anonymous()))

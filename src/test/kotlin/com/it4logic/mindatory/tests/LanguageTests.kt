@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2017, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory language by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,9 +23,8 @@ package com.it4logic.mindatory.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.model.mlc.Language
-import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
@@ -59,7 +58,7 @@ import org.springframework.web.context.WebApplicationContext
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-class SolutionTests {
+class LanguageTests {
 
     @Autowired
     private lateinit var context: WebApplicationContext
@@ -93,9 +92,10 @@ class SolutionTests {
     private lateinit var adminLogin: JwtAuthenticationResponse
     private lateinit var userLogin: JwtAuthenticationResponse
 
+    private lateinit var enLanguage: Language
+    private val _languagesEntryPointEn: String = ApplicationControllerEntryPoints.Languages + "en/"
+    private val _languagesEntryPointAr: String = ApplicationControllerEntryPoints.Languages + "ar/"
     private val _solutionsEntryPointEn: String = ApplicationControllerEntryPoints.Solutions + "en/"
-    private val _solutionsEntryPointAr: String = ApplicationControllerEntryPoints.Solutions + "ar/"
-    private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
 
     @Before
     fun setup() {
@@ -109,13 +109,16 @@ class SolutionTests {
     }
 
     fun setupLanguageData() {
-        languageService.create(Language("en", "English", true))
-        languageService.create(Language("ar", "عربي", false))
+        enLanguage = languageService.create(Language("en", "English", true))
     }
 
     fun setupSecurityData() {
         roleAdmin = securityRoleService.create(SecurityRole("ROLE_ADMIN", "Admins Role",
                 permissions = arrayListOf(
+                        ApplicationSecurityPermissions.LanguageAdminView,
+                        ApplicationSecurityPermissions.LanguageAdminCreate,
+                        ApplicationSecurityPermissions.LanguageAdminModify,
+                        ApplicationSecurityPermissions.LanguageAdminDelete,
                         ApplicationSecurityPermissions.SolutionAdminView,
                         ApplicationSecurityPermissions.SolutionAdminCreate,
                         ApplicationSecurityPermissions.SolutionAdminModify,
@@ -153,207 +156,178 @@ class SolutionTests {
     }
 
     @Test
-    fun `Solutions Management`() {
-        var solution1 = Solution("Solution A")
-        var solution2 = Solution("Solution B")
-        val solution3 = Solution("Solution B")
+    fun `Languages Management`() {
+        var language1 = Language("ar", "عربي", false)
+        var language2 = Language("fr", "France", false)
+        val language3 = Language("fr", "France", false)
 
-        // create solutions
-        mvc.perform(post(_solutionsEntryPointEn).with(anonymous()))
+        // create languages
+        mvc.perform(post(_languagesEntryPointEn).with(anonymous()))
             .andExpect(status().isUnauthorized)
 
         var contents = mvc.perform(
-            post(_solutionsEntryPointEn)
+            post(_languagesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(solution1))
+                .content(objectMapper.writeValueAsString(language1))
             )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.name", equalTo("Solution A")))
+            .andExpect(jsonPath("$.name", equalTo("عربي")))
             .andReturn().response.contentAsString
-        solution1 = objectMapper.readValue(contents, Solution::class.java)
-
-        mvc.perform(
-            post(_repositoriesEntryPoint)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A", solution = solution1)))
-            )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.name", equalTo("ApplicationRepository A")))
+        language1 = objectMapper.readValue(contents, Language::class.java)
 
         contents = mvc.perform(
-            post(_solutionsEntryPointEn)
+            post(_languagesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(solution2))
+                .content(objectMapper.writeValueAsString(language2))
             )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.name", equalTo("Solution B")))
+            .andExpect(jsonPath("$.name", equalTo("France")))
             .andReturn().response.contentAsString
-        solution2 = objectMapper.readValue(contents, Solution::class.java)
+        language2 = objectMapper.readValue(contents, Language::class.java)
 
         // duplicate check
         mvc.perform(
-            post(_solutionsEntryPointEn)
+            post(_languagesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(solution2))
+                .content(objectMapper.writeValueAsString(language2))
             )
             .andExpect(status().isNotAcceptable)
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotCreateObjectWithExistingId)))
 
+        language3.locale = "frr"
         mvc.perform(
-            post(_solutionsEntryPointEn)
+            post(_languagesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(solution3))
+                .content(objectMapper.writeValueAsString(language3))
             )
             .andExpect(status().isNotAcceptable)
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.DataIntegrityError)))
-            .andExpect(jsonPath("$.errorData", equalTo(ApplicationErrorCodes.DuplicateSolutionName)))
+            .andExpect(jsonPath("$.errorData", equalTo(ApplicationErrorCodes.DuplicateLanguageName)))
 
-        // load solution
+        language3.locale = "fr"
+        language3.name = "French"
         mvc.perform(
-            get(_solutionsEntryPointEn + solution1.id)
+            post(_languagesEntryPointEn)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(language3))
+        )
+            .andExpect(status().isNotAcceptable)
+            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.DataIntegrityError)))
+            .andExpect(jsonPath("$.errorData", equalTo(ApplicationErrorCodes.DuplicateLanguageLocale)))
+
+        // load language
+        mvc.perform(
+            get(_languagesEntryPointEn + language1.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            post(_solutionsEntryPointEn)
+            post(_languagesEntryPointEn)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(solution2))
+                .content(objectMapper.writeValueAsString(language2))
             )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            get(_solutionsEntryPointEn + solution1.id)
+            get(_languagesEntryPointEn + language1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
-
-        var aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View, ApplicationPermission.Modify)))
-        mvc.perform(
-            post(_solutionsEntryPointEn + solution1.id + "/permissions/add")
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(aclRequest))
-            )
-            .andExpect(status().isForbidden)
-
-        mvc.perform(
-            post(_solutionsEntryPointEn + solution1.id + "/permissions/add")
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(aclRequest))
-            )
-            .andExpect(status().isOk)
-
-        mvc.perform(
-            get(_solutionsEntryPointEn + solution1.id)
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name", equalTo("Solution A")))
-
-        aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View)))
-        mvc.perform(
-            post(_solutionsEntryPointEn + solution1.id + "/permissions/remove")
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(aclRequest))
-            )
-            .andExpect(status().isOk)
-
-        mvc.perform(
-            get(_solutionsEntryPointEn + solution1.id)
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
-            .andExpect(status().isOk)
 
         // update
-        solution1.description = "updated"
+        language1.name = "اللغة العربية"
 
         contents = mvc.perform(
-            put(_solutionsEntryPointEn)
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
+            put(_languagesEntryPointEn)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(solution1))
+                .content(objectMapper.writeValueAsString(language1))
             )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.description", equalTo("updated")))
+            .andExpect(jsonPath("$.name", equalTo("اللغة العربية")))
             .andReturn().response.contentAsString
-        solution1 = objectMapper.readValue(contents, Solution::class.java)
+        language1 = objectMapper.readValue(contents, Language::class.java)
 
         // getting in Arabic
         mvc.perform(
-            get(_solutionsEntryPointAr + solution1.id)
+            get(_languagesEntryPointAr + language1.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name", equalTo("Solution A")))
+            .andExpect(jsonPath("$.name", equalTo("اللغة العربية")))
 
-        // updating in Arabic
-        solution1.description = "محدث"
+        // change default language
+        language2.default = true
 
-        contents = mvc.perform(
-            put(_solutionsEntryPointAr)
+        mvc.perform(
+            put(_languagesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(solution1))
+                .content(objectMapper.writeValueAsString(language2))
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.description", equalTo("محدث")))
-            .andReturn().response.contentAsString
-        solution1 = objectMapper.readValue(contents, Solution::class.java)
-
-        // change the owner
-        mvc.perform(
-            get(_solutionsEntryPointEn + solution2.id)
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
-            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.default", equalTo(true)))
 
         mvc.perform(
-            post(_solutionsEntryPointEn + solution2.id + "/permissions/change-owner/user")
+            get(_languagesEntryPointAr + language1.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-            )
+        )
             .andExpect(status().isOk)
-
-        mvc.perform(
-            get(_solutionsEntryPointEn + solution2.id)
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name", equalTo("Solution B")))
+            .andExpect(jsonPath("$.default", equalTo(false)))
 
         // delete
         mvc.perform(
-            delete(_solutionsEntryPointEn + solution1.id)
+            delete(_languagesEntryPointEn + language1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            delete(_solutionsEntryPointEn + solution1.id)
+            delete(_languagesEntryPointEn + language2.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isNotAcceptable)
-            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationSolutionHasRepository)))
+            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotDeleteDefaultLanguage)))
 
         mvc.perform(
-            delete(_solutionsEntryPointEn + solution2.id)
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
+            delete(_languagesEntryPointEn + language1.id)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+        )
             .andExpect(status().isOk)
 
+
+        // Create MLC
         mvc.perform(
-            get(_solutionsEntryPointEn + solution2.id)
-                .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
-            )
-            .andExpect(status().isNotFound)
+            post(_solutionsEntryPointEn)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Solution("Solution A")))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.name", equalTo("Solution A")))
+            .andReturn().response.contentAsString
+
+        // delete language with MLCs
+        mvc.perform(
+            delete(_languagesEntryPointEn + enLanguage.id)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+        )
+            .andExpect(status().isNotAcceptable)
+            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationLanguageHasRelatedContents)))
+
+        // delete language with MLCs by force
+        mvc.perform(
+            delete(_languagesEntryPointEn + enLanguage.id + "/force")
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+        )
+            .andExpect(status().isOk)
     }
 
 }

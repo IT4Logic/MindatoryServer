@@ -24,12 +24,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.model.Company
 import com.it4logic.mindatory.model.CompanyRepository
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.security.JwtAuthenticationResponse
 import com.it4logic.mindatory.security.LoginRequest
+import com.it4logic.mindatory.services.CompanyService
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
 import com.it4logic.mindatory.services.security.SecurityUserService
@@ -77,7 +80,10 @@ class CompanyTests {
     private lateinit var securityUserService: SecurityUserService
 
     @Autowired
-    private lateinit var companyRepository: CompanyRepository
+    lateinit var languageService: LanguageService
+
+    @Autowired
+    private lateinit var companyService: CompanyService
 
     private lateinit var mvc: MockMvc
 
@@ -93,6 +99,8 @@ class CompanyTests {
     private lateinit var adminLogin: JwtAuthenticationResponse
     private lateinit var userLogin: JwtAuthenticationResponse
 
+    private val _companyEntryPoint: String = ApplicationControllerEntryPoints.Company + "en/"
+
     companion object {
         var companyId = -1L
     }
@@ -104,9 +112,15 @@ class CompanyTests {
             .apply<DefaultMockMvcBuilder>(springSecurity())
             .build()
 
+        setupLanguageData()
         setupSecurityData()
 
-        companyId = companyRepository.save(Company("IT4L", id = 1)).id
+        companyId = companyService.create(Company("IT4L", id = 1)).id
+    }
+
+    fun setupLanguageData() {
+        languageService.create(Language("en", "English", true))
+        languageService.create(Language("ar", "عربي", false))
     }
 
     fun setupSecurityData() {
@@ -151,18 +165,18 @@ class CompanyTests {
         assertEquals(1, companyId)
 
         // Check for view company with anonymous access
-        mvc.perform(get(ApplicationControllerEntryPoints.Company).with(anonymous())).andExpect(unauthenticated())
+        mvc.perform(get(_companyEntryPoint).with(anonymous())).andExpect(unauthenticated())
 
         // Check for view company with lack of permissions
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Company)
+            get(_companyEntryPoint)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         // load company
         val contents = mvc.perform(
-            get(ApplicationControllerEntryPoints.Company)
+            get(_companyEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isOk)
@@ -176,7 +190,7 @@ class CompanyTests {
 
         // Check company update
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Company)
+            post(_companyEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(company))
@@ -184,7 +198,7 @@ class CompanyTests {
             .andExpect(status().isMethodNotAllowed)
 
         mvc.perform(
-            put(ApplicationControllerEntryPoints.Company)
+            put(_companyEntryPoint)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(company))
@@ -192,7 +206,7 @@ class CompanyTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            put(ApplicationControllerEntryPoints.Company)
+            put(_companyEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(company))

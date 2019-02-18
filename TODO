@@ -15,8 +15,13 @@ ok 5- for entity part (ex. solution)
     ok b- create new entity to hold the contents
     ok c- direct link between entity and entity contents but not json ignore
     ok d- before/after saving entity listener will be responsible for managing the contents
-6- validate existing translations before delete languages
-7- have force delete language with translation
-8- don't delete default language
-9- system must have at least one language
-10- exception if no default language
+ok 6- validate existing translations before delete languages
+ok 7- have force delete language with translation
+ok 8- don't delete default language
+ok 9- system must have at least one language
+ok 10- exception if no default language
+ok 11- passing language selection in controllers
+ok 12- languages test case
+13- MLC search through search criteria (JPA RSQL)
+=======================================
+update plugins kotlin and spring version

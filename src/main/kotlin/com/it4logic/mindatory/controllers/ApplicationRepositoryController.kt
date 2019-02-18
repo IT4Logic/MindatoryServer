@@ -39,7 +39,7 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.Repositories)
+@RequestMapping(ApplicationControllerEntryPoints.Repositories + "{locale}/")
 class ApplicationRepositoryController : ApplicationBaseController<ApplicationRepository>() {
 
   @Autowired
@@ -52,29 +52,36 @@ class ApplicationRepositoryController : ApplicationBaseController<ApplicationRep
   @GetMapping
   @ResponseBody
   @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.ApplicationRepositoryAdminView}', '${ApplicationSecurityPermissions.ApplicationRepositoryAdminCreate}', '${ApplicationSecurityPermissions.ApplicationRepositoryAdminModify}', '${ApplicationSecurityPermissions.ApplicationRepositoryAdminDelete}')" +
-          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})")
-  override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
-          = doGetInternal(filter, pageable, request, response)
+          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})" +
+          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionCreate})" +
+          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionModify})" +
+          " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionDelete})" )
+  override fun doGet(@PathVariable locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+          = doGetInternal(locale, filter, pageable, request, response)
 
   @GetMapping("{id}")
   @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.ApplicationRepositoryAdminView}', '${ApplicationSecurityPermissions.ApplicationRepositoryAdminCreate}', '${ApplicationSecurityPermissions.ApplicationRepositoryAdminModify}', '${ApplicationSecurityPermissions.ApplicationRepositoryAdminDelete}')" +
-          " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})")
-  override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): ApplicationRepository
-          = doGetInternal(id, request, response)
+          " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})" +
+          " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionCreate})" +
+          " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionModify})" +
+          " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionDelete})" )
+  override fun doGet(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): ApplicationRepository
+          = doGetInternal(locale, id, request, response)
 
   @PostMapping
   @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ApplicationRepositoryAdminCreate}')")
-  override fun doCreate(@Valid @RequestBody target: ApplicationRepository, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ApplicationRepository
-          = doCreateInternal(target, errors, request, response)
+  override fun doCreate(@PathVariable locale: String, @Valid @RequestBody target: ApplicationRepository, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ApplicationRepository
+          = doCreateInternal(locale, target, errors, request, response)
 
   @PutMapping
   @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ApplicationRepositoryAdminModify}')" +
           " or hasPermission(#target, ${ApplicationSecurityPermissions.PermissionModify})")
-  override fun doUpdate(@Valid @RequestBody target: ApplicationRepository, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ApplicationRepository
-          = doUpdateInternal(target, errors, request, response)
+  override fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: ApplicationRepository, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ApplicationRepository
+          = doUpdateInternal(locale, target, errors, request, response)
 
   @DeleteMapping("{id}")
   @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SolutionAdminDelete}')" +
           " or hasPermission(#id, 'com.it4logic.mindatory.model.ApplicationRepository', ${ApplicationSecurityPermissions.PermissionDelete})")
-  override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
+  override fun doDelete(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
+          = doDeleteInternal(locale, id, request, response)
 }

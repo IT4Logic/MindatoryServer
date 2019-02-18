@@ -20,7 +20,10 @@
 
 package com.it4logic.mindatory.model.security
 
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.*
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -31,8 +34,7 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_security_users",
-        uniqueConstraints = [
+@Table(name = "t_security_users", uniqueConstraints = [
             UniqueConstraint(name = ApplicationConstraintCodes.SecurityUserUsernameUniqueIndex, columnNames = ["username"])
         ]
 )
@@ -61,7 +63,8 @@ data class SecurityUser (
 
         @get: NotBlank
         @get: Size(min = 4, max = 100)
-        @Column(nullable = false, length = 100)
+        @get: MultipleLanguageContent
+        @Transient
         var fullName: String = "",
 
         @get: NotBlank
@@ -75,14 +78,17 @@ data class SecurityUser (
         var mobile: String = "",
 
         @get: Size(max = 255)
-        @Column(length = 255)
+        @get: MultipleLanguageContent
+        @Transient
         var notes: String = "",
 
         @get: NotNull
+        @get: MultipleLanguageContent
         @ManyToOne(fetch = FetchType.EAGER, optional = false)
         @JoinColumn(name = "group_id", nullable = false)
         var group: SecurityGroup? = null,
 
+        @get: MultipleLanguageContent
         @ManyToMany(fetch = FetchType.EAGER)
         @JoinTable(name = "t_security_users_roles", joinColumns = [JoinColumn(name = "user_id")], inverseJoinColumns = [JoinColumn(name = "role_id")])
         var roles: MutableList<SecurityRole> = mutableListOf()
@@ -124,3 +130,20 @@ interface SecurityUserRepository : ApplicationCompanyBaseRepository<SecurityUser
         fun findAllByRolesId(id: Long) : MutableList<SecurityUser>
         fun findByUsername(username: String): Optional<SecurityUser>
 }
+
+/**
+ * Multiple Language Content support entity
+ */
+@Audited
+@Entity
+@EntityListeners(AuditingEntityListener::class)
+@Table(name = "t_security_user_mlcs", uniqueConstraints = [
+        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityUserMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+])
+class SecurityUserMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+
+/**
+ * Multiple Language Content support Repository
+ */
+@RepositoryRestResource(exported = false)
+interface SecurityUserMLCRepository : MultipleLanguageContentBaseEntityRepository<SecurityUserMultipleLanguageContent>

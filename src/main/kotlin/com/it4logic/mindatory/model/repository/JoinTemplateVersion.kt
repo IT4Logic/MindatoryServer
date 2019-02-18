@@ -20,6 +20,8 @@
 
 package com.it4logic.mindatory.model.repository
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.*
@@ -37,26 +39,28 @@ import javax.validation.constraints.NotNull
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_join_template_versions")
 data class JoinTemplateVersion (
-    @get: NotNull
     @ManyToOne
     @JoinColumn(name = "join_template_id", nullable = false)
+    @JsonIgnore
     var joinTemplate: JoinTemplate,
 
     @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "source_stereotype_id", nullable = false)
     var sourceStereotype: Stereotype,
 
-    @ManyToMany()
+    @ManyToMany
     @JoinTable(name = "t_source_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
     var sourceArtifacts: MutableList<ArtifactTemplateVersion> = mutableListOf(),
 
     @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "target_stereotype_id", nullable = false)
     var targetStereotype: Stereotype,
 
-    @ManyToMany()
+    @ManyToMany
     @JoinTable(name = "t_target_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
     var targetArtifacts: MutableList<ArtifactTemplateVersion> = mutableListOf(),
 
@@ -64,13 +68,14 @@ data class JoinTemplateVersion (
 
     var designVersion: Int = 1,
 
-    @get: NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "repository_id", nullable = false)
+    @JsonIgnore
     var repository: ApplicationRepository? = null,
 
     @ManyToOne(optional=true)
     @JoinColumn(name = "solution_id")
+    @JsonIgnore
     var solution: Solution? = null
 
 ) : ApplicationEntityBase()

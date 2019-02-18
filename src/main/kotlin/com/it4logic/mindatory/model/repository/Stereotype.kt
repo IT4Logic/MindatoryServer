@@ -20,9 +20,12 @@
 
 package com.it4logic.mindatory.model.repository
 
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.*
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -34,24 +37,26 @@ import javax.validation.constraints.Size
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_stereotypes", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.StereotypeNameUniqueIndex, columnNames = ["name"]))
-])
+@Table(name = "t_stereotypes", uniqueConstraints = [])
 data class Stereotype (
     @get: NotBlank
-    @get: Size(min = 2, max = 50)
-    @Column(nullable = false, length = 255)
+    @get: Size(min = 2, max = 100)
+    @get: MultipleLanguageContent
+    @Transient
     var name: String,
 
     @get: Size(max = 255)
-    @Column(length = 255)
+    @get: MultipleLanguageContent
+    @Transient
     var description: String = "",
 
     @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "repository_id", nullable = false)
     var repository: ApplicationRepository? = null,
 
+    @get: MultipleLanguageContent
     @ManyToOne(optional=true)
     @JoinColumn(name = "solution_id")
     var solution: Solution? = null
@@ -63,3 +68,21 @@ data class Stereotype (
  */
 @RepositoryRestResource(exported = false)
 interface StereotypeRepository : ApplicationRepositoryBaseRepository<Stereotype>
+
+
+/**
+ * Multiple Language Content support entity
+ */
+@Audited
+@Entity
+@EntityListeners(AuditingEntityListener::class)
+@Table(name = "t_stereotype_mlcs", uniqueConstraints = [
+    (UniqueConstraint(name = ApplicationConstraintCodes.StereotypeMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+])
+class StereotypeMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+
+/**
+ * Multiple Language Content support Repository
+ */
+@RepositoryRestResource(exported = false)
+interface StereotypeMLCRepository : MultipleLanguageContentBaseEntityRepository<StereotypeMultipleLanguageContent>

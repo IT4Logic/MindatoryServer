@@ -7,12 +7,14 @@ import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.ApplicationRepositoryRepository
 import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.repository.AttributeTemplate
 import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.*
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
 import com.it4logic.mindatory.services.security.SecurityUserService
@@ -62,6 +64,9 @@ class AttributeTemplateTests {
     @Autowired
     private lateinit var securityUserService: SecurityUserService
 
+    @Autowired
+    private lateinit var languageService: LanguageService
+
     private lateinit var roleAdmin: SecurityRole
     private lateinit var roleUser: SecurityRole
 
@@ -81,6 +86,10 @@ class AttributeTemplateTests {
 
     private val testDataTypeUUID = "19bf955e-00c7-43d6-9b47-d286c20bd0da"
 
+    private val _attributeTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.AttributeTemplates + "en/"
+    private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
+    private val _solutionsEntryPointEn: String = ApplicationControllerEntryPoints.Solutions + "en/"
+
     @Before
     fun setup() {
         mvc = MockMvcBuilders
@@ -88,8 +97,14 @@ class AttributeTemplateTests {
             .apply<DefaultMockMvcBuilder>(SecurityMockMvcConfigurers.springSecurity())
             .build()
 
+        setupLanguageData()
         setupSecurityData()
         setupBasicData()
+    }
+
+    fun setupLanguageData() {
+        languageService.create(Language("en", "English", true))
+        languageService.create(Language("ar", "عربي", false))
     }
 
     fun setupSecurityData() {
@@ -141,7 +156,7 @@ class AttributeTemplateTests {
 
     fun setupBasicData() {
         var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A")))
@@ -152,7 +167,7 @@ class AttributeTemplateTests {
         applicationRepository = objectMapper.readValue(contents, ApplicationRepository::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Solutions)
+            post(_solutionsEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Solution("Solution A")))
@@ -192,11 +207,11 @@ class AttributeTemplateTests {
         val attributeTemplate3 = AttributeTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository)
 
         // create Attribute Templates
-        mvc.perform(post(ApplicationControllerEntryPoints.AttributeTemplates).with(SecurityMockMvcRequestPostProcessors.anonymous()))
+        mvc.perform(post(_attributeTemplatesEntryPointEn).with(SecurityMockMvcRequestPostProcessors.anonymous()))
             .andExpect(status().isUnauthorized)
 
         var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            post(_attributeTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeCodeTemplate))
@@ -207,7 +222,7 @@ class AttributeTemplateTests {
         attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplate::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            post(_attributeTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeTemplate2))
@@ -219,7 +234,7 @@ class AttributeTemplateTests {
 
         // duplicate check
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            post(_attributeTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeTemplate2))
@@ -228,7 +243,7 @@ class AttributeTemplateTests {
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotCreateObjectWithExistingId)))
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            post(_attributeTemplatesEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeTemplate3))
@@ -241,13 +256,13 @@ class AttributeTemplateTests {
 
         // load solution
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+            get(_attributeTemplatesEntryPointEn + attributeCodeTemplate.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates)
+            post(_attributeTemplatesEntryPointEn)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeTemplate2))
@@ -255,7 +270,7 @@ class AttributeTemplateTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+            get(_attributeTemplatesEntryPointEn + attributeCodeTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
@@ -263,7 +278,7 @@ class AttributeTemplateTests {
         var aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View, ApplicationPermission.Modify)))
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id + "/permissions/add")
+            post(_attributeTemplatesEntryPointEn + attributeCodeTemplate.id + "/permissions/add")
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -271,7 +286,7 @@ class AttributeTemplateTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id + "/permissions/add")
+            post(_attributeTemplatesEntryPointEn + attributeCodeTemplate.id + "/permissions/add")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -279,7 +294,7 @@ class AttributeTemplateTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+            get(_attributeTemplatesEntryPointEn + attributeCodeTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
@@ -287,7 +302,7 @@ class AttributeTemplateTests {
 
         aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View)))
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id + "/permissions/remove")
+            post(_attributeTemplatesEntryPointEn + attributeCodeTemplate.id + "/permissions/remove")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -295,16 +310,16 @@ class AttributeTemplateTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+            get(_attributeTemplatesEntryPointEn + attributeCodeTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
-            .andExpect(status().isForbidden)
+            .andExpect(status().isOk)
 
         // update
         attributeCodeTemplate.description = "updated"
 
         contents = mvc.perform(
-            put(ApplicationControllerEntryPoints.AttributeTemplates)
+            put(_attributeTemplatesEntryPointEn)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(attributeCodeTemplate))
@@ -316,19 +331,19 @@ class AttributeTemplateTests {
 
         // change the owner
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id)
+            get(_attributeTemplatesEntryPointEn + attributeTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id + "/permissions/change-owner/user")
+            post(_attributeTemplatesEntryPointEn + attributeTemplate2.id + "/permissions/change-owner/user")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id)
+            get(_attributeTemplatesEntryPointEn + attributeTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
@@ -336,19 +351,19 @@ class AttributeTemplateTests {
 
         // delete
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.AttributeTemplates + attributeCodeTemplate.id)
+            delete(_attributeTemplatesEntryPointEn + attributeCodeTemplate.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id)
+            delete(_attributeTemplatesEntryPointEn + attributeTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.AttributeTemplates + attributeTemplate2.id)
+            get(_attributeTemplatesEntryPointEn + attributeTemplate2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isNotFound)
@@ -356,7 +371,7 @@ class AttributeTemplateTests {
 
     fun designVersions() {
         // get design versions
-        val attributeTemplateDesignVersions = "${ApplicationControllerEntryPoints.AttributeTemplates}/${attributeCodeTemplate.id}/design-versions"
+        val attributeTemplateDesignVersions = "${_attributeTemplatesEntryPointEn}/${attributeCodeTemplate.id}/design-versions"
 
         mvc.perform(get(attributeTemplateDesignVersions).with(SecurityMockMvcRequestPostProcessors.anonymous()))
             .andExpect(status().isUnauthorized)

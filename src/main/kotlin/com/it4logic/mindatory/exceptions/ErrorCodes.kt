@@ -103,9 +103,16 @@ interface ApplicationErrorCodes {
                 = "mindatory.error.validation.cannot_create_object_with_existing_id"
         const val ValidationJoinTemplateHasInDesignVersion
                 = "mindatory.error.validation.join_template_has_in_design_version"
+        const val ValidationAtLeastOneLanguageInSystem
+                = "mindatory.error.validation.at_least_one_language_in_system"
+        const val ValidationCannotDeleteDefaultLanguage
+                = "mindatory.error.validation.cannot_delete_default_language"
+        const val ValidationLanguageHasRelatedContents
+                = "mindatory.error.validation.language_has_related_contents"
 
         // Data Not Found
         const val NotFoundAttributeTemplateDataType     = "mindatory.error.data.not_found_attribute_template_data_type"
+        const val NotFoundDefaultLanguage               = "mindatory.error.data.not_found_default_language"
 
 //        const val NotFoundCompany                       = "mindatory.error.data.company_not_found"
 //        const val NotFoundRole                          = "mindatory.error.data.role_not_found"
@@ -147,8 +154,16 @@ interface ApplicationErrorCodes {
         const val DuplicateSecurityRoleName                     = "mindatory.error.duplicate.security_role_name"
         const val DuplicateSecurityGroupName                    = "mindatory.error.duplicate.security_group_name"
 
-
+        const val DuplicateCompanyMCL                           = "mindatory.error.duplicate.company_mcl"
         const val DuplicateSolutionMCL                          = "mindatory.error.duplicate.solution_mcl"
+        const val DuplicateApplicationRepositoryMCL             = "mindatory.error.duplicate.app_repo_mcl"
+        const val DuplicateArtifactTemplateMCL                  = "mindatory.error.duplicate.artifact_template_mcl"
+        const val DuplicateAttributeTemplateMCL                 = "mindatory.error.duplicate.attribute_template_mcl"
+        const val DuplicateJoinTemplateMCL                      = "mindatory.error.duplicate.join_template_mcl"
+        const val DuplicateStereotypeMCL                        = "mindatory.error.duplicate.stereotype_mcl"
+        const val DuplicateSecurityUserMCL                      = "mindatory.error.duplicate.security_user_mcl"
+        const val DuplicateSecurityRoleMCL                      = "mindatory.error.duplicate.security_role_mcl"
+        const val DuplicateSecurityGroupMCL                     = "mindatory.error.duplicate.security_group_mcl"
 
     }
 }

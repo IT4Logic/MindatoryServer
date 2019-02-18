@@ -39,7 +39,6 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@MultipleLanguageContentEntity
 @Table(name = "t_solutions", uniqueConstraints = [])
 data class Solution (
         @get: NotBlank
@@ -49,7 +48,8 @@ data class Solution (
         var name: String,
 
         @get: Size(max = 255)
-        @Column(length = 255)
+        @get: MultipleLanguageContent
+        @Transient
         var description: String = ""
 
 ) : ApplicationCompanyEntityBase()
@@ -63,12 +63,11 @@ interface SolutionRepository : ApplicationCompanyBaseRepository<Solution>
 /**
  * Multiple Language Content support entity
   */
-
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_solution_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SolutionMCLUniqueIndex, columnNames = ["parentId", "language_id", "fieldName"]))
+        (UniqueConstraint(name = ApplicationConstraintCodes.SolutionMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
 ])
 class SolutionMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
@@ -76,5 +75,4 @@ class SolutionMultipleLanguageContent : MultipleLanguageContentBaseEntity()
  * Multiple Language Content support Repository
  */
 @RepositoryRestResource(exported = false)
-interface SolutionLanguageContentRepository :
-        MultipleLanguageContentBaseEntityRepository<SolutionMultipleLanguageContent>
+interface SolutionMLCRepository : MultipleLanguageContentBaseEntityRepository<SolutionMultipleLanguageContent>

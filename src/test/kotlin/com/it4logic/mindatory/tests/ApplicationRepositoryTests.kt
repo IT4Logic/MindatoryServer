@@ -5,10 +5,12 @@ import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoint
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.*
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.SolutionService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
@@ -74,6 +76,12 @@ class ApplicationRepositoryTests {
 
     private lateinit var solution1: Solution
 
+    @Autowired
+    private lateinit var languageService: LanguageService
+
+    private val _solutionsEntryPoint: String = ApplicationControllerEntryPoints.Solutions + "en/"
+    private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
+
     @Before
     fun setup() {
         mvc = MockMvcBuilders
@@ -81,9 +89,14 @@ class ApplicationRepositoryTests {
                 .apply<DefaultMockMvcBuilder>(springSecurity())
                 .build()
 
+        setupLanguageData()
         setupSecurityData()
-
         setupSolutionData()
+    }
+
+    fun setupLanguageData() {
+        languageService.create(Language("en", "English", true))
+        languageService.create(Language("ar", "عربي", false))
     }
 
     fun setupSecurityData() {
@@ -127,7 +140,7 @@ class ApplicationRepositoryTests {
 
     fun setupSolutionData() {
         val contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Solutions)
+            post(_solutionsEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Solution("Solution A")))
@@ -145,11 +158,11 @@ class ApplicationRepositoryTests {
         val applicationRepository3 = ApplicationRepository("ApplicationRepository B")
 
         // create applicationRepositories
-        mvc.perform(post(ApplicationControllerEntryPoints.Repositories).with(anonymous()))
+        mvc.perform(post(_repositoriesEntryPoint).with(anonymous()))
             .andExpect(status().isUnauthorized)
 
         var contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(applicationRepository1))
@@ -160,7 +173,7 @@ class ApplicationRepositoryTests {
         applicationRepository1 = objectMapper.readValue(contents, ApplicationRepository::class.java)
 
         contents = mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(applicationRepository2))
@@ -172,7 +185,7 @@ class ApplicationRepositoryTests {
 
         // duplicate check
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(applicationRepository2))
@@ -181,7 +194,7 @@ class ApplicationRepositoryTests {
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationCannotCreateObjectWithExistingId)))
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(applicationRepository3))
@@ -192,13 +205,13 @@ class ApplicationRepositoryTests {
 
         // load applicationRepository
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Repositories + applicationRepository1.id)
+            get(_repositoriesEntryPoint + applicationRepository1.id)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories)
+            post(_repositoriesEntryPoint)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(applicationRepository2))
@@ -206,14 +219,14 @@ class ApplicationRepositoryTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Repositories + applicationRepository1.id)
+            get(_repositoriesEntryPoint + applicationRepository1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         var aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View, ApplicationPermission.Modify)))
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories + applicationRepository1.id + "/permissions/add")
+            post(_repositoriesEntryPoint + applicationRepository1.id + "/permissions/add")
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -221,7 +234,7 @@ class ApplicationRepositoryTests {
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories + applicationRepository1.id + "/permissions/add")
+            post(_repositoriesEntryPoint + applicationRepository1.id + "/permissions/add")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -229,7 +242,7 @@ class ApplicationRepositoryTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Repositories + applicationRepository1.id)
+            get(_repositoriesEntryPoint + applicationRepository1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
@@ -237,7 +250,7 @@ class ApplicationRepositoryTests {
 
         aclRequest = listOf(ApplicationAclPermissionRequest ("user", listOf(ApplicationPermission.View)))
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories + applicationRepository1.id + "/permissions/remove")
+            post(_repositoriesEntryPoint + applicationRepository1.id + "/permissions/remove")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(aclRequest))
@@ -245,16 +258,16 @@ class ApplicationRepositoryTests {
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Repositories + applicationRepository1.id)
+            get(_repositoriesEntryPoint + applicationRepository1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
-            .andExpect(status().isForbidden)
+            .andExpect(status().isOk)
 
         // update
         applicationRepository1.description = "updated"
 
         contents = mvc.perform(
-            put(ApplicationControllerEntryPoints.Repositories)
+            put(_repositoriesEntryPoint)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(applicationRepository1))
@@ -266,19 +279,19 @@ class ApplicationRepositoryTests {
 
         // change the owner
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Repositories + applicationRepository2.id)
+            get(_repositoriesEntryPoint + applicationRepository2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            post(ApplicationControllerEntryPoints.Repositories + applicationRepository2.id + "/permissions/change-owner/user")
+            post(_repositoriesEntryPoint + applicationRepository2.id + "/permissions/change-owner/user")
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Repositories + applicationRepository2.id)
+            get(_repositoriesEntryPoint + applicationRepository2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
@@ -286,19 +299,19 @@ class ApplicationRepositoryTests {
 
         // delete
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.Repositories + applicationRepository1.id)
+            delete(_repositoriesEntryPoint + applicationRepository1.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isForbidden)
 
         mvc.perform(
-            delete(ApplicationControllerEntryPoints.Repositories + applicationRepository2.id)
+            delete(_repositoriesEntryPoint + applicationRepository2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isOk)
 
         mvc.perform(
-            get(ApplicationControllerEntryPoints.Repositories + applicationRepository2.id)
+            get(_repositoriesEntryPoint + applicationRepository2.id)
                 .header("Authorization", userLogin.tokenType + " " + userLogin.accessToken)
             )
             .andExpect(status().isNotFound)

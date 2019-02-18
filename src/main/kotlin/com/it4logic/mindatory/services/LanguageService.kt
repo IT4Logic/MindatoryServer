@@ -20,14 +20,18 @@
 
 package com.it4logic.mindatory.services
 
-//import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-//import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
+import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.model.ApplicationRepositoryMLCRepository
+import com.it4logic.mindatory.model.CompanyMLCRepository
+import com.it4logic.mindatory.model.SolutionMLCRepository
 import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.mlc.LanguageRepository
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
-import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 
@@ -36,23 +40,99 @@ class LanguageService : ApplicationBaseService<Language>() {
   @Autowired
   private lateinit var languageRepository: LanguageRepository
 
-  @Autowired
-  protected lateinit var securityAclService: SecurityAclService
+  @Autowired protected lateinit var solutionMLCRepository: SolutionMLCRepository
+  @Autowired protected lateinit var applicationRepositoryMLCRepository: ApplicationRepositoryMLCRepository
+  @Autowired protected lateinit var companyMLCRepository: CompanyMLCRepository
 
   override fun repository(): ApplicationBaseRepository<Language> = languageRepository
 
   override fun type(): Class<Language> = Language::class.java
 
-  override fun useAcl() : Boolean = true
-
-  override fun securityAclService() : SecurityAclService? = securityAclService
+  override fun beforeCreate(target: Language) {
+    changeDefault(target)
+  }
+  override fun beforeUpdate(target: Language) {
+    changeDefault(target)
+  }
 
   override fun beforeDelete(target: Language) {
-    // todo
-    // check if the language is default
-    // check if the language is used
-//    val count = repoRepository.countByLanguageId(target.id)
-//    if(count > 0)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationLanguageHasRepository)
+    checkForDelete(target.id)
+    checkForUsages(target.id)
+  }
+
+  /**
+   * Change the default language
+   * @param target Language object
+   */
+  fun changeDefault(target: Language) {
+    if(!target.default)
+      return
+    val languages = languageRepository.findAllByDefault(true)
+    languages.forEach { it.default =  false }
+    languageRepository.saveAll(languages)
+  }
+
+  /**
+   * Finds language according to the given locale, or load the default language, otherwise a suitable exception will be raised
+   * @param locale Language locale
+   * @return Language object according to the given locale, or the default language object
+   */
+  fun findLanguageByLocaleOrDefault(locale: String?): Language {
+    if(locale == null)
+      return languageRepository.findOneByDefault(true).orElseThrow { ApplicationObjectNotFoundException(-1, ApplicationErrorCodes.NotFoundDefaultLanguage) }
+    return languageRepository.findOneByLocale(locale).orElseThrow { ApplicationObjectNotFoundException(locale, type().simpleName.toLowerCase()) }
+  }
+
+  /**
+   * Deletes language and its all related translations from all objects
+   *
+   * @param target Object instance
+   */
+  fun forceDelete(target: Language) {
+    if(useAcl() && SecurityContextHolder.getContext().authentication != null) {
+      securityAclService()?.deleteAcl(target)
+    }
+    checkForDelete(target.id)
+    deleteRelatedContents(target.id)
+    repository().delete(target)
+    repository().flush()
+  }
+
+  /**
+   * Check if we can delete this language, if no a suitable exception will be raised
+   * @param id Language Id
+   */
+  private fun checkForDelete(id: Long) {
+    val obj = findById(id)
+    if(obj.default)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotDeleteDefaultLanguage)
+
+    val count = repository().count()
+    if(count <= 1)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationAtLeastOneLanguageInSystem)
+  }
+
+  /**
+   * Check if the language has any usage (i.e. related contents), if yes a suitable exception will be raised
+   * @param id Language Id
+   */
+  private fun checkForUsages(id: Long) {
+    var count = solutionMLCRepository.countByLanguageId(id)
+    if(count > 0)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationLanguageHasRelatedContents)
+
+    count = applicationRepositoryMLCRepository.countByLanguageId(id)
+    if(count > 0)
+      throw ApplicationValidationException(ApplicationErrorCodes.ValidationLanguageHasRelatedContents)
+  }
+
+  /**
+   * Delete all related language contents (usage)
+   * @param id Language Id
+   */
+  fun deleteRelatedContents(id: Long) {
+    applicationRepositoryMLCRepository.deleteAllByLanguageId(id)
+    solutionMLCRepository.deleteAllByLanguageId(id)
+    companyMLCRepository.deleteAllByLanguageId(id)
   }
 }

@@ -20,18 +20,16 @@
 
 package com.it4logic.mindatory.services
 
-import com.it4logic.mindatory.model.Company
-import com.it4logic.mindatory.model.CompanyRepository
+import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.mlc.LanguageManager
+import com.it4logic.mindatory.model.*
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
-import javax.transaction.NotSupportedException
 import javax.transaction.Transactional
+import kotlin.reflect.KClass
 
 
 @Service
@@ -40,9 +38,37 @@ class CompanyService : ApplicationBaseService<Company>() {
   @Autowired
   private lateinit var companyRepository: CompanyRepository
 
+  @Autowired
+  protected lateinit var languageManager: LanguageManager
+
+  @Autowired
+  private lateinit var mlcRepository: CompanyMLCRepository
+
   override fun repository(): ApplicationBaseRepository<Company> = companyRepository
 
   override fun type(): Class<Company> = Company::class.java
 
-  fun findFirst(): Company = repository().findAll()[0]
+  override fun multipleLanguageContentRepository() : CompanyMLCRepository = mlcRepository
+
+  override fun multipleLanguageContentType() : KClass<*> = CompanyMultipleLanguageContent::class
+
+  fun findFirst(): Company {
+    val obj = repository().findAll()[0]
+    mlcService()?.load(obj)
+    return obj
+  }
+
+  override fun beforeCreate(target: Company) {
+    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+    if(result.isNotEmpty()) {
+      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateCompanyName)
+    }
+  }
+
+  override fun beforeUpdate(target: Company) {
+    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+    if(result.isNotEmpty()) {
+      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateCompanyName)
+    }
+  }
 }

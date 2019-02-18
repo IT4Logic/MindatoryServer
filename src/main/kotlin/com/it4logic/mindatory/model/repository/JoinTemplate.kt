@@ -21,11 +21,14 @@
 package com.it4logic.mindatory.model.repository
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -42,12 +45,13 @@ import javax.validation.constraints.Size
 ])
 data class JoinTemplate (
     @get: NotBlank
-    @get: Size(min = 2, max = 100)
+    @get: Size(min = 2, max = 255)
     @Column(nullable = false, length = 255)
     var identifier: String,
 
     @get: Size(max = 255)
-    @Column(length = 255)
+    @get: MultipleLanguageContent
+    @Transient
     var description: String = "",
 
     @JsonIgnore
@@ -55,10 +59,12 @@ data class JoinTemplate (
     var versions: MutableList<JoinTemplateVersion> = mutableListOf(),
 
     @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "repository_id", nullable = false)
     var repository: ApplicationRepository? = null,
 
+    @get: MultipleLanguageContent
     @ManyToOne(optional=true)
     @JoinColumn(name = "solution_id")
     var solution: Solution? = null
@@ -83,3 +89,21 @@ data class JoinTemplate (
  */
 @RepositoryRestResource(exported = false)
 interface JoinTemplateRepository : ApplicationRepositoryBaseRepository<JoinTemplate>
+
+
+/**
+ * Multiple Language Content support entity
+ */
+@Audited
+@Entity
+@EntityListeners(AuditingEntityListener::class)
+@Table(name = "t_join_template_mlcs", uniqueConstraints = [
+    (UniqueConstraint(name = ApplicationConstraintCodes.JoinTemplateMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+])
+class JoinTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+
+/**
+ * Multiple Language Content support Repository
+ */
+@RepositoryRestResource(exported = false)
+interface JoinTemplateMLCRepository : MultipleLanguageContentBaseEntityRepository<JoinTemplateMultipleLanguageContent>

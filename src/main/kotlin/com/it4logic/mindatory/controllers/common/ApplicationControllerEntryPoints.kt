@@ -26,13 +26,18 @@ package com.it4logic.mindatory.controllers.common
 interface ApplicationControllerEntryPoints {
     companion object {
         const val Authentication: String = "/auth/"
+
         const val Languages : String = "/api/mlc/"
-        const val Company: String = "/api/company"
+
+        const val Company: String = "/api/company/"
+
         const val SecurityRoles: String = "/api/security/roles/"
         const val SecurityGroups: String = "/api/security/groups/"
         const val SecurityUsers: String = "/api/security/users/"
         const val SecurityUserProfile: String = "/api/security/profile/"
+
         const val Solutions: String = "/api/solutions/"
+
         const val Repositories: String = "/api/repositories/"
         const val Stereotypes: String = "/api/repository/stereotypes/"
         const val AttributeTemplates: String = "/api/repository/attribute-templates/"

@@ -22,9 +22,10 @@ package com.it4logic.mindatory.controllers.common
 
 import com.it4logic.mindatory.exceptions.ApplicationAuthorizationException
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.security.*
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.security.SecurityAclService
 import org.apache.commons.logging.Log
@@ -33,15 +34,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
 import org.springframework.data.rest.core.RepositoryConstraintViolationException
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PostAuthorize
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
 import org.springframework.validation.Errors
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import java.lang.Exception
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.validation.Valid
@@ -57,15 +54,29 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
     @Autowired
     lateinit var securityAclService: SecurityAclService
 
+    @Autowired
+    lateinit var languageService: LanguageService
+
+    @Autowired
+    lateinit var languageManager: LanguageManager
+
     protected abstract fun service() : ApplicationBaseService<T>
 
     protected abstract fun type() : Class<T>
 
     protected fun typeName() : String = type().typeName
 
+    // ====================================================== Language Operations ======================================================
+
+    protected fun propagateLanguage(locale: String?) {
+        val language = languageService.findLanguageByLocaleOrDefault(locale)
+        languageManager.currentLanguage = language
+    }
+
     // ====================================================== Basic Operations ======================================================
 
-    protected fun doGetInternal(filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any {
+    protected fun doGetInternal(locale: String, filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any {
+        propagateLanguage(locale)
         val result = when {
             request.parameterMap.isEmpty() -> service().findAll(null, null, null)
             request.parameterMap.containsKey("page") -> service().findAll(pageable, null, filter)
@@ -76,14 +87,16 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
         return result
     }
 
-    protected fun doGetInternal(id: Long, request: HttpServletRequest, response: HttpServletResponse) : T {
+    protected fun doGetInternal(locale: String?, id: Long, request: HttpServletRequest, response: HttpServletResponse) : T {
+        propagateLanguage(locale)
         val result = service().findById(id)
         service().refresh(result)
         response.status = HttpStatus.OK.value()
         return result
     }
 
-    protected fun doCreateInternal(target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T {
+    protected fun doCreateInternal(locale: String?, target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T {
+        propagateLanguage(locale)
         if(errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)
 
@@ -94,7 +107,8 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
         return result
     }
 
-    protected fun doUpdateInternal(target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): T {
+    protected fun doUpdateInternal(locale: String?, target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): T {
+        propagateLanguage(locale)
         if (errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)
 
@@ -104,7 +118,8 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
         return result
     }
 
-    protected fun doDeleteInternal(id: Long, request: HttpServletRequest, response: HttpServletResponse) {
+    protected fun doDeleteInternal(locale: String?, id: Long, request: HttpServletRequest, response: HttpServletResponse) {
+        propagateLanguage(locale)
         val target = service().findById(id)
         service().delete(target)
         response.status = HttpStatus.OK.value()
@@ -192,19 +207,19 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
 
     @GetMapping
     @ResponseBody
-    abstract fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+    abstract fun doGet(@PathVariable locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
 
     @GetMapping("{id}")
-    abstract fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) : T
+    abstract fun doGet(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) : T
 
     @PostMapping
-    abstract fun doCreate(@Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T
+    abstract fun doCreate(@PathVariable locale: String, @Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T
 
     @PutMapping
-    abstract fun doUpdate(@Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T
+    abstract fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T
 
     @DeleteMapping("{id}")
-    abstract fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
+    abstract fun doDelete(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
 
 
 }

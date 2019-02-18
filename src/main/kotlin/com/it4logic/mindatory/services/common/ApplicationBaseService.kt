@@ -118,7 +118,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    */
   fun findById(id: Long) : T {
     val target = repository().findById(id).orElseThrow { ApplicationObjectNotFoundException(id, type().simpleName.toLowerCase()) }
-    mlcService()?.load(target)
+    loadMLC(target)
     return target
   }
 
@@ -140,9 +140,9 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     validate(target)
     beforeCreate(target)
     val obj = repository().save(target)
-    mlcService()?.save(obj.id, target)
-    mlcService()?.load(obj)
+    saveMLC(obj, target)
     repository().flush()
+    loadMLC(obj)
     if(useAcl() && SecurityContextHolder.getContext().authentication != null) {
       securityAclService()?.createAcl(obj, SecurityContextHolder.getContext().authentication)
     }
@@ -163,9 +163,9 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     findById(target.id)
     beforeUpdate(target)
     val obj = repository().save(target)
-    mlcService()?.save(obj.id, target)
-    mlcService()?.load(obj)
+    saveMLC(obj, target)
     repository().flush()
+    loadMLC(obj)
     refresh(obj)
     afterUpdate(obj)
     return obj
@@ -192,9 +192,21 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     }
     beforeDelete(target)
     repository().delete(target)
-    mlcService()?.delete(target)
+    deleteMLC(target)
     repository().flush()
     afterDelete(target)
+  }
+
+  fun loadMLC(target: ApplicationEntityBase) {
+    mlcService()?.load(target)
+  }
+
+  fun saveMLC(savedObj: ApplicationEntityBase, target: ApplicationEntityBase) {
+    mlcService()?.save(savedObj, target)
+  }
+
+  fun deleteMLC(target: ApplicationEntityBase) {
+    mlcService()?.delete(target)
   }
 
   fun beforeCreate(target: T) {}

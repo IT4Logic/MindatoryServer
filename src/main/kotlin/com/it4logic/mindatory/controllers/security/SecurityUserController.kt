@@ -40,7 +40,7 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.SecurityUsers)
+@RequestMapping(ApplicationControllerEntryPoints.SecurityUsers + "{locale}/")
 class SecurityUserController : ApplicationBaseController<SecurityUser>() {
 
     @Autowired
@@ -53,27 +53,28 @@ class SecurityUserController : ApplicationBaseController<SecurityUser>() {
     @GetMapping
     @ResponseBody
     @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
-            = doGetInternal(filter, pageable, request, response)
+    override fun doGet(@PathVariable locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+            = doGetInternal(locale,filter, pageable, request, response)
 
     @GetMapping("{id}")
     @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-    override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
-            = doGetInternal(id, request, response)
+    override fun doGet(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
+            = doGetInternal(locale,id, request, response)
 
     @PostMapping
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminCreate}')")
-    override fun doCreate(@Valid @RequestBody target: SecurityUser, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
-            = doCreateInternal(target, errors, request, response)
+    override fun doCreate(@PathVariable locale: String, @Valid @RequestBody target: SecurityUser, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
+            = doCreateInternal(locale,target, errors, request, response)
 
     @PutMapping
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminModify}')")
-    override fun doUpdate(@Valid @RequestBody target: SecurityUser, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
-            = doUpdateInternal(target, errors, request, response)
+    override fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: SecurityUser, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityUser
+            = doUpdateInternal(locale,target, errors, request, response)
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-    override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
+    override fun doDelete(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
+            = doDeleteInternal(locale,id, request, response)
     
     @PostMapping("{id}/change-password")
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminModify}')")

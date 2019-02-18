@@ -23,8 +23,11 @@ package com.it4logic.mindatory.services.security
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.security.SecurityUser
+import com.it4logic.mindatory.model.security.SecurityUserMLCRepository
+import com.it4logic.mindatory.model.security.SecurityUserMultipleLanguageContent
 import com.it4logic.mindatory.model.security.SecurityUserRepository
 import com.it4logic.mindatory.security.ChangePasswordRequest
 import com.it4logic.mindatory.security.SecurityFactory
@@ -33,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.security.crypto.password.PasswordEncoder
 import javax.transaction.Transactional
+import kotlin.reflect.KClass
 
 
 @Service
@@ -44,9 +48,19 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
 
+    @Autowired
+    private lateinit var mlcRepository: SecurityUserMLCRepository
+
+    @Autowired
+    protected lateinit var languageManager: LanguageManager
+
     override fun repository(): ApplicationBaseRepository<SecurityUser> = userRepository
 
     override fun type(): Class<SecurityUser> = SecurityUser::class.java
+
+    override fun multipleLanguageContentRepository() : SecurityUserMLCRepository = mlcRepository
+
+    override fun multipleLanguageContentType() : KClass<*> = SecurityUserMultipleLanguageContent::class
 
     override fun beforeCreate(target: SecurityUser) {
         target.password = passwordEncoder.encode(target.password)
@@ -89,7 +103,9 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
      * @return SecurityUser object, or ApplicationObjectNotFoundException in case if the user username doesn't exist
      */
     fun findByUsername(username: String) : SecurityUser {
-        return userRepository.findByUsername(username).orElseThrow { ApplicationObjectNotFoundException(username, SecurityUser::class.java.simpleName.toLowerCase()) }
+        val obj = userRepository.findByUsername(username).orElseThrow { ApplicationObjectNotFoundException(username, SecurityUser::class.java.simpleName.toLowerCase()) }
+        loadMLC(obj)
+        return obj
     }
 
     /**
@@ -99,7 +115,10 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
      * @return SecurityUser objects list
      */
     fun findAllByGroupId(id: Long) : MutableList<SecurityUser> {
-        return userRepository.findAllByGroupId(id)
+        val objList = userRepository.findAllByGroupId(id)
+        for(obj in objList)
+            loadMLC(obj)
+        return objList
     }
 
     /**
@@ -109,7 +128,10 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
      * @return SecurityUser objects list
      */
     fun findAllByRoleId(id: Long) : MutableList<SecurityUser> {
-        return userRepository.findAllByRolesId(id)
+        val objList = userRepository.findAllByRolesId(id)
+        for(obj in objList)
+            loadMLC(obj)
+        return objList
     }
 
     /**
@@ -119,7 +141,9 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
      */
     fun getCurrentSecurityUser(): SecurityUser {
         val username = if(SecurityFactory.getCurrentUsername().isPresent) SecurityFactory.getCurrentUsername().get() else ""
-        return userRepository.findByUsername(username).orElseThrow { ApplicationObjectNotFoundException(username, SecurityUser::class.java.simpleName.toLowerCase()) }
+        val obj = userRepository.findByUsername(username).orElseThrow { ApplicationObjectNotFoundException(username, SecurityUser::class.java.simpleName.toLowerCase()) }
+        loadMLC(obj)
+        return obj
     }
 
     /**

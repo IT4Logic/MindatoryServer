@@ -46,7 +46,7 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.ArtifactTemplates)
+@RequestMapping(ApplicationControllerEntryPoints.ArtifactTemplates + "{locale}/")
 class ArtifactTemplateController : ApplicationBaseController<ArtifactTemplate>() {
 
     @Autowired
@@ -64,31 +64,38 @@ class ArtifactTemplateController : ApplicationBaseController<ArtifactTemplate>()
     @GetMapping
     @ResponseBody
     @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminView}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
-            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})")
-    override fun doGet(@RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
-            = doGetInternal(filter, pageable, request, response)
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionView})" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionCreate})" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionModify})" +
+            " or hasPermission(filterObject, ${ApplicationSecurityPermissions.PermissionDelete})" )
+    override fun doGet(@PathVariable locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+            = doGetInternal(locale,filter, pageable, request, response)
 
     @GetMapping("{id}")
     @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminView}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
-            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})")
-    override fun doGet(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
-            = doGetInternal(id, request, response)
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionView})" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionCreate})" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionModify})" +
+            " or hasPermission(returnObject, ${ApplicationSecurityPermissions.PermissionDelete})" )
+    override fun doGet(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
+            = doGetInternal(locale,id, request, response)
 
     @PostMapping
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}')")
-    override fun doCreate(@Valid @RequestBody target: ArtifactTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
-            = doCreateInternal(target, errors, request, response)
+    override fun doCreate(@PathVariable locale: String, @Valid @RequestBody target: ArtifactTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
+            = doCreateInternal(locale,target, errors, request, response)
 
     @PutMapping
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}')" +
             " or hasPermission(#target, ${ApplicationSecurityPermissions.PermissionModify})")
-    override fun doUpdate(@Valid @RequestBody target: ArtifactTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
-            = doUpdateInternal(target, errors, request, response)
+    override fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: ArtifactTemplate, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): ArtifactTemplate
+            = doUpdateInternal(locale,target, errors, request, response)
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.ArtifactTemplateAdminDelete}')" +
             " or hasPermission(#id, 'com.it4logic.mindatory.model.repository.ArtifactTemplate', ${ApplicationSecurityPermissions.PermissionDelete})")
-    override fun doDelete(@PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) = doDeleteInternal(id, request, response)
+    override fun doDelete(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
+            = doDeleteInternal(locale,id, request, response)
 
 
     // ====================================================== Attributes ======================================================

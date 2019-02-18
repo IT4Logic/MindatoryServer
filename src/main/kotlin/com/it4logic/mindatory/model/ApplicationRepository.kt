@@ -20,9 +20,12 @@
 
 package com.it4logic.mindatory.model
 
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationCompanyEntityBase
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -32,28 +35,29 @@ import javax.persistence.*
 
 
 /**
- * Solution entity that will be used as container for the whole application.
- * One database can have one or more solutions. Solution will act like a database but without the need to change the database and that will be at runtime.
+ * Application Repository entity that will be used as container for the whole application.
  */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_application_repositories", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositoryNameUniqueIndex, columnNames = ["name"])),
     (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositorySolutionUniqueIndex, columnNames = ["solution_id"]))
 ])
 data class ApplicationRepository (
     @get: NotBlank
     @get: Size(min = 2, max = 100)
-    @Column(nullable = false, length = 255)
+    @get: MultipleLanguageContent
+    @Transient
     var name: String,
 
     @get: Size(max = 255)
-    @Column(length = 255)
+    @get: MultipleLanguageContent
+    @Transient
     var description: String = "",
 
     var shared: Boolean = true,
 
+    @get: MultipleLanguageContent
     @ManyToOne(optional=true)
     @JoinColumn(name = "solution_id")
     var solution: Solution? = null
@@ -61,7 +65,26 @@ data class ApplicationRepository (
 ) : ApplicationCompanyEntityBase()
 
 /**
- * Solution Entity Rest Repository
+ * ApplicationRepository Entity Rest Repository
  */
 @RepositoryRestResource(exported = false)
 interface ApplicationRepositoryRepository : ApplicationSolutionBaseRepository<ApplicationRepository>
+
+
+/**
+ * Multiple Language Content support entity
+ */
+@Audited
+@Entity
+@EntityListeners(AuditingEntityListener::class)
+@Table(name = "t_app_repo_mlcs", uniqueConstraints = [
+    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositoryMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+])
+class ApplicationRepositoryMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+
+/**
+ * Multiple Language Content support Repository
+ */
+@RepositoryRestResource(exported = false)
+interface ApplicationRepositoryMLCRepository :
+    MultipleLanguageContentBaseEntityRepository<ApplicationRepositoryMultipleLanguageContent>
