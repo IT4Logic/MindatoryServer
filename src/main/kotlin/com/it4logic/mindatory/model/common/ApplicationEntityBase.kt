@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.GenericGenerator
 import org.springframework.data.annotation.CreatedBy
@@ -67,6 +68,28 @@ open class ApplicationEntityBase {
     @GenericGenerator(name = "UseExistingOrGenerateIdGenerator", strategy = "com.it4logic.mindatory.helpers.UseExistingOrGenerateIdGenerator")
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "UseExistingOrGenerateIdGenerator")
     open var id: Long = -1
+
+    open fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+
+    open fun addMLC(mlc: MultipleLanguageContentBaseEntity) {
+        val result = obtainMLCs().filter { it.id == mlc.id }
+        if(result.isNotEmpty())
+            return
+        obtainMLCs().add(mlc)
+    }
+
+    open fun removeMLC(mlc: MultipleLanguageContentBaseEntity) {
+        val result = obtainMLCs().filter { it.id == mlc.id }
+        if(result.isEmpty())
+            return
+        obtainMLCs().remove(mlc)
+    }
+
+    open fun copyMLCs(target: ApplicationEntityBase) {
+        for(mlc in target.obtainMLCs()) {
+            addMLC(mlc)
+        }
+    }
 }
 
 /**

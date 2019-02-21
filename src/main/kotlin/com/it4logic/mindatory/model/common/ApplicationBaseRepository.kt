@@ -34,7 +34,7 @@ import org.springframework.lang.Nullable
  * Base interface for common functionality for entity repositories
  */
 @NoRepositoryBean
-interface ApplicationBaseRepository<T> : JpaRepository<T, Long>, RevisionRepository<T, Long, Long>, JpaSpecificationExecutor<T>
+interface ApplicationBaseRepository<T> : ExtendedJpaRepository<T, Long>, JpaRepository<T, Long>, RevisionRepository<T, Long, Long>, JpaSpecificationExecutor<T>
 
 /**
  * Base interface for company common functionality for entity repositories

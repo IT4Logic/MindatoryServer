@@ -30,19 +30,19 @@ import org.springframework.data.jpa.domain.Specification
 /**
  * Implementation of [RSQLVisitor] visitor interface to generate JPA Specification from RSQL Node
  */
-class JpaRSQLVisitor<T> : RSQLVisitor<Specification<T>, Void> {
+class JpaRSQLVisitor<T> : RSQLVisitor<Specification<T>, Any> {
 
     private val builder: JpaRSQLSpecBuilder<T> = JpaRSQLSpecBuilder()
 
-    override fun visit(node: AndNode, param: Void?): Specification<T>? {
-        return builder.createSpecification(node)
+    override fun visit(node: AndNode, param: Any?): Specification<T>? {
+        return builder.createSpecification(node, param)
     }
 
-    override fun visit(node: OrNode, param: Void?): Specification<T>? {
-        return builder.createSpecification(node)
+    override fun visit(node: OrNode, param: Any?): Specification<T>? {
+        return builder.createSpecification(node, param)
     }
 
-    override fun visit(node: ComparisonNode, params: Void?): Specification<T>? {
-        return builder.createSpecification(node)
+    override fun visit(node: ComparisonNode, param: Any?): Specification<T>? {
+        return builder.createSpecification(node, param)
     }
 }

@@ -49,7 +49,7 @@ open class MultipleLanguageContentBaseEntity (
 
     @get: NotNull
     @Column(nullable = false)
-    open var parentId: Long = 0
+    open var parent: Long = 0
 
 ) : ApplicationEntityBase()
 
@@ -58,10 +58,10 @@ open class MultipleLanguageContentBaseEntity (
  */
 @NoRepositoryBean
 interface MultipleLanguageContentBaseEntityRepository<T : MultipleLanguageContentBaseEntity> : ApplicationBaseRepository<T> {
-    fun findOneByLanguageIdAndFieldNameAndParentId(langId: Long, fieldName: String, parentId: Long): Optional<T>
+    fun findOneByLanguageIdAndFieldNameAndParent(langId: Long, fieldName: String, parentId: Long): Optional<T>
     fun findAllByLanguageIdAndFieldNameAndContents(langId: Long, fieldName: String, contents: String): List<T>
-    fun findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(langId: Long, fieldName: String, contents: String, parentId: Long): List<T>
-    fun findAllByParentId(parentId: Long): List<T>
+    fun findAllByLanguageIdAndFieldNameAndContentsAndParentNot(langId: Long, fieldName: String, contents: String, parentId: Long): List<T>
+    fun findAllByParent(parentId: Long): List<T>
     fun countByLanguageId(langId: Long): Long
     fun deleteAllByLanguageId(langId: Long)
 }

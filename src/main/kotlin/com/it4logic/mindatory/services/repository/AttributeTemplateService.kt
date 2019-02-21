@@ -218,7 +218,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
     }
 
     override fun beforeUpdate(target: AttributeTemplate) {
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
         if(result.isNotEmpty()) {
             throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
         }

@@ -103,7 +103,7 @@ interface ArtifactTemplateRepository : ApplicationRepositoryBaseRepository<Artif
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_artifact_template_mlcs", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+    (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class ArtifactTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

@@ -59,9 +59,19 @@ data class SecurityRole (
 
         @Lob
         @JsonIgnore
-        var authorities: ByteArray? = null
+        var authorities: ByteArray? = null,
+
+        @OneToMany
+        @JoinColumn(name="parent", referencedColumnName="id")
+        @JsonIgnore
+        var mlcs: MutableList<SecurityRoleMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationCompanyEntityBase() {
+
+        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+                if(mlcs == null) mlcs = mutableListOf()
+                return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+        }
 
         /**
          * Converts permissions from encoded format into string array
@@ -139,7 +149,7 @@ interface SecurityRoleRepository : ApplicationCompanyBaseRepository<SecurityRole
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_security_role_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityRoleMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityRoleMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class SecurityRoleMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

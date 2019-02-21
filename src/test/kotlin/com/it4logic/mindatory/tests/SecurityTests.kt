@@ -244,38 +244,38 @@ class SecurityTests {
             )
                     .andExpect(status().isCreated)
         }
-//
-//        mvc.perform(
-//                get(_rolesEntryPointEn)
-//                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView}))
-//                        .param("filter","name=='*9'")
-//        )
-//                .andExpect(status().isOk)
-//                .andExpect(jsonPath("$", hasSize<Any>(1)))
-//
-//        mvc.perform(
-//                get(_rolesEntryPointEn)
-//                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView}))
-//                        .param("filter","name=='ROLE*'")
-//                        .param("page","0")
-//                        .param("size","9")
-//                        .param("sort","name,desc")
-//                        .param("sort","createdBy,asc")
-//        )
-//                .andExpect(status().isOk)
-//                .andExpect(jsonPath("$.content", hasSize<Any>(9)))
-//
-//        mvc.perform(
-//                get(_rolesEntryPointEn)
-//                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView}))
-//                        .param("filter","name=='ROLE*'")
-//                        .param("page","1")
-//                        .param("size","9")
-//                        .param("sort","name,desc")
-//                        .param("sort","createdBy,asc")
-//        )
-//                .andExpect(status().isOk)
-//                .andExpect(jsonPath("$.content", hasSize<Any>(3)))
+
+        mvc.perform(
+                get(_rolesEntryPointEn)
+                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView}))
+                        .param("filter","name=='*9'")
+        )
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$", hasSize<Any>(1)))
+
+        mvc.perform(
+                get(_rolesEntryPointEn)
+                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView}))
+                        .param("filter","name=='ROLE*'")
+                        .param("page","0")
+                        .param("size","9")
+                        .param("sort","name,desc")
+                        .param("sort","createdBy,asc")
+        )
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.content", hasSize<Any>(9)))
+
+        mvc.perform(
+                get(_rolesEntryPointEn)
+                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView}))
+                        .param("filter","name=='ROLE*'")
+                        .param("page","1")
+                        .param("size","9")
+                        .param("sort","name,desc")
+                        .param("sort","createdBy,asc")
+        )
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.content", hasSize<Any>(3)))
     }
 
     @Test
@@ -408,39 +408,37 @@ class SecurityTests {
                     .andExpect(status().isCreated)
         }
 
-        // todo
-//
-//        mvc.perform(
-//                get(_groupsEntryPointEn)
-//                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView}))
-//                .param("filter","name=='*9'")
-//            )
-//            .andExpect(status().isOk)
-//            .andExpect(jsonPath("$", hasSize<Any>(1)))
-//
-//        mvc.perform(
-//                get(_groupsEntryPointEn)
-//                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView}))
-//                .param("filter","name=='Group*'")
-//                .param("page","0")
-//                .param("size","9")
-//                .param("sort","name,desc")
-//                .param("sort","createdBy,asc")
-//            )
-//            .andExpect(status().isOk)
-//            .andExpect(jsonPath("$.content", hasSize<Any>(9)))
-//
-//        mvc.perform(
-//                get(_groupsEntryPointEn)
-//                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView}))
-//                .param("filter","name=='Group*'")
-//                .param("page","1")
-//                .param("size","9")
-//                .param("sort","name,desc")
-//                .param("sort","createdBy,asc")
-//            )
-//            .andExpect(status().isOk)
-//            .andExpect(jsonPath("$.content", hasSize<Any>(1)))
+        mvc.perform(
+                get(_groupsEntryPointEn)
+                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView}))
+                .param("filter","name=='*9'")
+            )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$", hasSize<Any>(1)))
+
+        mvc.perform(
+                get(_groupsEntryPointEn)
+                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView}))
+                .param("filter","name=='Group*'")
+                .param("page","0")
+                .param("size","9")
+                .param("sort","name,desc")
+                .param("sort","createdBy,asc")
+            )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content", hasSize<Any>(9)))
+
+        mvc.perform(
+                get(_groupsEntryPointEn)
+                .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView}))
+                .param("filter","name=='Group*'")
+                .param("page","1")
+                .param("size","9")
+                .param("sort","name,desc")
+                .param("sort","createdBy,asc")
+            )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content", hasSize<Any>(3)))
 
     }
 
@@ -593,39 +591,38 @@ class SecurityTests {
             )
                     .andExpect(status().isCreated)
         }
-        // todo
-//
-//        mvc.perform(
-//                get(_usersEntryPointEn)
-//                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView}))
-//                        .param("filter","username=='*9'")
-//        )
-//                .andExpect(status().isOk)
-//                .andExpect(jsonPath("$", hasSize<Any>(1)))
-//
-//        mvc.perform(
-//                get(_usersEntryPointEn)
-//                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView}))
-//                        .param("filter","fullName=='User*'")
-//                        .param("page","0")
-//                        .param("size","9")
-//                        .param("sort","fullName,desc")
-//                        .param("sort","createdBy,asc")
-//        )
-//                .andExpect(status().isOk)
-//                .andExpect(jsonPath("$.content", hasSize<Any>(9)))
-//
-//        mvc.perform(
-//                get(_usersEntryPointEn)
-//                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView}))
-//                        .param("filter","fullName=='User*'")
-//                        .param("page","1")
-//                        .param("size","9")
-//                        .param("sort","fullName,desc")
-//                        .param("sort","createdBy,asc")
-//        )
-//                .andExpect(status().isOk)
-//                .andExpect(jsonPath("$.content", hasSize<Any>(1)))
+
+        mvc.perform(
+                get(_usersEntryPointEn)
+                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView}))
+                        .param("filter","username=='*9'")
+        )
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$", hasSize<Any>(1)))
+
+        mvc.perform(
+                get(_usersEntryPointEn)
+                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView}))
+                        .param("filter","fullName=='User*'")
+                        .param("page","0")
+                        .param("size","9")
+                        .param("sort","fullName,desc")
+                        .param("sort","createdBy,asc")
+        )
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.content", hasSize<Any>(9)))
+
+        mvc.perform(
+                get(_usersEntryPointEn)
+                        .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView}))
+                        .param("filter","fullName=='User*'")
+                        .param("page","1")
+                        .param("size","9")
+                        .param("sort","fullName,desc")
+                        .param("sort","createdBy,asc")
+        )
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.content", hasSize<Any>(1)))
     }
 
     @Test

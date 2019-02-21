@@ -95,7 +95,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    * @return Objects list
    */
   fun findAll(pageable: Pageable?, sort: Sort?, filter: String?): Any {
-    val specs = QueryService.parse<T>(filter)
+    val specs = QueryService.parseFilter<T>(filter, null)
     return if (specs != null && pageable != null)
       repository().findAll(specs, pageable)
     else if (specs != null && sort != null)
@@ -116,9 +116,10 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    * @param id Objects Id
    * @return Objectobject, or ApplicationObjectNotFoundException in case if the object Id doesn't exist
    */
-  fun findById(id: Long) : T {
+  fun findById(id: Long, loadMLC: Boolean = true) : T {
     val target = repository().findById(id).orElseThrow { ApplicationObjectNotFoundException(id, type().simpleName.toLowerCase()) }
-    loadMLC(target)
+    if(loadMLC)
+      loadMLC(target)
     return target
   }
 
@@ -140,13 +141,13 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     validate(target)
     beforeCreate(target)
     val obj = repository().save(target)
+//    repository().flush()
     saveMLC(obj, target)
-    repository().flush()
+    refresh(obj)
     loadMLC(obj)
     if(useAcl() && SecurityContextHolder.getContext().authentication != null) {
       securityAclService()?.createAcl(obj, SecurityContextHolder.getContext().authentication)
     }
-    refresh(obj)
     afterCreate(obj)
     return obj
   }
@@ -160,13 +161,14 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
   fun update(target: T): T {
     validate(target)
     // to make sure that the object exists
-    findById(target.id)
+    var obj = findById(target.id, false)
+    target.copyMLCs(obj)
     beforeUpdate(target)
-    val obj = repository().save(target)
+    obj = repository().save(target)
     saveMLC(obj, target)
     repository().flush()
-    loadMLC(obj)
     refresh(obj)
+    loadMLC(obj)
     afterUpdate(obj)
     return obj
   }
@@ -191,9 +193,9 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
       securityAclService()?.deleteAcl(target)
     }
     beforeDelete(target)
-    repository().delete(target)
     deleteMLC(target)
     repository().flush()
+    repository().delete(target)
     afterDelete(target)
   }
 

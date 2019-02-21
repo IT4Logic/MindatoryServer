@@ -20,10 +20,16 @@
 
 package com.it4logic.mindatory.query
 
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.query.RSQLSearchOperator
 import cz.jirutka.rsql.parser.RSQLParser
 import org.springframework.data.jpa.domain.Specification
 import cz.jirutka.rsql.parser.ast.RSQLOperators
+import org.springframework.data.domain.Sort
+import javax.persistence.criteria.JoinType
+import kotlin.reflect.KClass
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.memberProperties
 
 
 /**
@@ -37,13 +43,33 @@ abstract class QueryService {
          * @param query Query string
          * @return JPA Specification list
          */
-        fun <T>parse(query: String?): Specification<T>? {
+        fun <T>parseFilter(query: String?, param: Any?): Specification<T>? {
             if(query == null || query.isBlank())
                 return null
             val operators = RSQLOperators.defaultOperators()
             operators.addAll(RSQLSearchOperator.extendedOperators())
             val rootNode = RSQLParser(operators).parse(query)
-            return rootNode.accept(JpaRSQLVisitor())
+            return rootNode.accept(JpaRSQLVisitor(), param)
+        }
+
+        fun parseSort(klass: Class<*>, sort: Sort?): Sort {
+            val orders = mutableListOf<Sort.Order>()
+            val iterator = sort?.iterator()
+            if (iterator != null) {
+                for(e in iterator)  {
+                    val memberProperty = klass.kotlin.memberProperties.filter { it.name ==  e.property}
+                    if(!memberProperty.isEmpty()) {
+                        val result = memberProperty[0].getter.findAnnotation<MultipleLanguageContent>()
+                        if(result != null) {
+//                            val pAttr = managedType.getDeclaredList("mlcs")
+//                            val join = startRoot.join(pAttr, JoinType.LEFT)
+//                            return createPredicate(join, builder, "contents")
+                        }
+                    } else
+                        orders.add(orders.size, e)
+                }
+            }
+            return Sort.by(orders)
         }
     }
 }

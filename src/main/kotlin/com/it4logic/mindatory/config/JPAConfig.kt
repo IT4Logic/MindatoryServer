@@ -21,6 +21,7 @@
 package com.it4logic.mindatory.config
 
 //import com.it4logic.svs.security.SecurityFactory
+import com.it4logic.mindatory.model.common.ExtendedJpaRepositoryImpl
 import com.it4logic.mindatory.security.SecurityFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -38,7 +39,10 @@ import java.util.*
  */
 @Configuration
 @EnableJpaAuditing
-@EnableJpaRepositories(repositoryFactoryBeanClass = EnversRevisionRepositoryFactoryBean::class, basePackages = ["com.it4logic.mindatory"])
+@EnableJpaRepositories(
+    repositoryFactoryBeanClass = EnversRevisionRepositoryFactoryBean::class,
+    repositoryBaseClass = ExtendedJpaRepositoryImpl::class,
+    basePackages = ["com.it4logic.mindatory"])
 class JpaConfig {
     /**
      * Bean generates spring security audit aware implementation. See [AuditorAware] for more information.

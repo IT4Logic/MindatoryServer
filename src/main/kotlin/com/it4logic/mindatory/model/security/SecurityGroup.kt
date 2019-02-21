@@ -20,6 +20,7 @@
 
 package com.it4logic.mindatory.model.security
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationCompanyBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationCompanyEntityBase
@@ -47,9 +48,19 @@ data class SecurityGroup (
         @get: Size(max = 255)
         @get: MultipleLanguageContent
         @Transient
-        var description: String = ""
+        var description: String = "",
 
-) : ApplicationCompanyEntityBase()
+        @OneToMany
+        @JoinColumn(name="parent", referencedColumnName="id")
+        @JsonIgnore
+        var mlcs: MutableList<SecurityGroupMultipleLanguageContent> = mutableListOf()
+
+) : ApplicationCompanyEntityBase() {
+        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+                if(mlcs == null) mlcs = mutableListOf()
+                return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+        }
+}
 
 
 /**
@@ -66,7 +77,7 @@ interface SecurityGroupRepository : ApplicationCompanyBaseRepository<SecurityGro
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_security_group_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityGroupMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityGroupMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class SecurityGroupMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

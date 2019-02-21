@@ -78,9 +78,10 @@ class SecurityUserController : ApplicationBaseController<SecurityUser>() {
     
     @PostMapping("{id}/change-password")
     @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityUserAdminModify}')")
-    fun doChangeUserPassword(@PathVariable id: Long, @Valid @RequestBody changePasswordRequest: ChangePasswordRequest, errors: Errors) {
+    fun doChangeUserPassword(@PathVariable locale: String, @PathVariable id: Long, @Valid @RequestBody changePasswordRequest: ChangePasswordRequest, errors: Errors) {
         if (errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)
+        propagateLanguage(locale)
         securityUserService.changeUserPassword(id, changePasswordRequest)
     }
 }

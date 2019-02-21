@@ -38,9 +38,9 @@ class JpaRSQLSpecBuilder<T> {
      * @param node RSQL Node
      * @return JPA Specification
      */
-    fun createSpecification(node: Node): Specification<T>? {
+    fun createSpecification(node: Node, param: Any?): Specification<T>? {
         return when (node) {
-            is LogicalNode -> createSpecificationFromLogicalNode(node)
+            is LogicalNode -> createSpecificationFromLogicalNode(node, param)
             is ComparisonNode -> createSpecificationFromComparisonNode(node)
             else -> null
         }
@@ -52,10 +52,10 @@ class JpaRSQLSpecBuilder<T> {
      * @param logicalNode RSQL LogicalNode
      * @return JPA Specification
      */
-    private fun createSpecificationFromLogicalNode(logicalNode: LogicalNode): Specification<T> {
+    private fun createSpecificationFromLogicalNode(logicalNode: LogicalNode, param: Any?): Specification<T> {
         val specs = ArrayList<Specification<T>>()
         for (node in logicalNode.children) {
-            val temp = createSpecification(node)
+            val temp = createSpecification(node, param)
             if (temp != null)
                 specs.add(temp)
         }

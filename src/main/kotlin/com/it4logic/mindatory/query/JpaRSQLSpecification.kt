@@ -20,13 +20,15 @@
 
 package com.it4logic.mindatory.query
 
-import com.it4logic.mindatory.query.RSQLSearchOperator
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import org.springframework.data.jpa.domain.Specification
 import cz.jirutka.rsql.parser.ast.ComparisonOperator
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.persistence.criteria.*
 import javax.persistence.metamodel.ManagedType
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.memberProperties
 
 
 /**
@@ -59,13 +61,22 @@ class JpaRSQLSpecification<T> (
      */
     private fun createPredicate(startRoot: Root<T>, path: Path<Any>, managedType: ManagedType<Any>, query: CriteriaQuery<*>, builder: CriteriaBuilder, property: String): Predicate? {
         val graph = property.split(".")
-        if(graph.size == 1)
+        if(graph.size == 1) {
+            val memberProperty = path.javaType.kotlin.memberProperties.filter { it.name ==  property}
+            if(!memberProperty.isEmpty()) {
+                val result = memberProperty[0].getter.findAnnotation<MultipleLanguageContent>()
+                if(result != null) {
+                    val pAttr = managedType.getDeclaredList("mlcs")
+                    val join = startRoot.join(pAttr, JoinType.LEFT)
+                    return createPredicate(join, builder, "contents")
+                }
+            }
             return createPredicate(path, builder, property)
+        }
 
         val attr = managedType.getAttribute(graph[0])
         when {
             attr.isAssociation -> {
-
                 val sAttr = managedType.getSingularAttribute(graph[0])
                 val attrPath = path.get(sAttr)
                 startRoot.join(sAttr, JoinType.LEFT)
@@ -74,6 +85,14 @@ class JpaRSQLSpecification<T> (
             }
             attr.isCollection -> {
                 //TODO to be implemented later on when needed
+
+//                when(pAttr?.collectionType) {
+//                    PluralAttribute.CollectionType.COLLECTION -> startRoot.join(managedType.getDeclaredCollection("mlcs"), JoinType.LEFT)
+//                    PluralAttribute.CollectionType.LIST -> startRoot.join(managedType.getDeclaredList("mlcs"), JoinType.LEFT)
+//                    PluralAttribute.CollectionType.MAP -> startRoot.join(managedType.getDeclaredMap("mlcs"), JoinType.LEFT)
+//                    PluralAttribute.CollectionType.SET -> startRoot.join(managedType.getDeclaredSet("mlcs"), JoinType.LEFT)
+//                }
+
             }
         }
 
@@ -90,7 +109,6 @@ class JpaRSQLSpecification<T> (
      * @return [Predicate] object equivalent to the input attribute condition
      */
     private fun createPredicate(rootPath: Path<*>, builder: CriteriaBuilder, property: String): Predicate? {
-
         val args = castArguments(rootPath, property)
         val argument = args[0]
         when (RSQLSearchOperator.getSimpleOperator(operator)) {

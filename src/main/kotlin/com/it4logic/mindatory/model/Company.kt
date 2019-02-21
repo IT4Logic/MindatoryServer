@@ -99,7 +99,7 @@ interface CompanyRepository : ApplicationBaseRepository<Company>
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_company_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.CompanyMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+        (UniqueConstraint(name = ApplicationConstraintCodes.CompanyMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class CompanyMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

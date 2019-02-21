@@ -20,6 +20,7 @@
 
 package com.it4logic.mindatory.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.*
 import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
@@ -50,7 +51,12 @@ data class Solution (
         @get: Size(max = 255)
         @get: MultipleLanguageContent
         @Transient
-        var description: String = ""
+        var description: String = "",
+
+        @OneToMany
+        @JoinColumn(name="parent", referencedColumnName="id")
+        @JsonIgnore
+        var mlcs: MutableList<SolutionMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationCompanyEntityBase()
 
@@ -67,7 +73,7 @@ interface SolutionRepository : ApplicationCompanyBaseRepository<Solution>
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_solution_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SolutionMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+        (UniqueConstraint(name = ApplicationConstraintCodes.SolutionMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class SolutionMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

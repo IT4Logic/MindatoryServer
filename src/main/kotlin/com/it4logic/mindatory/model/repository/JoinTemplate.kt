@@ -98,7 +98,7 @@ interface JoinTemplateRepository : ApplicationRepositoryBaseRepository<JoinTempl
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_join_template_mlcs", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.JoinTemplateMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+    (UniqueConstraint(name = ApplicationConstraintCodes.JoinTemplateMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class JoinTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

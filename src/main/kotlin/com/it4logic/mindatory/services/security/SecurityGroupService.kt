@@ -66,7 +66,7 @@ class SecurityGroupService : ApplicationBaseService<SecurityGroup>() {
     }
 
     override fun beforeUpdate(target: SecurityGroup) {
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
         if(result.isNotEmpty()) {
             throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityGroupName)
         }

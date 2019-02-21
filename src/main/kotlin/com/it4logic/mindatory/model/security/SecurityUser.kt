@@ -20,6 +20,7 @@
 
 package com.it4logic.mindatory.model.security
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
@@ -91,9 +92,19 @@ data class SecurityUser (
         @get: MultipleLanguageContent
         @ManyToMany(fetch = FetchType.EAGER)
         @JoinTable(name = "t_security_users_roles", joinColumns = [JoinColumn(name = "user_id")], inverseJoinColumns = [JoinColumn(name = "role_id")])
-        var roles: MutableList<SecurityRole> = mutableListOf()
+        var roles: MutableList<SecurityRole> = mutableListOf(),
+
+        @OneToMany(orphanRemoval=true)
+        @JoinColumn(name="parent", referencedColumnName="id")
+        @JsonIgnore
+        var mlcs: MutableList<SecurityUserMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationCompanyEntityBase() {
+        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+                if(mlcs == null) mlcs = mutableListOf()
+                return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+        }
+
         private fun isRoleExists(role: SecurityRole) : Boolean {
                 for(r in roles) {
                         if(r.id == role.id)
@@ -138,7 +149,7 @@ interface SecurityUserRepository : ApplicationCompanyBaseRepository<SecurityUser
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_security_user_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityUserMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityUserMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class SecurityUserMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

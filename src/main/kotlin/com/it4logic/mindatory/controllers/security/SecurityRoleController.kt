@@ -78,11 +78,20 @@ class SecurityRoleController : ApplicationBaseController<SecurityRole>() {
     @GetMapping("{id}/users")
     @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminView}', '${ApplicationSecurityPermissions.SecurityRoleAdminCreate}', '${ApplicationSecurityPermissions.SecurityRoleAdminModify}', '${ApplicationSecurityPermissions.SecurityRoleAdminDelete}') " +
             " and hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-    fun doGetRoleUsers(@PathVariable id: Long) : MutableList<SecurityUser> = securityRoleService.getRoleUsers(id)
+    fun doGetRoleUsers(@PathVariable locale: String, @PathVariable id: Long) : MutableList<SecurityUser> {
+        propagateLanguage(locale)
+        return securityRoleService.getRoleUsers(id)
+    }
 
     @PostMapping("{id}/users")
-    fun doAddUsersToRole(@PathVariable id: Long, @Valid @RequestBody userIdsList: List<Long>) = securityRoleService.addUsersToRole(id, userIdsList)
+    fun doAddUsersToRole(@PathVariable locale: String, @PathVariable id: Long, @Valid @RequestBody userIdsList: List<Long>) {
+        propagateLanguage(locale)
+        securityRoleService.addUsersToRole(id, userIdsList)
+    }
 
     @DeleteMapping("{id}/users")
-    fun doDeleteUsersFromRole(@PathVariable id: Long, @Valid @RequestBody userIdsList: List<Long>) = securityRoleService.removeUsersFromRole(id, userIdsList)
+    fun doDeleteUsersFromRole(@PathVariable locale: String, @PathVariable id: Long, @Valid @RequestBody userIdsList: List<Long>) {
+        propagateLanguage(locale)
+        securityRoleService.removeUsersFromRole(id, userIdsList)
+    }
 }

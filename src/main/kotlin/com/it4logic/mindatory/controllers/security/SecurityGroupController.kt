@@ -77,8 +77,14 @@ class SecurityGroupController : ApplicationBaseController<SecurityGroup>() {
     @GetMapping("{id}/users")
     @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityGroupAdminView}', '${ApplicationSecurityPermissions.SecurityGroupAdminCreate}', '${ApplicationSecurityPermissions.SecurityGroupAdminModify}', '${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')" +
             " and hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-    fun doGetGroupUsers(@PathVariable id: Long) : MutableList<SecurityUser> = securityGroupService.getGroupUsers(id)
+    fun doGetGroupUsers(@PathVariable locale: String, @PathVariable id: Long) : MutableList<SecurityUser> {
+        propagateLanguage(locale)
+        return securityGroupService.getGroupUsers(id)
+    }
 
     @PostMapping("{id}/users")
-    fun doAssignUsersToGroup(@PathVariable id: Long, @Valid @RequestBody userIdsList: List<Long>) = securityGroupService.assignUsersToGroup(id, userIdsList)
+    fun doAssignUsersToGroup(@PathVariable locale: String, @PathVariable id: Long, @Valid @RequestBody userIdsList: List<Long>) {
+        propagateLanguage(locale)
+        securityGroupService.assignUsersToGroup(id, userIdsList)
+    }
 }

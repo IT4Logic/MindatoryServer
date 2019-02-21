@@ -77,7 +77,7 @@ interface StereotypeRepository : ApplicationRepositoryBaseRepository<Stereotype>
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_stereotype_mlcs", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.StereotypeMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+    (UniqueConstraint(name = ApplicationConstraintCodes.StereotypeMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class StereotypeMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

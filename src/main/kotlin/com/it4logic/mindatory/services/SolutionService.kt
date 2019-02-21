@@ -72,7 +72,7 @@ class SolutionService : ApplicationBaseService<Solution>() {
   }
 
   override fun beforeUpdate(target: Solution) {
-    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentIdNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
     if(result.isNotEmpty()) {
       throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSolutionName)
     }

@@ -104,7 +104,7 @@ interface AttributeTemplateRepository : ApplicationRepositoryBaseRepository<Attr
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_attribute_template_mlcs", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.AttributeTemplateMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+    (UniqueConstraint(name = ApplicationConstraintCodes.AttributeTemplateMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class AttributeTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 

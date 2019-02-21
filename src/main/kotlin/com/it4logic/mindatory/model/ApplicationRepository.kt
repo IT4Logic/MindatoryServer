@@ -78,7 +78,7 @@ interface ApplicationRepositoryRepository : ApplicationSolutionBaseRepository<Ap
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_app_repo_mlcs", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositoryMCLUniqueIndex, columnNames = ["parentId", "languageId", "fieldName"]))
+    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositoryMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class ApplicationRepositoryMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
