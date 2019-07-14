@@ -20,8 +20,9 @@
 
 package com.it4logic.mindatory.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
-import com.it4logic.mindatory.model.common.ApplicationCompanyEntityBase
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
@@ -29,6 +30,7 @@ import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityReposit
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
@@ -40,29 +42,46 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_application_repositories", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositorySolutionUniqueIndex, columnNames = ["solution_id"]))
-])
-data class ApplicationRepository (
-    @get: NotBlank
-    @get: Size(min = 2, max = 100)
-    @get: MultipleLanguageContent
-    @Transient
-    var name: String,
+@Table(
+	name = "t_app_repo", uniqueConstraints = [
+		(UniqueConstraint(
+			name = ApplicationConstraintCodes.ApplicationRepositorySolutionUniqueIndex,
+			columnNames = ["solution_id"]
+		))
+	]
+)
+data class ApplicationRepository(
+	@get: NotBlank
+	@get: Size(min = 2, max = 100)
+	@get: MultipleLanguageContent
+	@Transient
+	var name: String,
 
-    @get: Size(max = 255)
-    @get: MultipleLanguageContent
-    @Transient
-    var description: String = "",
+	@get: Size(max = 255)
+	@get: MultipleLanguageContent
+	@Transient
+	var description: String = "",
 
-    var shared: Boolean = true,
+	var shared: Boolean = true,
 
-    @get: MultipleLanguageContent
-    @ManyToOne(optional=true)
-    @JoinColumn(name = "solution_id")
-    var solution: Solution? = null
+	@get: MultipleLanguageContent
+	@ManyToOne(optional = true)
+	@JoinColumn(name = "solution_id")
+	var solution: Solution? = null,
 
-) : ApplicationCompanyEntityBase()
+	@NotAudited
+	@OneToMany
+	@JoinColumn(name = "parent", referencedColumnName = "id")
+	@JsonIgnore
+	var mlcs: MutableList<ApplicationRepositoryMultipleLanguageContent> = mutableListOf()
+
+) : ApplicationMLCEntityBase() {
+	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+		if (mlcs == null)
+			mlcs = mutableListOf()
+		return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+	}
+}
 
 /**
  * ApplicationRepository Entity Rest Repository
@@ -70,16 +89,20 @@ data class ApplicationRepository (
 @RepositoryRestResource(exported = false)
 interface ApplicationRepositoryRepository : ApplicationSolutionBaseRepository<ApplicationRepository>
 
-
 /**
  * Multiple Language Content support entity
  */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_app_repo_mlcs", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositoryMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
-])
+@Table(
+	name = "t_app_repo_mlcs", uniqueConstraints = [
+		(UniqueConstraint(
+			name = ApplicationConstraintCodes.ApplicationRepositoryMCLUniqueIndex,
+			columnNames = ["parent", "languageId", "fieldName"]
+		))
+	]
+)
 class ApplicationRepositoryMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**
@@ -87,4 +110,4 @@ class ApplicationRepositoryMultipleLanguageContent : MultipleLanguageContentBase
  */
 @RepositoryRestResource(exported = false)
 interface ApplicationRepositoryMLCRepository :
-    MultipleLanguageContentBaseEntityRepository<ApplicationRepositoryMultipleLanguageContent>
+	MultipleLanguageContentBaseEntityRepository<ApplicationRepositoryMultipleLanguageContent>

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -37,50 +37,60 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 class SolutionService : ApplicationBaseService<Solution>() {
-  @Autowired
-  private lateinit var solutionRepository: SolutionRepository
+	@Autowired
+	private lateinit var solutionRepository: SolutionRepository
 
-  @Autowired
-  private lateinit var repoRepository: ApplicationRepositoryRepository
+	@Autowired
+	private lateinit var repoRepository: ApplicationRepositoryRepository
 
-  @Autowired
-  private lateinit var mlcRepository: SolutionMLCRepository
+	@Autowired
+	private lateinit var mlcRepository: SolutionMLCRepository
 
-  @Autowired
-  protected lateinit var securityAclService: SecurityAclService
+	@Autowired
+	protected lateinit var securityAclService: SecurityAclService
 
-  @Autowired
-  protected lateinit var languageManager: LanguageManager
+	@Autowired
+	protected lateinit var languageManager: LanguageManager
 
-  override fun repository(): ApplicationBaseRepository<Solution> = solutionRepository
+	override fun repository(): ApplicationBaseRepository<Solution> = solutionRepository
 
-  override fun type(): Class<Solution> = Solution::class.java
+	override fun type(): Class<Solution> = Solution::class.java
 
-  override fun useAcl() : Boolean = true
+	override fun useAcl(): Boolean = false
 
-  override fun securityAclService() : SecurityAclService? = securityAclService
+	override fun securityAclService(): SecurityAclService? = securityAclService
 
-  override fun multipleLanguageContentRepository() : SolutionMLCRepository = mlcRepository
+	override fun multipleLanguageContentRepository(): SolutionMLCRepository = mlcRepository
 
-  override fun multipleLanguageContentType() : KClass<*> = SolutionMultipleLanguageContent::class
+	override fun multipleLanguageContentType(): KClass<*> = SolutionMultipleLanguageContent::class
 
-  override fun beforeCreate(target: Solution) {
-    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
-    if(result.isNotEmpty()) {
-      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSolutionName)
-    }
-  }
+	override fun beforeCreate(target: Solution) {
+		//    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+		val obj = result.find { it.contents == target.name }
+		//if(result.isNotEmpty()) {
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSolutionName)
+		}
+	}
 
-  override fun beforeUpdate(target: Solution) {
-    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
-    if(result.isNotEmpty()) {
-      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSolutionName)
-    }
-  }
+	override fun beforeUpdate(target: Solution) {
+		//        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
+			languageManager.currentLanguage.id,
+			"name",
+			target.id
+		)
+		val obj = result.find { it.contents == target.name }
+		//if(result.isNotEmpty()) {
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSolutionName)
+		}
+	}
 
-  override fun beforeDelete(target: Solution) {
-    val count = repoRepository.countBySolutionId(target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationSolutionHasRepository)
-  }
+	override fun beforeDelete(target: Solution) {
+		val count = repoRepository.countBySolutionId(target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationSolutionHasRepository)
+	}
 }

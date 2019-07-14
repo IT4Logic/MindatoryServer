@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -24,8 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.mlc.Language
-import com.it4logic.mindatory.model.ApplicationRepository
-import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
@@ -154,9 +152,9 @@ class SolutionTests {
 
     @Test
     fun `Solutions Management`() {
-        var solution1 = Solution("Solution A")
-        var solution2 = Solution("Solution B")
-        val solution3 = Solution("Solution B")
+        var solution1 = SolutionTest("Solution A")
+        var solution2 = SolutionTest("Solution B")
+        val solution3 = SolutionTest("Solution B")
 
         // create solutions
         mvc.perform(post(_solutionsEntryPointEn).with(anonymous()))
@@ -171,13 +169,18 @@ class SolutionTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("Solution A")))
             .andReturn().response.contentAsString
-        solution1 = objectMapper.readValue(contents, Solution::class.java)
+        solution1 = objectMapper.readValue(contents, SolutionTest::class.java)
 
         mvc.perform(
             post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A", solution = solution1)))
+                .content(objectMapper.writeValueAsString(
+                    ApplicationRepositoryTest(
+                        "ApplicationRepository A",
+                        solution = solution1
+                    )
+                ))
             )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("ApplicationRepository A")))
@@ -191,7 +194,7 @@ class SolutionTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("Solution B")))
             .andReturn().response.contentAsString
-        solution2 = objectMapper.readValue(contents, Solution::class.java)
+        solution2 = objectMapper.readValue(contents, SolutionTest::class.java)
 
         // duplicate check
         mvc.perform(
@@ -285,7 +288,7 @@ class SolutionTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.description", equalTo("updated")))
             .andReturn().response.contentAsString
-        solution1 = objectMapper.readValue(contents, Solution::class.java)
+        solution1 = objectMapper.readValue(contents, SolutionTest::class.java)
 
         // getting in Arabic
         mvc.perform(
@@ -307,7 +310,7 @@ class SolutionTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.description", equalTo("محدث")))
             .andReturn().response.contentAsString
-        solution1 = objectMapper.readValue(contents, Solution::class.java)
+        solution1 = objectMapper.readValue(contents, SolutionTest::class.java)
 
         // change the owner
         mvc.perform(

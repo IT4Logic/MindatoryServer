@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -27,7 +27,7 @@ import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import com.it4logic.mindatory.mlc.MultipleLanguageContentService
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationEntityBase
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.query.QueryService
 import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,7 +47,7 @@ import kotlin.reflect.KClass
  */
 @Service
 @Transactional
-abstract class ApplicationBaseService<T : ApplicationEntityBase> {
+abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
   @Autowired
   protected lateinit var validator: Validator
 
@@ -70,8 +70,8 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
   protected fun multipleLanguageContentType() : KClass<*>? = null
 
   protected fun mlcService() : MultipleLanguageContentService? {
-    if(multipleLanguageContentRepository() == null || multipleLanguageContentType() == null)
-      return null
+//    if(multipleLanguageContentRepository() == null || multipleLanguageContentType() == null)
+//      return null
     multipleLanguageContentService.repository = multipleLanguageContentRepository() as MultipleLanguageContentBaseEntityRepository<MultipleLanguageContentBaseEntity>?
     multipleLanguageContentService.type = multipleLanguageContentType()
     return multipleLanguageContentService
@@ -96,7 +96,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
    */
   fun findAll(pageable: Pageable?, sort: Sort?, filter: String?): Any {
     val specs = QueryService.parseFilter<T>(filter, null)
-    return if (specs != null && pageable != null)
+    val result = if (specs != null && pageable != null)
       repository().findAll(specs, pageable)
     else if (specs != null && sort != null)
       repository().findAll(specs, sort)
@@ -108,6 +108,17 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
       repository().findAll(sort)
     else
       repository().findAll()
+
+//    val filtered = result.distinctBy { it.id }
+//    if( (pageable?.sort != null && pageable.sort.isSorted) || (sort != null && sort.isSorted) ) {
+//      filtered.sortedBy { "${it.id}" }
+//    }
+
+    result.forEach {
+      loadMLC(it)
+    }
+
+    return result
   }
 
   /**
@@ -141,7 +152,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     validate(target)
     beforeCreate(target)
     val obj = repository().save(target)
-//    repository().flush()
+    repository().flush()
     saveMLC(obj, target)
     refresh(obj)
     loadMLC(obj)
@@ -199,15 +210,15 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
     afterDelete(target)
   }
 
-  fun loadMLC(target: ApplicationEntityBase) {
+  fun loadMLC(target: ApplicationMLCEntityBase) {
     mlcService()?.load(target)
   }
 
-  fun saveMLC(savedObj: ApplicationEntityBase, target: ApplicationEntityBase) {
+  fun saveMLC(savedObj: ApplicationMLCEntityBase, target: ApplicationMLCEntityBase) {
     mlcService()?.save(savedObj, target)
   }
 
-  fun deleteMLC(target: ApplicationEntityBase) {
+  fun deleteMLC(target: ApplicationMLCEntityBase) {
     mlcService()?.delete(target)
   }
 

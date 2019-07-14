@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -20,13 +20,15 @@
 
 package com.it4logic.mindatory.services.security
 
-import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
-import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.exceptions.*
 import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.security.*
+import com.it4logic.mindatory.security.ApplicationSecurityPermissions
+import com.it4logic.mindatory.security.SecurityPermissionsHelper
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
@@ -35,65 +37,88 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
-    @Autowired
-    private lateinit var roleRepository: SecurityRoleRepository
+	@Autowired
+	private lateinit var roleRepository: SecurityRoleRepository
 
-    @Autowired
-    private lateinit var securityUserService: SecurityUserService
+	@Autowired
+	private lateinit var securityUserService: SecurityUserService
 
-    @Autowired
-    private lateinit var mlcRepository: SecurityRoleMLCRepository
+	@Autowired
+	private lateinit var mlcRepository: SecurityRoleMLCRepository
 
-    @Autowired
-    protected lateinit var languageManager: LanguageManager
+	@Autowired
+	protected lateinit var languageManager: LanguageManager
 
-    override fun repository(): ApplicationBaseRepository<SecurityRole> = roleRepository
+	override fun repository(): ApplicationBaseRepository<SecurityRole> = roleRepository
 
-    override fun type(): Class<SecurityRole> = SecurityRole::class.java
+	override fun type(): Class<SecurityRole> = SecurityRole::class.java
 
-    override fun multipleLanguageContentRepository() : SecurityRoleMLCRepository = mlcRepository
+	override fun multipleLanguageContentRepository(): SecurityRoleMLCRepository = mlcRepository
 
-    override fun multipleLanguageContentType() : KClass<*> = SecurityRoleMultipleLanguageContent::class
+	override fun multipleLanguageContentType(): KClass<*> = SecurityRoleMultipleLanguageContent::class
 
-    override fun beforeCreate(target: SecurityRole) {
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
-        if(result.isNotEmpty()) {
-            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
-        }
-    }
+	override fun beforeCreate(target: SecurityRole) {
+		//    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+		val obj = result.find { it.contents == target.name }
+		//if(result.isNotEmpty()) {
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
+		}
 
-    override fun beforeUpdate(target: SecurityRole) {
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
-        if(result.isNotEmpty()) {
-            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
-        }
-    }
+		validatePermissions(target)
+	}
 
-    override fun beforeDelete(target: SecurityRole) {
-        val users = securityUserService.findAllByRoleId(target.id)
-        for(user in users) {
-            user.removeRole(target)
-            securityUserService.update(user)
-        }
-    }
+	override fun beforeUpdate(target: SecurityRole) {
+//        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
+			languageManager.currentLanguage.id,
+			"name",
+			target.id
+		)
+		val obj = result.find { it.contents == target.name }
+		//if(result.isNotEmpty()) {
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
+		}
 
-    fun getRoleUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByRoleId(id)
+		validatePermissions(target)
+	}
 
-    fun addUsersToRole(id: Long, userIdsList: List<Long>) {
-        val role = findById(id)
-        for(uid in userIdsList) {
-            val user = securityUserService.findById(uid)
-            user.addRole(role)
-            securityUserService.update(user)
-        }
-    }
+	override fun beforeDelete(target: SecurityRole) {
+		val users = securityUserService.findAllByRoleId(target.id)
+		for (user in users) {
+			user.removeRole(target)
+			securityUserService.update(user)
+		}
+	}
 
-    fun removeUsersFromRole(id: Long, userIdsList: List<Long>) {
-        val role = findById(id)
-        for(uid in userIdsList) {
-            val user = securityUserService.findById(uid)
-            user.removeRole(role)
-            securityUserService.update(user)
-        }
-    }
+	fun getRoleUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByRoleId(id)
+
+	fun addUsersToRole(id: Long, userIdsList: List<Long>) {
+		val role = findById(id)
+		for (uid in userIdsList) {
+			val user = securityUserService.findById(uid)
+			user.addRole(role)
+			securityUserService.update(user)
+		}
+	}
+
+	fun removeUsersFromRole(id: Long, userIdsList: List<Long>) {
+		val role = findById(id)
+		for (uid in userIdsList) {
+			val user = securityUserService.findById(uid)
+			user.removeRole(role)
+			securityUserService.update(user)
+		}
+	}
+
+	fun validatePermissions(target: SecurityRole) {
+		for (perm in target.permissions) {
+			if (ApplicationSecurityPermissions.Permissions.indexOf(perm) < 0)
+				throw ApplicationObjectNotFoundException(perm, ApplicationErrorCodes.NotFoundPermission)
+		}
+
+		SecurityPermissionsHelper.verifyViewPermission(target.permissions)
+	}
 }

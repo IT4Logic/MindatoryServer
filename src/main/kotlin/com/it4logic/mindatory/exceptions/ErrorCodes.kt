@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -85,6 +85,8 @@ interface ApplicationErrorCodes {
                 = "mindatory.error.validation.cannot_change_released_artifact_template_version"
         const val ValidationCannotChangeReleasedJoinTemplateVersion
                 = "mindatory.error.validation.cannot_change_released_join_template_version"
+        const val ValidationCannotDeleteArtifactStoreObjectThatUsedInJoinStoreObjects
+                = "mindatory.error.validation.cannot_delete_artifact_store_object_that_used_in_join_store_objects"
         const val ValidationCannotMigrateStoreObjectsToNoneReleasedVersion
                 = "mindatory.error.validation.cannot_migrate_store_objects_to_none_released_version"
         const val ValidationCannotMigrateJoinStoresDueToRemovedSourceArtifactWithRelativeData
@@ -109,10 +111,17 @@ interface ApplicationErrorCodes {
                 = "mindatory.error.validation.cannot_delete_default_language"
         const val ValidationLanguageHasRelatedContents
                 = "mindatory.error.validation.language_has_related_contents"
+        const val ValidationMailTemplateUUIDNotFound
+                = "mindatory.error.validation.mail_template_uuid_not_found"
+        const val ValidationTokenUserIsNotMatching
+                = "mindatory.error.validation.token_user_is_not_matching"
+        const val ValidationTokenIsExpired
+                = "mindatory.error.validation.token_is_expired"
 
         // Data Not Found
         const val NotFoundAttributeTemplateDataType     = "mindatory.error.data.not_found_attribute_template_data_type"
         const val NotFoundDefaultLanguage               = "mindatory.error.data.not_found_default_language"
+        const val NotFoundPermission                    = "mindatory.error.data.not_found_permission"
 
 //        const val NotFoundCompany                       = "mindatory.error.data.company_not_found"
 //        const val NotFoundRole                          = "mindatory.error.data.role_not_found"
@@ -135,7 +144,10 @@ interface ApplicationErrorCodes {
         const val SecurityAccountLocked                 = "mindatory.error.security.account_locked"
 
         // Authorization
-        const val AuthorizationError                   = "mindatory.error.security.authorization_error"
+        const val AuthorizationError                            = "mindatory.error.security.authorization_error"
+
+        // Mail
+        const val SendMailError                                 = "mindatory.error.mail.sending_error"
 
         // Database Duplications
         const val DuplicateLanguageLocale                       = "mindatory.error.duplicate.language_locale"
@@ -153,6 +165,7 @@ interface ApplicationErrorCodes {
         const val DuplicateSecurityUserUsername                 = "mindatory.error.duplicate.security_user_username"
         const val DuplicateSecurityRoleName                     = "mindatory.error.duplicate.security_role_name"
         const val DuplicateSecurityGroupName                    = "mindatory.error.duplicate.security_group_name"
+        const val DuplicateMailTemplateUUID                     = "mindatory.error.duplicate.mail_template_uuid"
 
         const val DuplicateCompanyMCL                           = "mindatory.error.duplicate.company_mcl"
         const val DuplicateSolutionMCL                          = "mindatory.error.duplicate.solution_mcl"
@@ -164,6 +177,9 @@ interface ApplicationErrorCodes {
         const val DuplicateSecurityUserMCL                      = "mindatory.error.duplicate.security_user_mcl"
         const val DuplicateSecurityRoleMCL                      = "mindatory.error.duplicate.security_role_mcl"
         const val DuplicateSecurityGroupMCL                     = "mindatory.error.duplicate.security_group_mcl"
+        const val DuplicateMailTemplateMCL                      = "mindatory.error.duplicate.mail_template_mcl"
+
+
 
     }
 }

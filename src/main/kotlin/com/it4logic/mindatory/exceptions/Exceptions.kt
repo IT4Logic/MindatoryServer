@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -20,6 +20,9 @@
 
 package com.it4logic.mindatory.exceptions
 
+import org.springframework.validation.Errors
+
+class ApplicationGeneralException (val error: ApiError, override var cause: Throwable? = null) : RuntimeException()
 
 class ApplicationObjectNotFoundException (var id: Any, var errorCode: String) : RuntimeException()
 
@@ -27,6 +30,6 @@ class ApplicationAuthenticationException (var errorCode: String, override var ca
 
 class ApplicationAuthorizationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
 
-class ApplicationValidationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
+class ApplicationValidationException (var errorCode: String, var errors: Errors? = null, override var cause: Throwable? = null) : RuntimeException()
 
 class ApplicationDataIntegrityViolationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()

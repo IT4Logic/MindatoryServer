@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -22,8 +22,9 @@ package com.it4logic.mindatory.controllers.common
 
 import com.it4logic.mindatory.exceptions.ApplicationAuthorizationException
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.mlc.LanguageManager
-import com.it4logic.mindatory.model.common.ApplicationEntityBase
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.security.*
 import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
@@ -32,7 +33,6 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
-import org.springframework.data.rest.core.RepositoryConstraintViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
@@ -44,11 +44,11 @@ import javax.servlet.http.HttpServletResponse
 import javax.validation.Valid
 
 /**
- * Base class for application controllers contains all the common functionalities
+ * Base class for application controllers contains all the common functionality
  */
 @CrossOrigin
 @RestController
-abstract class ApplicationBaseController<T : ApplicationEntityBase> {
+abstract class ApplicationBaseController<T : ApplicationMLCEntityBase> {
     protected val logger: Log = LogFactory.getLog(javaClass)
 
     @Autowired
@@ -75,7 +75,7 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
 
     // ====================================================== Basic Operations ======================================================
 
-    protected fun doGetInternal(locale: String, filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any {
+    protected fun doGetInternal(locale: String?, filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any {
         propagateLanguage(locale)
         val result = when {
             request.parameterMap.isEmpty() -> service().findAll(null, null, null)
@@ -98,7 +98,7 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
     protected fun doCreateInternal(locale: String?, target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T {
         propagateLanguage(locale)
         if(errors.hasErrors())
-            throw RepositoryConstraintViolationException(errors)
+            throw ApplicationValidationException(ApplicationErrorCodes.ValidationError, errors)
 
         val result = service().create(target)
         val location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{Id}").buildAndExpand(result.id).toUri()
@@ -110,7 +110,7 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
     protected fun doUpdateInternal(locale: String?, target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): T {
         propagateLanguage(locale)
         if (errors.hasErrors())
-            throw RepositoryConstraintViolationException(errors)
+            throw ApplicationValidationException(ApplicationErrorCodes.ValidationError, errors)
 
         val result = service().update(target)
         service().refresh(result)
@@ -202,24 +202,4 @@ abstract class ApplicationBaseController<T : ApplicationEntityBase> {
     @PostMapping("{id}/permissions/change-owner/{owner}")
     fun doChangeOwner(@PathVariable id: Long, @PathVariable owner: String, request: HttpServletRequest, response: HttpServletResponse)
             = doChangeOwnerInternal(id, owner, request, response)
-
-    // ====================================================== Basic Operations abstract methods ======================================================
-
-    @GetMapping
-    @ResponseBody
-    abstract fun doGet(@PathVariable locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
-
-    @GetMapping("{id}")
-    abstract fun doGet(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) : T
-
-    @PostMapping
-    abstract fun doCreate(@PathVariable locale: String, @Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T
-
-    @PutMapping
-    abstract fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: T, errors: Errors, request: HttpServletRequest, response: HttpServletResponse) : T
-
-    @DeleteMapping("{id}")
-    abstract fun doDelete(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
-
-
 }

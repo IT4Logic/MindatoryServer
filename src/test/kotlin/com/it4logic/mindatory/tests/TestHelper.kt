@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -18,22 +18,14 @@
 
  */
 
-package com.it4logic.mindatory.controllers.store
+package com.it4logic.mindatory.tests
 
-import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
-import com.it4logic.mindatory.services.store.AttributeStoreService
-import org.springframework.web.bind.annotation.*
 
-//@CrossOrigin
-//@RestController
-//@RequestMapping(ApplicationControllerEntryPoints.AttributeStores)
-//class AttributeStoreController /*: ApplicationBaseController<AttributeStore>()*/ {
-//
-//  @Autowired
-//  lateinit var attributeStoreService: AttributeStoreService
-//
-////  override fun service(): ApplicationBaseService<AttributeStore> {
-////    return attributeStoreService
-////  }
-//}
+abstract class TestHelper {
+	companion object {
+		fun setLocaleForEntryPoint(entryPoint: String, locale: String) : String {
+			return entryPoint.replace(ApplicationControllerEntryPoints.Locale, locale)
+		}
+	}
+}

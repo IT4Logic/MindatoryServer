@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -40,7 +40,7 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(path = [ApplicationControllerEntryPoints.Languages, ApplicationControllerEntryPoints.Languages + "{locale}/"])
+@RequestMapping(ApplicationControllerEntryPoints.Languages)
 class LanguageController : ApplicationBaseController<Language>() {
 
   override fun service(): ApplicationBaseService<Language> = languageService
@@ -49,32 +49,32 @@ class LanguageController : ApplicationBaseController<Language>() {
 
   @GetMapping
   @ResponseBody
-  @PostFilter("hasAnyAuthority('${ApplicationSecurityPermissions.LanguageAdminView}', '${ApplicationSecurityPermissions.LanguageAdminCreate}', '${ApplicationSecurityPermissions.LanguageAdminModify}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')" )
-  override fun doGet(@PathVariable(required = false) locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.LanguageAdminView}', '${ApplicationSecurityPermissions.LanguageAdminCreate}', '${ApplicationSecurityPermissions.LanguageAdminModify}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')" )
+  fun doGet(@PathVariable(required = false) locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
           = doGetInternal(locale,filter, pageable, request, response)
 
   @GetMapping("{id}")
-  @PostAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.LanguageAdminView}', '${ApplicationSecurityPermissions.LanguageAdminCreate}', '${ApplicationSecurityPermissions.LanguageAdminModify}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')" )
-  override fun doGet(@PathVariable(required = false) locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): Language
+  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.LanguageAdminView}', '${ApplicationSecurityPermissions.LanguageAdminCreate}', '${ApplicationSecurityPermissions.LanguageAdminModify}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')" )
+  fun doGet(@PathVariable(required = false) locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): Language
           = doGetInternal(locale,id, request, response)
 
   @PostMapping
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminCreate}')")
-  override fun doCreate(@PathVariable(required = false) locale: String, @Valid @RequestBody target: Language, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Language
+  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.LanguageAdminCreate}')")
+  fun doCreate(@PathVariable(required = false) locale: String, @Valid @RequestBody target: Language, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Language
           = doCreateInternal(locale,target, errors, request, response)
 
   @PutMapping
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminModify}')")
-  override fun doUpdate(@PathVariable(required = false) locale: String, @Valid @RequestBody target: Language, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Language
+  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.LanguageAdminModify}')")
+  fun doUpdate(@PathVariable(required = false) locale: String, @Valid @RequestBody target: Language, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): Language
           = doUpdateInternal(locale,target, errors, request, response)
 
   @DeleteMapping("{id}")
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminDelete}')")
-  override fun doDelete(@PathVariable(required = false) locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
+  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')")
+  fun doDelete(@PathVariable(required = false) locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
           = doDeleteInternal(locale,id, request, response)
 
   @DeleteMapping("{id}/force")
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.LanguageAdminDelete}')")
+  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')")
   fun doForceDelete(@PathVariable(required = false) locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse) {
     val target = service().findById(id)
     languageService.forceDelete(target)

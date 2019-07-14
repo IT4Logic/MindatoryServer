@@ -20,15 +20,18 @@
 
 package com.it4logic.mindatory.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
@@ -36,25 +39,29 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_companies", uniqueConstraints = [])
+@Table(name = "t_company", uniqueConstraints = [])
 data class Company (
         @get: NotBlank
         @get: Size(min = 2, max = 255)
+        @Column(length = 255)
         @get: MultipleLanguageContent
         @Transient
         var name: String,
 
         @get: Size(max = 255)
+        @Column(length = 255)
         @get: MultipleLanguageContent
         @Transient
         var street: String = "",
 
         @get: Size(max = 100)
+        @Column(length = 100)
         @get: MultipleLanguageContent
         @Transient
         var city: String = "",
 
         @get: Size(max = 100)
+        @Column(length = 100)
         @get: MultipleLanguageContent
         @Transient
         var state: String = "",
@@ -64,6 +71,7 @@ data class Company (
         var zipCode: String = "",
 
         @get: Size(max = 100)
+        @Column(length = 100)
         @get: MultipleLanguageContent
         @Transient
         var country: String = "",
@@ -80,10 +88,21 @@ data class Company (
         @Column(length = 20)
         var fax: String = "",
 
-        override var id: Long = -1
+        override var id: Long = -1,
 
-) : ApplicationEntityBase()
+        @NotAudited
+        @OneToMany
+        @JoinColumn(name="parent", referencedColumnName="id")
+        @JsonIgnore
+        var mlcs: MutableList<CompanyMultipleLanguageContent> = mutableListOf()
 
+) : ApplicationMLCEntityBase() {
+        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+                if(mlcs == null)
+                        mlcs = mutableListOf()
+                return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+        }
+}
 /**
  * Repository
  */

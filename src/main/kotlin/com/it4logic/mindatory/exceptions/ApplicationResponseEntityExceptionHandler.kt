@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -24,13 +24,13 @@ import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import java.util.*
 import javax.validation.ConstraintViolationException
-
 
 /**
  * Class responsible for handling specific exception raised within controllers
@@ -91,6 +91,9 @@ class ApplicationResponseEntityExceptionHandler : ResponseEntityExceptionHandler
     fun handleValidationException(exception: ApplicationValidationException, request: WebRequest): ResponseEntity<Any> {
         val message = if(exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
         val error = ApiError(HttpStatus.NOT_ACCEPTABLE,  exception.errorCode, message?:"")
+        exception.errors?.fieldErrors?.forEach {
+            error.subErrors.add(ApiValidationError(it.objectName, it.field, it.rejectedValue, it.defaultMessage?:""))
+        }
         return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
     }
 
@@ -99,4 +102,16 @@ class ApplicationResponseEntityExceptionHandler : ResponseEntityExceptionHandler
         val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.DataIntegrityError, exception.errorCode)
         return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
     }
+
+    @ExceptionHandler(ApplicationGeneralException::class)
+    fun handleApplicationGeneralException(exception: ApplicationGeneralException, request: WebRequest): ResponseEntity<Any> {
+        return ResponseEntity(exception.error, exception.error.status)
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException::class)
+    fun handleObjectOptimisticLockingFailureException(exception: ObjectOptimisticLockingFailureException, request: WebRequest): ResponseEntity<Any> {
+        val error = ApiError(HttpStatus.CONFLICT, exception.identifier?.toString()?:"", exception.persistentClassName?:"")
+        return ResponseEntity(error, HttpStatus.CONFLICT)
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -20,10 +20,10 @@
 
 package com.it4logic.mindatory.services.store
 
-import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.it4logic.mindatory.exceptions.ApiError
+import com.it4logic.mindatory.exceptions.ApplicationGeneralException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.common.DesignStatus
 import com.it4logic.mindatory.model.store.AttributeStore
 import com.it4logic.mindatory.model.store.AttributeStoreRepository
 import com.it4logic.mindatory.services.RepositoryManagerService
@@ -36,22 +36,27 @@ import javax.transaction.Transactional
 
 @Service
 @Transactional
-class AttributeStoreService {
+class AttributeStoreService : ApplicationBaseService<AttributeStore>() {
+    @Autowired
+    private lateinit var attributeStoreRepository: AttributeStoreRepository
 
-  @Autowired
-  private lateinit var repositoryManagerService: RepositoryManagerService
+    @Autowired
+    private lateinit var attributeStoreService: AttributeStoreService
 
-  fun validate(target: AttributeStore) {
-//    if(target.attributeTemplate.id != target.attributeTemplate.attributeTemplate.id)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
+    @Autowired
+    private lateinit var repositoryManagerService: RepositoryManagerService
 
-//    if(target.attributeTemplate.designStatus != DesignStatus.Released)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
+    override fun repository(): ApplicationBaseRepository<AttributeStore> = attributeStoreRepository
 
-    val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(target.attributeTemplateVersion.typeUUID)
-//    dataTypeManager.validateDataTypeContents(
-//                                UUID.fromString(target.attributeTemplate.typeUUID),
-//                                target.attributeTemplate.propertiesJson,
-//                                target.contentsJson)
-  }
+    override fun type(): Class<AttributeStore> = AttributeStore::class.java
+
+
+    fun validateStore(target: AttributeStore) {
+        val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(target.attributeTemplateVersion.typeUUID)
+        val error = dataTypeManager.validateDataTypeContents(
+                                UUID.fromString(target.attributeTemplateVersion.typeUUID),
+                                target.attributeTemplateVersion.properties,
+                                ObjectMapper().readTree(target.contents)) ?: return
+        throw ApplicationGeneralException(error as ApiError)
+    }
 }

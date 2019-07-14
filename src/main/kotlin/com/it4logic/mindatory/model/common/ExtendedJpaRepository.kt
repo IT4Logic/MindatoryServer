@@ -29,7 +29,7 @@ class ExtendedJpaRepositoryImpl<T, ID : Serializable> (
 	val entityManager: EntityManager
 ) : SimpleJpaRepository<T, ID>(entityInformation, entityManager), ExtendedJpaRepository<T, ID> {
 
-	fun toMLCSort(sort: Sort, from: From<*, *>, cb: CriteriaBuilder): Sort {
+	fun <S> toMLCSort(sort: Sort, from: From<*, *>, cb: CriteriaBuilder, query: CriteriaQuery<S>): Sort {
 		if (sort.isUnsorted)
 			return sort
 
@@ -43,8 +43,10 @@ class ExtendedJpaRepositoryImpl<T, ID : Serializable> (
 			if(!memberProperty.isEmpty()) {
 				val result = memberProperty[0].getter.findAnnotation<MultipleLanguageContent>()
 				if(result != null) {
+					// This feature is not supported in PostgresSQL
 					val sortOrder = Sort.Order(order.direction, "mlcs.contents", order.nullHandling)
 					orders.add(sortOrder)
+					query.distinct(true)
 					continue
 				}
 			}
@@ -63,7 +65,7 @@ class ExtendedJpaRepositoryImpl<T, ID : Serializable> (
 		query.select(root)
 
 		if (sort.isSorted) {
-			val newSort = toMLCSort(sort, root, builder)
+			val newSort = toMLCSort(sort, root, builder, query)
 			query.orderBy(toOrders(newSort, root, builder))
 		}
 

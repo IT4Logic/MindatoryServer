@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -20,6 +20,7 @@
 
 package com.it4logic.mindatory.security
 
+import com.it4logic.mindatory.config.AppProperties
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationAuthenticationException
 import io.jsonwebtoken.*
@@ -30,6 +31,9 @@ import java.util.*
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.Claims
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.userdetails.User
 
 /**
  * Utility class that contains JWT helper methods
@@ -39,11 +43,8 @@ class JwtTokenHelper {
 
     private val logger = LoggerFactory.getLogger(JwtTokenHelper::class.java)
 
-    @Value("\${app.jwt.key}")
-    private val jwtKey: String? = null
-
-    @Value("\${app.jwt.expiration}")
-    private val jwtExpiration: Long? = null
+    @Autowired
+    private lateinit var appProperties: AppProperties
 
     var claims: Claims? = null
 
@@ -53,12 +54,13 @@ class JwtTokenHelper {
      * @param username Input user name
      * @return Generated JWT token
      */
-    fun generateToken(username: String) : String {
+    fun generateToken(authentication: Authentication) : String {
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject((authentication.principal as User).username)
+                .claim("authorities", authentication.authorities.map { it.authority })
                 .setIssuedAt(DefaultClock.INSTANCE.now())
-                .setExpiration(Date(DefaultClock.INSTANCE.now().time + jwtExpiration!! ))
-                .signWith(SignatureAlgorithm.HS512, jwtKey)
+                .setExpiration(Date(DefaultClock.INSTANCE.now().time + appProperties.jwtExpiration ))
+                .signWith(SignatureAlgorithm.HS512, appProperties.key)
                 .compact()
     }
 
@@ -70,7 +72,7 @@ class JwtTokenHelper {
      */
     fun validateToken(authToken: String): Boolean {
         try {
-            claims = Jwts.parser().setSigningKey(jwtKey).parseClaimsJws(authToken).body
+            claims = Jwts.parser().setSigningKey(appProperties.key).parseClaimsJws(authToken).body
             return true
         } catch (ex: SignatureException) {
             throw ApplicationAuthenticationException(ApplicationErrorCodes.SecurityInvalidJwtSignature)

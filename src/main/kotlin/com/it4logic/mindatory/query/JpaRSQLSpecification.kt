@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -68,6 +68,7 @@ class JpaRSQLSpecification<T> (
                 if(result != null) {
                     val pAttr = managedType.getDeclaredList("mlcs")
                     val join = startRoot.join(pAttr, JoinType.LEFT)
+                    query.distinct(true);
                     return createPredicate(join, builder, "contents")
                 }
             }

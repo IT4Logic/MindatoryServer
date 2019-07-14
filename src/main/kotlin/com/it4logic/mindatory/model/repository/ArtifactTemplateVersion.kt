@@ -22,9 +22,11 @@ package com.it4logic.mindatory.model.repository
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.*
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -37,18 +39,18 @@ import javax.validation.constraints.NotNull
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_artifact_template_versions", uniqueConstraints = [
+@Table(name = "t_artf_templ_vers", uniqueConstraints = [
     (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateVersionUniqueIndex, columnNames = ["artifact_template_id", "designVersion"]))
 ])
 data class ArtifactTemplateVersion (
+    @get: MultipleLanguageContent
     @ManyToOne
     @JoinColumn(name = "artifact_template_id", nullable = false)
-    @JsonIgnore
     var artifactTemplate: ArtifactTemplate,
 
+    @get: MultipleLanguageContent
     @ManyToMany
-    @JsonIgnore
-    @JoinTable(name = "t_artifact_versions_attr_versions_templates", joinColumns = [JoinColumn(name = "artifact_version_id")], inverseJoinColumns = [JoinColumn(name = "attribute_version_id")])
+    @JoinTable(name = "t_artf_vers_attr_verss_templs", joinColumns = [JoinColumn(name = "artifact_version_id")], inverseJoinColumns = [JoinColumn(name = "attribute_version_id")])
     var attributes: MutableList<AttributeTemplateVersion> = mutableListOf(),
 
     var designStatus: DesignStatus = DesignStatus.InDesign,
@@ -65,7 +67,9 @@ data class ArtifactTemplateVersion (
     @JsonIgnore
     var solution: Solution? = null
 
-) : ApplicationEntityBase()
+) : ApplicationMLCEntityBase() {
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+}
 
 @RepositoryRestResource(exported = false)
 interface ArtifactTemplateVersionRepository : ApplicationRepositoryBaseRepository<ArtifactTemplateVersion> {

@@ -1,0 +1,16 @@
+{
+  "properties": [
+    {
+      "name": "app.key",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "app.key-salt",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "app.jwt-expiration",
+      "type": "java.lang.Long"
+    }
+  ]
+}

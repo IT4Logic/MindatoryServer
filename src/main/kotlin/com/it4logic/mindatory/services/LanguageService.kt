@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory Solution by IT4Logic.
 
@@ -78,9 +78,14 @@ class LanguageService : ApplicationBaseService<Language>() {
    * @return Language object according to the given locale, or the default language object
    */
   fun findLanguageByLocaleOrDefault(locale: String?): Language {
-    if(locale == null)
+    if (locale == null)
       return languageRepository.findOneByDefault(true).orElseThrow { ApplicationObjectNotFoundException(-1, ApplicationErrorCodes.NotFoundDefaultLanguage) }
-    return languageRepository.findOneByLocale(locale).orElseThrow { ApplicationObjectNotFoundException(locale, type().simpleName.toLowerCase()) }
+    else {
+      return languageRepository.findOneByLocale(locale).orElseGet {
+        languageRepository.findOneByDefault(true).orElseThrow { ApplicationObjectNotFoundException(-1, ApplicationErrorCodes.NotFoundDefaultLanguage) }
+      }
+    }
+//    return languageRepository.findOneByLocale(locale).orElseThrow { ApplicationObjectNotFoundException(locale, type().simpleName.toLowerCase()) }
   }
 
   /**

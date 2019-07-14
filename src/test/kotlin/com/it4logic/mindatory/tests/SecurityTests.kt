@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -24,9 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.mlc.Language
-import com.it4logic.mindatory.model.security.SecurityGroup
-import com.it4logic.mindatory.model.security.SecurityRole
-import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.security.ChangePasswordRequest
 import com.it4logic.mindatory.security.JwtAuthenticationResponse
@@ -55,7 +52,6 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 
-
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -81,10 +77,10 @@ class SecurityTests {
 
     private lateinit var mvc: MockMvc
 
-    private val _usersEntryPointEn: String = ApplicationControllerEntryPoints.SecurityUsers + "en/"
-    private val _userProfileEntryPointEn: String = ApplicationControllerEntryPoints.SecurityUserProfile + "en/"
-    private val _rolesEntryPointEn: String = ApplicationControllerEntryPoints.SecurityRoles + "en/"
-    private val _groupsEntryPointEn: String = ApplicationControllerEntryPoints.SecurityGroups + "en/"
+    private val _usersEntryPointEn = TestHelper.setLocaleForEntryPoint(ApplicationControllerEntryPoints.SecurityUsers, "en")
+    private val _userProfileEntryPointEn = TestHelper.setLocaleForEntryPoint(ApplicationControllerEntryPoints.SecurityUserProfile, "en")
+    private val _rolesEntryPointEn = TestHelper.setLocaleForEntryPoint(ApplicationControllerEntryPoints.SecurityRoles, "en")
+    private val _groupsEntryPointEn = TestHelper.setLocaleForEntryPoint(ApplicationControllerEntryPoints.SecurityGroups, "en")
 
     @Before
     fun setup() {
@@ -92,27 +88,17 @@ class SecurityTests {
                 .webAppContextSetup(context)
                 .apply<DefaultMockMvcBuilder>(springSecurity())
                 .build()
-
-        setupLanguageData()
-    }
-
-    fun setupLanguageData() {
-        val result = languageService.findAll(null, null, null) as List<*>
-        if(!result.isEmpty())
-            return
-        languageService.create(Language("en", "English", true))
-        languageService.create(Language("ar", "عربي", false))
     }
 
     @Test
     fun `A- Security Roles`() {
-        val roleAdmin = SecurityRole("ROLE_ADMIN", "Admins Role",
+        val roleAdmin = SecurityRoleTest("ROLE_ADMIN", "Admins Role",
                 permissions = arrayListOf(
                         ApplicationSecurityPermissions.SecurityRoleAdminView,
                         ApplicationSecurityPermissions.SecurityRoleAdminCreate,
                         ApplicationSecurityPermissions.SecurityGroupAdminView
                         ))
-        var roleUser = SecurityRole("ROLE_USER", "Users Role",
+        var roleUser = SecurityRoleTest("ROLE_USER", "Users Role",
                 permissions = arrayListOf(ApplicationSecurityPermissions.SecurityRoleAdminView))
 
         // Check for view role with anonymous access
@@ -125,7 +111,7 @@ class SecurityTests {
         mvc.perform(get(_rolesEntryPointEn).with(
                 user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView})))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$", hasSize<Any>(0)))
+            .andExpect(jsonPath("$", hasSize<Any>(1)))
 
         // Check for add role with anonymous access
         mvc.perform(post(_rolesEntryPointEn).with(anonymous())).andExpect(unauthenticated())
@@ -145,7 +131,7 @@ class SecurityTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("ROLE_ADMIN")))
             .andReturn().response.contentAsString
-        roleAdminId = objectMapper.readValue(contents, SecurityRole::class.java).id
+        roleAdminId = objectMapper.readValue(contents, SecurityRoleTest::class.java).id
 
         // Check for add role with duplication
         mvc.perform(
@@ -172,7 +158,7 @@ class SecurityTests {
         mvc.perform(get(_rolesEntryPointEn).with(
                 user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView})))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$", hasSize<Any>(2)))
+                .andExpect(jsonPath("$", hasSize<Any>(3)))
 
         // Check for non exists role
         mvc.perform(get(_rolesEntryPointEn + "99999").with(
@@ -186,7 +172,7 @@ class SecurityTests {
                 .andExpect(jsonPath("$.name", equalTo("ROLE_USER")))
                 .andReturn().response.contentAsString
 
-        roleUser = objectMapper.readValue(contents, SecurityRole::class.java)
+        roleUser = objectMapper.readValue(contents, SecurityRoleTest::class.java)
         roleUser.addPermission(ApplicationSecurityPermissions.SecurityRoleAdminModify)
         roleUser.removePermission(ApplicationSecurityPermissions.SecurityRoleAdminView)
         roleUser.addPermission(ApplicationSecurityPermissions.SecurityRoleAdminCreate)
@@ -217,10 +203,10 @@ class SecurityTests {
         mvc.perform(get(_rolesEntryPointEn).with(
             user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminView})))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$", hasSize<Any>(1)))
+            .andExpect(jsonPath("$", hasSize<Any>(2)))
 
         // Adding second role for users test
-        roleUser = SecurityRole("ROLE_USER", "Users Role", permissions = arrayListOf(ApplicationSecurityPermissions.SecurityRoleAdminView))
+        roleUser = SecurityRoleTest("ROLE_USER", "Users Role", permissions = arrayListOf(ApplicationSecurityPermissions.SecurityRoleAdminView))
 
         contents = mvc.perform(
                 post(_rolesEntryPointEn)
@@ -231,7 +217,7 @@ class SecurityTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("ROLE_USER")))
             .andReturn().response.contentAsString
-        roleUserId = objectMapper.readValue(contents, SecurityRole::class.java).id
+        roleUserId = objectMapper.readValue(contents, SecurityRoleTest::class.java).id
 
 
         // testing paging & searching
@@ -240,7 +226,7 @@ class SecurityTests {
                     post(_rolesEntryPointEn)
                             .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminCreate}))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(SecurityRole("ROLE_$idx")))
+                            .content(objectMapper.writeValueAsString(SecurityRoleTest("ROLE_$idx")))
             )
                     .andExpect(status().isCreated)
         }
@@ -275,13 +261,13 @@ class SecurityTests {
                         .param("sort","createdBy,asc")
         )
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$.content", hasSize<Any>(3)))
+                .andExpect(jsonPath("$.content", hasSize<Any>(4)))
     }
 
     @Test
     fun `B- Security Groups`() {
-        val adminGroup = SecurityGroup("Admins Group", "Group for Admins")
-        var userGroup = SecurityGroup("Users Group", "Group for Users")
+        val adminGroup = SecurityGroupTest("Admins Group 2", "Group for Admins")
+        var userGroup = SecurityGroupTest("Users Group", "Group for Users")
 
         // Check for view group with anonymous access
         mvc.perform(get(_groupsEntryPointEn).with(anonymous())).andExpect(unauthenticated())
@@ -293,7 +279,7 @@ class SecurityTests {
         mvc.perform(get(_groupsEntryPointEn).with(
                 user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView})))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$", hasSize<Any>(0)))
+                .andExpect(jsonPath("$", hasSize<Any>(1)))
 
         // Check for add group with anonymous access
         mvc.perform(post(_groupsEntryPointEn).with(anonymous())).andExpect(unauthenticated())
@@ -311,10 +297,10 @@ class SecurityTests {
                         .content(objectMapper.writeValueAsString(adminGroup))
                 )
                 .andExpect(status().isCreated)
-                .andExpect(jsonPath("$.name", equalTo("Admins Group")))
+                .andExpect(jsonPath("$.name", equalTo("Admins Group 2")))
                 .andReturn().response.contentAsString
 
-        groupAdminId = objectMapper.readValue(contents, SecurityGroup::class.java).id
+        groupAdminId = objectMapper.readValue(contents, SecurityGroupTest::class.java).id
 
         // Check for add group with duplication
         mvc.perform(
@@ -341,7 +327,7 @@ class SecurityTests {
         mvc.perform(get(_groupsEntryPointEn).with(
                 user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView})))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$", hasSize<Any>(2)))
+                .andExpect(jsonPath("$", hasSize<Any>(3)))
 
         // Check for none exists group
         mvc.perform(get(_groupsEntryPointEn + "99999").with(
@@ -355,7 +341,7 @@ class SecurityTests {
                 .andExpect(jsonPath("$.name", equalTo("Users Group")))
                 .andReturn().response.contentAsString
 
-        userGroup = objectMapper.readValue(contents, SecurityGroup::class.java)
+        userGroup = objectMapper.readValue(contents, SecurityGroupTest::class.java)
         userGroup.description = "updated"
 
         // Check update specific group
@@ -379,10 +365,10 @@ class SecurityTests {
         mvc.perform(get(_groupsEntryPointEn).with(
                 user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminView})))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$", hasSize<Any>(1)))
+                .andExpect(jsonPath("$", hasSize<Any>(2)))
 
         // Adding second group for users test
-        userGroup = SecurityGroup("Users Group", "Group for Users")
+        userGroup = SecurityGroupTest("Users Group", "Group for Users")
 
         contents = mvc.perform(
                 post(_groupsEntryPointEn)
@@ -394,7 +380,7 @@ class SecurityTests {
                 .andExpect(jsonPath("$.name", equalTo("Users Group")))
                 .andReturn().response.contentAsString
 
-        groupUserId = objectMapper.readValue(contents, SecurityGroup::class.java).id
+        groupUserId = objectMapper.readValue(contents, SecurityGroupTest::class.java).id
 
 
         // testing paging & searching
@@ -403,7 +389,7 @@ class SecurityTests {
                     post(_groupsEntryPointEn)
                             .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminCreate}))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(SecurityGroup("Group $idx")))
+                            .content(objectMapper.writeValueAsString(SecurityGroupTest("Group $idx")))
                     )
                     .andExpect(status().isCreated)
         }
@@ -438,29 +424,29 @@ class SecurityTests {
                 .param("sort","createdBy,asc")
             )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.content", hasSize<Any>(3)))
+            .andExpect(jsonPath("$.content", hasSize<Any>(4)))
 
     }
 
     @Test
     fun `C- Security Users`() {
-        val roleAdmin = SecurityRole()
+        val roleAdmin = SecurityRoleTest()
         roleAdmin.id = roleAdminId
-        val roleUser = SecurityRole()
+        val roleUser = SecurityRoleTest()
         roleUser.id = roleUserId
 
-        val adminGroup = SecurityGroup()
+        val adminGroup = SecurityGroupTest()
         adminGroup.id = groupAdminId
-        val userGroup = SecurityGroup()
+        val userGroup = SecurityGroupTest()
         userGroup.id = groupUserId
 
-        val adminUser = SecurityUser("admin", "password", fullName = "Admin User", email = "admin@it4logic.com",
+        val adminUser = SecurityUserTest("admin 2", "password", fullName = "Admin User", email = "admin@it4logic.com",
                 roles = mutableListOf(roleAdmin), group = adminGroup)
 
-        var normalUser = SecurityUser("user", "password", fullName = "Manager User", email = "manager@it4logic.com",
+        var normalUser = SecurityUserTest("user", "password", fullName = "Manager User", email = "manager@it4logic.com",
                 roles = mutableListOf(roleUser), group = userGroup)
 
-        var anotherUser = SecurityUser("another-user", "password", fullName = "Manager User", email = "manager@it4logic.com",
+        var anotherUser = SecurityUserTest("another-user", "password", fullName = "Manager User", email = "manager@it4logic.com",
             roles = mutableListOf(roleUser), group = userGroup)
 
         // Check for view user with anonymous access
@@ -473,7 +459,7 @@ class SecurityTests {
         mvc.perform(get(_usersEntryPointEn).with(
                 user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView})))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$", hasSize<Any>(0)))
+                .andExpect(jsonPath("$", hasSize<Any>(1)))
 
         // Check for add user with anonymous access
         mvc.perform(post(_usersEntryPointEn).with(anonymous())).andExpect(unauthenticated())
@@ -491,7 +477,7 @@ class SecurityTests {
                 .content(objectMapper.writeValueAsString(adminUser))
             )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.username", equalTo("admin")))
+            .andExpect(jsonPath("$.username", equalTo("admin 2")))
             .andReturn().response
 
         // Check for add user with duplication
@@ -514,7 +500,7 @@ class SecurityTests {
             )
             .andExpect(status().isCreated)
             .andReturn().response
-        anotherUser = objectMapper.readValue(response.contentAsString, SecurityUser::class.java)
+        anotherUser = objectMapper.readValue(response.contentAsString, SecurityUserTest::class.java)
 
         // Check for add another user
         response = mvc.perform(
@@ -527,13 +513,13 @@ class SecurityTests {
             .andReturn().response
 
         val userUrl = response.getHeaderValue("Location")
-        normalUserId = objectMapper.readValue(response.contentAsString, SecurityGroup::class.java).id
+        normalUserId = objectMapper.readValue(response.contentAsString, SecurityGroupTest::class.java).id
 
         // Check for new users count
         mvc.perform(get(_usersEntryPointEn).with(
                 user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView})))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$", hasSize<Any>(3)))
+                .andExpect(jsonPath("$", hasSize<Any>(4)))
 
         // Check for non exists user
         mvc.perform(get(_usersEntryPointEn + "99999").with(
@@ -547,7 +533,7 @@ class SecurityTests {
                 .andExpect(jsonPath("$.username", equalTo("user")))
                 .andReturn().response
 
-        normalUser = objectMapper.readValue(response.contentAsString, SecurityUser::class.java)
+        normalUser = objectMapper.readValue(response.contentAsString, SecurityUserTest::class.java)
         normalUser.addRole(roleAdmin)
         normalUser.removeRole(roleUser)
         normalUser.notes = "updated"
@@ -576,7 +562,7 @@ class SecurityTests {
         mvc.perform(get(_usersEntryPointEn).with(
                 user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminView})))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$", hasSize<Any>(2)))
+                .andExpect(jsonPath("$", hasSize<Any>(3)))
 
         // testing paging & searching
         for(idx in 1..10) {
@@ -585,7 +571,7 @@ class SecurityTests {
                             .with(user("super_admin").authorities(GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminCreate}))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
-                                    SecurityUser("user$idx", "password", fullName = "User $idx", email = "user$idx@it4logic.com",
+                                    SecurityUserTest("user$idx", "password", fullName = "User $idx", email = "user$idx@it4logic.com",
                                             roles = mutableListOf(roleAdmin), group = adminGroup)
                                     ))
             )
@@ -642,7 +628,7 @@ class SecurityTests {
             )
             .andExpect(status().isOk)
             .andReturn().response.contentAsString
-        val group = objectMapper.treeToValue(objectMapper.readTree(contents)[0], SecurityGroup::class.java)
+        val group = objectMapper.treeToValue(objectMapper.readTree(contents)[0], SecurityGroupTest::class.java)
 
         mvc.perform(
                 delete(_groupsEntryPointEn + group.id)
@@ -689,15 +675,15 @@ class SecurityTests {
                 )
                 .andExpect(status().isOk)
                 .andReturn().response.contentAsString
-        val role = objectMapper.treeToValue(objectMapper.readTree(contents)[0], SecurityRole::class.java)
+        val role = objectMapper.treeToValue(objectMapper.readTree(contents)[0], SecurityRoleTest::class.java)
 
 
-        // assign users to specific group
+        // assign users to specific Role
         val userIdsList = listOf(normalUserId)
         mvc.perform(
                 post(_rolesEntryPointEn + role.id + "/users")
                         .with(user("super_admin").authorities(
-                            GrantedAuthority {ApplicationSecurityPermissions.SecurityGroupAdminModify},
+                            GrantedAuthority {ApplicationSecurityPermissions.SecurityRoleAdminModify},
                             GrantedAuthority {ApplicationSecurityPermissions.SecurityUserAdminModify}))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userIdsList))
@@ -736,7 +722,7 @@ class SecurityTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.username", equalTo("admin")))
             .andReturn().response.contentAsString
-        val user = objectMapper.readValue(contents, SecurityUser::class.java)
+        val user = objectMapper.readValue(contents, SecurityUserTest::class.java)
         user.notes = "updated through profile"
 
         // check updating user profile

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -30,18 +30,34 @@ interface ApplicationSecurityPermissions {
         const val PermissionModify                       = "write"
         const val PermissionDelete                       = "delete"
 
+        const val SystemWideAdmin                         = "PERM_SYSTEM_WIDE_ADMIN"
+
+        const val SystemAdmin                             = "PERM_SYSTEM_ADMIN"
+
         // Languages
         const val LanguageAdminView                       = "PERM_LANGUAGES_ADMIN_VIEW"
-        const val LanguageAdminCreate                     = "PERM_LANGUAGES_ADMIN_MODIFY"
+        const val LanguageAdminCreate                     = "PERM_LANGUAGES_ADMIN_CREATE"
         const val LanguageAdminModify                     = "PERM_LANGUAGES_ADMIN_MODIFY"
-        const val LanguageAdminDelete                     = "PERM_LANGUAGES_ADMIN_MODIFY"
+        const val LanguageAdminDelete                     = "PERM_LANGUAGES_ADMIN_DELETE"
+
+        // Mail Templates
+        const val MailTemplateAdminView                   = "PERM_MAIL_TEMPLATES_ADMIN_VIEW"
+        const val MailTemplateAdminCreate                 = "PERM_MAIL_TEMPLATES_ADMIN_CREATE"
+        const val MailTemplateAdminModify                 = "PERM_MAIL_TEMPLATES_ADMIN_MODIFY"
+        const val MailTemplateAdminDelete                 = "PERM_MAIL_TEMPLATES_ADMIN_DELETE"
         
         // Companies
         const val CompanyAdminView                       = "PERM_COMPANIES_ADMIN_VIEW"
-        const val CompanyAdminCreate                     = "PERM_COMPANIES_ADMIN_MODIFY"
+        const val CompanyAdminCreate                     = "PERM_COMPANIES_ADMIN_CREATE"
         const val CompanyAdminModify                     = "PERM_COMPANIES_ADMIN_MODIFY"
-        const val CompanyAdminDelete                     = "PERM_COMPANIES_ADMIN_MODIFY"
+        const val CompanyAdminDelete                     = "PERM_COMPANIES_ADMIN_DELETE"
 
+        // Preferences
+        const val AppPreferencesAdminView                = "PERM_APP_PREFERENCES_ADMIN_VIEW"
+        const val AppPreferencesAdminCreate              = "PERM_APP_PREFERENCES_ADMIN_CREATE"
+        const val AppPreferencesAdminModify              = "PERM_APP_PREFERENCES_ADMIN_MODIFY"
+        const val AppPreferencesAdminDelete              = "PERM_APP_PREFERENCES_ADMIN_DELETE"
+        
         // Security Roles
         const val SecurityRoleAdminView                  = "PERM_SECURITY_ROLES_ADMIN_VIEW"
         const val SecurityRoleAdminCreate                = "PERM_SECURITY_ROLES_ADMIN_CREATE"
@@ -79,29 +95,110 @@ interface ApplicationSecurityPermissions {
         const val SolutionAdminDelete                   = "PERM_SOLUTIONS_ADMIN_DELETE"
 
         // Stereotypes
-        const val StereotypeAdminView                     = "PERM_STEREOTYPES_ADMIN_VIEW"
-        const val StereotypeAdminCreate                   = "PERM_STEREOTYPES_ADMIN_CREATE"
-        const val StereotypeAdminModify                   = "PERM_STEREOTYPES_ADMIN_MODIFY"
-        const val StereotypeAdminDelete                   = "PERM_STEREOTYPES_ADMIN_DELETE"
+        const val StereotypeAdminView                   = "PERM_STEREOTYPES_ADMIN_VIEW"
+        const val StereotypeAdminCreate                 = "PERM_STEREOTYPES_ADMIN_CREATE"
+        const val StereotypeAdminModify                 = "PERM_STEREOTYPES_ADMIN_MODIFY"
+        const val StereotypeAdminDelete                 = "PERM_STEREOTYPES_ADMIN_DELETE"
 
         // Join Templates
-        const val JoinTemplateAdminView                     = "PERM_JOIN_TEMPLATES_ADMIN_VIEW"
-        const val JoinTemplateAdminCreate                   = "PERM_JOIN_TEMPLATES_ADMIN_CREATE"
-        const val JoinTemplateAdminModify                   = "PERM_JOIN_TEMPLATES_ADMIN_MODIFY"
-        const val JoinTemplateAdminDelete                   = "PERM_JOIN_TEMPLATES_ADMIN_DELETE"
+        const val JoinTemplateAdminView                 = "PERM_JOIN_TEMPLATES_ADMIN_VIEW"
+        const val JoinTemplateAdminCreate               = "PERM_JOIN_TEMPLATES_ADMIN_CREATE"
+        const val JoinTemplateAdminModify               = "PERM_JOIN_TEMPLATES_ADMIN_MODIFY"
+        const val JoinTemplateAdminDelete               = "PERM_JOIN_TEMPLATES_ADMIN_DELETE"
 
-        const val JoinTemplateStoreAdminModify                   = "PERM_JOIN_TEMPLATE_STORES_ADMIN_MODIFY"
-
-        // Attribute Templates
-        const val AttributeTemplateAdminView                     = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_VIEW"
-        const val AttributeTemplateAdminCreate                   = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_CREATE"
-        const val AttributeTemplateAdminModify                   = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_MODIFY"
-        const val AttributeTemplateAdminDelete                   = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_DELETE"
+        const val JoinTemplateStoreAdminModify          = "PERM_JOIN_TEMPLATE_STORES_ADMIN_MODIFY"
 
         // Attribute Templates
-        const val ArtifactTemplateAdminView                     = "PERM_ARTIFACT_TEMPLATES_ADMIN_VIEW"
-        const val ArtifactTemplateAdminCreate                   = "PERM_ARTIFACT_TEMPLATES_ADMIN_CREATE"
-        const val ArtifactTemplateAdminModify                   = "PERM_ARTIFACT_TEMPLATES_ADMIN_MODIFY"
-        const val ArtifactTemplateAdminDelete                   = "PERM_ARTIFACT_TEMPLATES_ADMIN_DELETE"
+        const val AttributeTemplateAdminView            = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_VIEW"
+        const val AttributeTemplateAdminCreate          = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_CREATE"
+        const val AttributeTemplateAdminModify          = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_MODIFY"
+        const val AttributeTemplateAdminDelete          = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_DELETE"
+
+        // Artifact Templates
+        const val ArtifactTemplateAdminView             = "PERM_ARTIFACT_TEMPLATES_ADMIN_VIEW"
+        const val ArtifactTemplateAdminCreate           = "PERM_ARTIFACT_TEMPLATES_ADMIN_CREATE"
+        const val ArtifactTemplateAdminModify           = "PERM_ARTIFACT_TEMPLATES_ADMIN_MODIFY"
+        const val ArtifactTemplateAdminDelete           = "PERM_ARTIFACT_TEMPLATES_ADMIN_DELETE"
+
+        // Artifact Stores
+        const val ArtifactStoreAdminView                = "PERM_ARTIFACT_STORES_ADMIN_VIEW"
+        const val ArtifactStoreAdminCreate              = "PERM_ARTIFACT_STORES_ADMIN_CREATE"
+        const val ArtifactStoreAdminModify              = "PERM_ARTIFACT_STORES_ADMIN_MODIFY"
+        const val ArtifactStoreAdminDelete              = "PERM_ARTIFACT_STORES_ADMIN_DELETE"
+
+        // Join Stores
+        const val JoinStoreAdminView                    = "PERM_JOIN_STORES_ADMIN_VIEW"
+        const val JoinStoreAdminCreate                  = "PERM_JOIN_STORES_ADMIN_CREATE"
+        const val JoinStoreAdminModify                  = "PERM_JOIN_STORES_ADMIN_MODIFY"
+        const val JoinStoreAdminDelete                  = "PERM_JOIN_STORES_ADMIN_DELETE"
+        
+        // Attribute Stores
+//        const val AttributeStoreAdminView                     = "PERM_ATTRIBUTE_STORES_ADMIN_VIEW"
+//        const val AttributeStoreAdminCreate                   = "PERM_ATTRIBUTE_STORES_ADMIN_CREATE"
+//        const val AttributeStoreAdminModify                   = "PERM_ATTRIBUTE_STORES_ADMIN_MODIFY"
+//        const val AttributeStoreAdminDelete                   = "PERM_ATTRIBUTE_STORES_ADMIN_DELETE"
+        
+        
+        val Permissions = listOf(
+            SystemWideAdmin,
+            LanguageAdminView,
+            LanguageAdminCreate,
+            LanguageAdminModify,
+            LanguageAdminDelete,
+            CompanyAdminView,
+            CompanyAdminCreate,
+            CompanyAdminModify,
+            CompanyAdminDelete,
+            SecurityRoleAdminView,
+            SecurityRoleAdminCreate,
+            SecurityRoleAdminModify,
+            SecurityRoleAdminDelete,
+            SecurityGroupAdminView,
+            SecurityGroupAdminCreate,
+            SecurityGroupAdminModify,
+            SecurityGroupAdminDelete,
+            SecurityUserAdminView,
+            SecurityUserAdminCreate,
+            SecurityUserAdminModify,
+            SecurityUserAdminDelete,
+            SecurityAclAdminView,
+            SecurityAclAdminAdd,
+            SecurityAclAdminRemove,
+            SecurityAclAdminChangeOwner,
+            ApplicationRepositoryAdminView,
+            ApplicationRepositoryAdminCreate,
+            ApplicationRepositoryAdminModify,
+            ApplicationRepositoryAdminDelete,
+            SolutionAdminView,
+            SolutionAdminCreate,
+            SolutionAdminModify,
+            SolutionAdminDelete,
+            StereotypeAdminView,
+            StereotypeAdminCreate,
+            StereotypeAdminModify,
+            StereotypeAdminDelete,
+            JoinTemplateAdminView,
+            JoinTemplateAdminCreate,
+            JoinTemplateAdminModify,
+            JoinTemplateAdminDelete,
+            JoinTemplateStoreAdminModify,
+            AttributeTemplateAdminView,
+            AttributeTemplateAdminCreate,
+            AttributeTemplateAdminModify,
+            AttributeTemplateAdminDelete,
+            ArtifactTemplateAdminView,
+            ArtifactTemplateAdminCreate,
+            ArtifactTemplateAdminModify,
+            ArtifactTemplateAdminDelete,
+            ArtifactStoreAdminView,
+            ArtifactStoreAdminCreate,
+            ArtifactStoreAdminModify,
+            ArtifactStoreAdminDelete,
+            JoinStoreAdminView,
+            JoinStoreAdminCreate,
+            JoinStoreAdminModify,
+            JoinStoreAdminDelete
+        )
+
     }
 }

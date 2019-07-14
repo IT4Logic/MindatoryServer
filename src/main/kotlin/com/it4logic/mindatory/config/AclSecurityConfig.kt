@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -45,12 +45,9 @@ import org.springframework.security.acls.model.ObjectIdentityGenerator
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 
-
 /**
- * Utility class for configuring ACL Spring Security
+ * Utility class to configure ACL Spring Security
  */
-
-
 @Configuration
 class MethodSecurityConfig {
 

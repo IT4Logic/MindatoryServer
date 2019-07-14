@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -41,8 +41,6 @@ data class JwtAuthenticationResponse (
 )
 
 data class ChangePasswordRequest (
-        @get: NotBlank
-        @get: Size(min = 6)
         var currentPassword: String,
 
         @get: NotBlank
@@ -52,6 +50,27 @@ data class ChangePasswordRequest (
         @get: NotBlank
         @get: Size(min = 6)
         var confirmPassword: String
+)
+
+data class ResetPasswordRequest  (
+        @get: NotBlank
+        var username: String,
+
+        @get: NotBlank
+        var requesterRestPasswordUrl: String
+)
+
+data class ProcessResetPasswordRequest  (
+        @get: NotBlank
+        var token: String,
+
+        @get: NotBlank
+        @get: Size(min = 6)
+        var password: String,
+
+        @get: NotBlank
+        @get: Size(min = 6)
+        var passwordConfirm: String
 )
 
 enum class ApplicationPermission(private val permission: Permission) {

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -39,7 +39,7 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.SecurityRoles + "{locale}/")
+@RequestMapping(ApplicationControllerEntryPoints.SecurityRoles)
 class SecurityRoleController : ApplicationBaseController<SecurityRole>() {
 
     @Autowired
@@ -51,45 +51,50 @@ class SecurityRoleController : ApplicationBaseController<SecurityRole>() {
 
     @GetMapping
     @ResponseBody
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminView}', '${ApplicationSecurityPermissions.SecurityRoleAdminCreate}', '${ApplicationSecurityPermissions.SecurityRoleAdminModify}', '${ApplicationSecurityPermissions.SecurityRoleAdminDelete}')")
-    override fun doGet(@PathVariable locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.SecurityRoleAdminView}', '${ApplicationSecurityPermissions.SecurityRoleAdminCreate}', '${ApplicationSecurityPermissions.SecurityRoleAdminModify}', '${ApplicationSecurityPermissions.SecurityRoleAdminDelete}')")
+    fun doGet(@PathVariable locale: String, @RequestParam(required = false) filter: String?, pageable: Pageable, request: HttpServletRequest, response: HttpServletResponse): Any
             = doGetInternal(locale,filter, pageable, request, response)
 
     @GetMapping("{id}")
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminView}', '${ApplicationSecurityPermissions.SecurityRoleAdminCreate}', '${ApplicationSecurityPermissions.SecurityRoleAdminModify}', '${ApplicationSecurityPermissions.SecurityRoleAdminDelete}')")
-    override fun doGet(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): SecurityRole
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.SecurityRoleAdminView}', '${ApplicationSecurityPermissions.SecurityRoleAdminCreate}', '${ApplicationSecurityPermissions.SecurityRoleAdminModify}', '${ApplicationSecurityPermissions.SecurityRoleAdminDelete}')")
+    fun doGet(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): SecurityRole
             = doGetInternal(locale,id, request, response)
 
     @PostMapping
-    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminCreate}')")
-    override fun doCreate(@PathVariable locale: String, @Valid @RequestBody target: SecurityRole, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityRole
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.SecurityRoleAdminCreate}')")
+    fun doCreate(@PathVariable locale: String, @Valid @RequestBody target: SecurityRole, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityRole
             = doCreateInternal(locale,target, errors, request, response)
 
     @PutMapping
-    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminModify}')")
-    override fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: SecurityRole, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityRole
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.SecurityRoleAdminModify}')")
+    fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: SecurityRole, errors: Errors, request: HttpServletRequest, response: HttpServletResponse): SecurityRole
             = doUpdateInternal(locale,target, errors, request, response)
 
     @DeleteMapping("{id}")
-    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminDelete}')")
-    override fun doDelete(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
+    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.SecurityRoleAdminDelete}')")
+    fun doDelete(@PathVariable locale: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse)
             = doDeleteInternal(locale,id, request, response)
 
     @GetMapping("{id}/users")
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminView}', '${ApplicationSecurityPermissions.SecurityRoleAdminCreate}', '${ApplicationSecurityPermissions.SecurityRoleAdminModify}', '${ApplicationSecurityPermissions.SecurityRoleAdminDelete}') " +
-            " and hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}') or  " +
+            "( hasAnyAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminView}', '${ApplicationSecurityPermissions.SecurityRoleAdminCreate}', '${ApplicationSecurityPermissions.SecurityRoleAdminModify}', '${ApplicationSecurityPermissions.SecurityRoleAdminDelete}') " +
+            " and hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminView}', '${ApplicationSecurityPermissions.SecurityUserAdminCreate}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}'))")
     fun doGetRoleUsers(@PathVariable locale: String, @PathVariable id: Long) : MutableList<SecurityUser> {
         propagateLanguage(locale)
         return securityRoleService.getRoleUsers(id)
     }
 
     @PostMapping("{id}/users")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}') or  " +
+            "( hasAnyAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminModify}') and hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminModify}'))")
     fun doAddUsersToRole(@PathVariable locale: String, @PathVariable id: Long, @Valid @RequestBody userIdsList: List<Long>) {
         propagateLanguage(locale)
         securityRoleService.addUsersToRole(id, userIdsList)
     }
 
     @DeleteMapping("{id}/users")
+    @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}') or  " +
+            "( hasAnyAuthority('${ApplicationSecurityPermissions.SecurityRoleAdminModify}') and hasAnyAuthority('${ApplicationSecurityPermissions.SecurityUserAdminModify}'))")
     fun doDeleteUsersFromRole(@PathVariable locale: String, @PathVariable id: Long, @Valid @RequestBody userIdsList: List<Long>) {
         propagateLanguage(locale)
         securityRoleService.removeUsersFromRole(id, userIdsList)

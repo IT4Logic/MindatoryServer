@@ -20,9 +20,14 @@
 
 package com.it4logic.mindatory.model.store
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationSolutionEntityBase
 import com.it4logic.mindatory.model.common.StoreObjectStatus
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.repository.ArtifactTemplate
 import com.it4logic.mindatory.model.repository.ArtifactTemplateVersion
 import org.hibernate.envers.Audited
@@ -35,25 +40,37 @@ import javax.validation.constraints.NotNull
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_artifact_stores")
+@Table(name = "t_artf_stores")
 data class ArtifactStore (
-    @get: NotNull
+//    @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "artifact_template_id", nullable = false)
-    var artifactTemplate: ArtifactTemplate,
+    @JsonIgnore
+    var artifactTemplate: ArtifactTemplate? = null,
 
     @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "artifact_template_ver_id", nullable = false)
     var artifactTemplateVersion: ArtifactTemplateVersion,
 
-    @ManyToMany()
+    @get: MultipleLanguageContent
+    @ManyToMany(cascade = [CascadeType.ALL])
     @JoinTable(name = "t_artifact_attribute_stores", joinColumns = [JoinColumn(name = "artifact_id")], inverseJoinColumns = [JoinColumn(name = "attribute_id")])
     var attributeStores: MutableList<AttributeStore> = mutableListOf(),
 
-    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active
+    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
 
-) : ApplicationSolutionEntityBase()
+    @get: NotNull
+    @get: MultipleLanguageContent
+    @ManyToOne
+    @JoinColumn(name = "solution_id", nullable = false)
+    var solution: Solution
+
+    ) : ApplicationMLCEntityBase() {
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+}
 
 /**
  * Repository

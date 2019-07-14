@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -38,7 +38,7 @@ import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.SecurityUserProfile + "{locale}/")
+@RequestMapping(ApplicationControllerEntryPoints.SecurityUserProfile)
 class SecurityUserProfileController {
 
     @Autowired
@@ -77,6 +77,6 @@ class SecurityUserProfileController {
         propagateLanguage(locale)
         if (errors.hasErrors())
             throw RepositoryConstraintViolationException(errors)
-        securityUserService.changeCurrentUserPassword(changePasswordRequest)
+        securityUserService.changeCurrentUserPassword(changePasswordRequest, false)
     }
 }

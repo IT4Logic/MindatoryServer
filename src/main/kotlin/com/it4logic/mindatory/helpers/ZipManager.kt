@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -37,19 +37,19 @@ interface ZipManager {
          * @param content String to be compressed
          * @return Compressed string in byte array format
          */
-        fun gzip(content: String): ByteArray {
+        fun compress(content: String): ByteArray {
             val bos = ByteArrayOutputStream()
             GZIPOutputStream(bos).bufferedWriter(Charsets.UTF_8).use { it.write(content) }
             return bos.toByteArray()
         }
 
         /**
-         * Uncompressing byte array into string
+         * Decompressing byte array into string
          *
          * @param content Compressed byte array
          * @return Uncompressed byte array in string format
          */
-        fun ungzip(content: ByteArray?): String {
+        fun decompress(content: ByteArray?): String {
             return GZIPInputStream(content?.inputStream()).bufferedReader(Charsets.UTF_8).use { it.readText() }
         }
     }

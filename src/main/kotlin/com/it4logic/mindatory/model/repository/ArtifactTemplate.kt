@@ -25,12 +25,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
-import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationEntityBase
-import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
+import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.validation.constraints.NotBlank
@@ -42,13 +41,13 @@ import javax.validation.constraints.NotNull
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_artifact_templates", uniqueConstraints = [
+@Table(name = "t_artf_templs", uniqueConstraints = [
     (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateIdentifierUniqueIndex, columnNames = ["identifier"]))
 ])
 data class ArtifactTemplate (
     @get: NotBlank
-    @get: Size(min = 10, max = 255)
-    @Column(nullable = false, length = 255)
+    @get: Size(min = 10, max = 200)
+    @Column(nullable = false, length = 200)
     var identifier: String,
 
     @get: NotBlank
@@ -75,9 +74,21 @@ data class ArtifactTemplate (
     @get: MultipleLanguageContent
     @ManyToOne
     @JoinColumn(name = "solution_id")
-    var solution: Solution? = null
+    var solution: Solution? = null,
 
-) : ApplicationEntityBase() {
+    @NotAudited
+    @OneToMany
+    @JoinColumn(name="parent", referencedColumnName="id")
+    @JsonIgnore
+    var mlcs: MutableList<ArtifactTemplateMultipleLanguageContent> = mutableListOf()
+
+) : ApplicationMLCEntityBase() {
+
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+        if(mlcs == null)
+            mlcs = mutableListOf()
+        return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+    }
 
     fun createDesignVersion(attributes: MutableList<AttributeTemplateVersion>): ArtifactTemplateVersion {
         return ArtifactTemplateVersion (
@@ -102,7 +113,7 @@ interface ArtifactTemplateRepository : ApplicationRepositoryBaseRepository<Artif
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_artifact_template_mlcs", uniqueConstraints = [
+@Table(name = "t_artf_templ_mlcs", uniqueConstraints = [
     (UniqueConstraint(name = ApplicationConstraintCodes.ArtifactTemplateMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class ArtifactTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()

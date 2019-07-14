@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -20,10 +20,7 @@
 
 package com.it4logic.mindatory.services.repository
 
-import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
-import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
-import com.it4logic.mindatory.exceptions.ApplicationValidationException
+import com.it4logic.mindatory.exceptions.*
 import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.DesignStatus
@@ -42,192 +39,265 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
-    @Autowired
-    private lateinit var attributeTemplateRepository: AttributeTemplateRepository
+	@Autowired
+	private lateinit var attributeTemplateRepository: AttributeTemplateRepository
 
-    @Autowired
-    private lateinit var attributeTemplateVersionRepository: AttributeTemplateVersionRepository
+	@Autowired
+	private lateinit var attributeTemplateVersionRepository: AttributeTemplateVersionRepository
 
-    @Autowired
-    lateinit var repositoryManagerService: RepositoryManagerService
+	@Autowired
+	lateinit var repositoryManagerService: RepositoryManagerService
 
-    @Autowired
-    private lateinit var attributeStoreRepository: AttributeStoreRepository
+	@Autowired
+	private lateinit var attributeStoreRepository: AttributeStoreRepository
 
-    @Autowired
-    private lateinit var artifactTemplateVersionRepository: ArtifactTemplateVersionRepository
+	@Autowired
+	private lateinit var artifactTemplateVersionRepository: ArtifactTemplateVersionRepository
 
-    @Autowired
-    protected lateinit var securityAclService: SecurityAclService
+	@Autowired
+	protected lateinit var securityAclService: SecurityAclService
 
-    @Autowired
-    private lateinit var mlcRepository: AttributeTemplateMLCRepository
+	@Autowired
+	private lateinit var mlcRepository: AttributeTemplateMLCRepository
 
-    @Autowired
-    protected lateinit var languageManager: LanguageManager
+	@Autowired
+	protected lateinit var languageManager: LanguageManager
 
-    override fun repository(): ApplicationBaseRepository<AttributeTemplate> = attributeTemplateRepository
+	override fun repository(): ApplicationBaseRepository<AttributeTemplate> = attributeTemplateRepository
 
-    override fun type(): Class<AttributeTemplate> = AttributeTemplate::class.java
+	override fun type(): Class<AttributeTemplate> = AttributeTemplate::class.java
 
-    override fun useAcl() : Boolean = true
+	override fun useAcl(): Boolean = false
 
-    override fun securityAclService() : SecurityAclService? = securityAclService
+	override fun securityAclService(): SecurityAclService? = securityAclService
 
-    override fun multipleLanguageContentRepository() : AttributeTemplateMLCRepository = mlcRepository
+	override fun multipleLanguageContentRepository(): AttributeTemplateMLCRepository = mlcRepository
 
-    override fun multipleLanguageContentType() : KClass<*> = AttributeTemplateMultipleLanguageContent::class
+	override fun multipleLanguageContentType(): KClass<*> = AttributeTemplateMultipleLanguageContent::class
 
-    // ================================================================================================================
+	// ================================================================================================================
 
-    fun getAllDesignVersions(id: Long): List<AttributeTemplateVersion> {
-        val obj = findById(id)
-        return obj.versions
-    }
+	fun getAllDesignVersions(id: Long): List<AttributeTemplateVersion> {
+		val obj = findById(id)
+		for (ver in obj.versions)
+			multipleLanguageContentService.load(ver)
+		return obj.versions
+	}
 
-    fun getDesignVersion(id: Long, versionId: Long): AttributeTemplateVersion {
-        val obj = findById(id)
-        for(version in obj.versions) {
-            if(version.id == versionId)
-                return version
-        }
-        throw ApplicationObjectNotFoundException(versionId, AttributeTemplateVersion::class.java.simpleName.toLowerCase())
-    }
+	fun getDesignVersion(id: Long, versionId: Long): AttributeTemplateVersion {
+		val obj = findById(id)
+		for (version in obj.versions) {
+			if (version.id == versionId) {
+				multipleLanguageContentService.load(version)
+				return version
+			}
+		}
+		throw ApplicationObjectNotFoundException(
+			versionId,
+			AttributeTemplateVersion::class.java.simpleName.toLowerCase()
+		)
+	}
 
-    fun createVersion(attributeTemplateId: Long, attributeTemplateVersion: AttributeTemplateVersion): AttributeTemplateVersion {
-        return createVersion(findById(attributeTemplateId), attributeTemplateVersion)
-    }
+	fun createVersion(
+		attributeTemplateId: Long,
+		attributeTemplateVersion: AttributeTemplateVersion
+	): AttributeTemplateVersion {
+		return createVersion(findById(attributeTemplateId), attributeTemplateVersion)
+	}
 
-    fun createVersion(target: AttributeTemplate, attributeTemplateVersion: AttributeTemplateVersion): AttributeTemplateVersion {
-        // check if we have a current in-design version
-        val result = attributeTemplateVersionRepository.findOneByAttributeTemplateIdAndDesignStatus(
-            target.id,
-            DesignStatus.InDesign
-        )
+	fun createVersion(
+		target: AttributeTemplate,
+		attributeTemplateVersion: AttributeTemplateVersion
+	): AttributeTemplateVersion {
+		// check if we have a current in-design version
+		val result = attributeTemplateVersionRepository.findOneByAttributeTemplateIdAndDesignStatus(
+			target.id,
+			DesignStatus.InDesign
+		)
 
-        if (result.isPresent)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateHasInDesignVersion)
+		if (result.isPresent)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateHasInDesignVersion)
 
-        attributeTemplateVersion.attributeTemplate = target
-        attributeTemplateVersion.repository = target.repository
-        attributeTemplateVersion.solution = target.solution
+		attributeTemplateVersion.attributeTemplate = target
+		attributeTemplateVersion.repository = target.repository
+		attributeTemplateVersion.solution = target.solution
 
-        val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(attributeTemplateVersion.typeUUID)
-        dataTypeManager.validateDataTypeProperties(UUID.fromString(attributeTemplateVersion.typeUUID), attributeTemplateVersion.properties)
+		val dataTypeManager =
+			repositoryManagerService.getAttributeTemplateDataTypeManager(attributeTemplateVersion.typeUUID)
+		val error = dataTypeManager.validateDataTypeProperties(
+			UUID.fromString(attributeTemplateVersion.typeUUID),
+			attributeTemplateVersion.properties
+		)
 
-        val max = attributeTemplateVersionRepository.maxDesignVersion(target.id)
-        attributeTemplateVersion.designVersion = max + 1
-        attributeTemplateVersion.designStatus = DesignStatus.InDesign
-        val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
-        repository().flush()
-        entityManager.refresh(ver)
+		if (error != null)
+			throw ApplicationGeneralException(error as ApiError)
 
-        if(target.versions == null)
-            target.versions = mutableListOf()
+		val max = attributeTemplateVersionRepository.maxDesignVersion(target.id)
+		attributeTemplateVersion.designVersion = max + 1
+		attributeTemplateVersion.designStatus = DesignStatus.InDesign
+		val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
+		repository().flush()
+		entityManager.refresh(ver)
 
-        target.versions.add(ver)
-        update(target)
+		if (target.versions == null)
+			target.versions = mutableListOf()
 
-        multipleLanguageContentService.load(ver)
+		target.versions.add(ver)
+		update(target)
 
-        return ver
-    }
+		multipleLanguageContentService.load(ver)
 
-    fun updateVersion(attributeTemplateId: Long, attributeTemplateVersion: AttributeTemplateVersion): AttributeTemplateVersion {
-        val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(attributeTemplateVersion.id, attributeTemplateId).orElseThrow {
-            ApplicationObjectNotFoundException(attributeTemplateVersion.id, AttributeTemplateVersion::class.java.simpleName.toLowerCase())
-        }
+		return ver
+	}
 
-        if(result.designStatus == DesignStatus.Released)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedAttributeTemplateVersion)
+	fun updateVersion(
+		attributeTemplateId: Long,
+		attributeTemplateVersion: AttributeTemplateVersion
+	): AttributeTemplateVersion {
+		val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(
+			attributeTemplateVersion.id,
+			attributeTemplateId
+		).orElseThrow {
+			ApplicationObjectNotFoundException(
+				attributeTemplateVersion.id,
+				AttributeTemplateVersion::class.java.simpleName.toLowerCase()
+			)
+		}
 
-        val target = findById(attributeTemplateId)
-        attributeTemplateVersion.attributeTemplate = target
-        attributeTemplateVersion.repository = target.repository
-        attributeTemplateVersion.solution = target.solution
+		if (result.designStatus == DesignStatus.Released)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedAttributeTemplateVersion)
 
-        val dataTypeManager = repositoryManagerService.getAttributeTemplateDataTypeManager(attributeTemplateVersion.typeUUID)
-        dataTypeManager.validateDataTypeProperties(UUID.fromString(attributeTemplateVersion.typeUUID), attributeTemplateVersion.properties)
+		val target = findById(attributeTemplateId)
+		attributeTemplateVersion.attributeTemplate = target
+		attributeTemplateVersion.repository = target.repository
+		attributeTemplateVersion.solution = target.solution
 
-        val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
-        repository().flush()
-        entityManager.refresh(ver)
+		val dataTypeManager =
+			repositoryManagerService.getAttributeTemplateDataTypeManager(attributeTemplateVersion.typeUUID)
+		val error = dataTypeManager.validateDataTypeProperties(
+			UUID.fromString(attributeTemplateVersion.typeUUID),
+			attributeTemplateVersion.properties
+		)
 
-        multipleLanguageContentService.load(ver)
+		if (error != null)
+			throw ApplicationGeneralException(error as ApiError)
 
-        return ver
-    }
+		val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
+		repository().flush()
+		entityManager.refresh(ver)
 
-    fun releaseVersion(attributeTemplateId: Long, attributeTemplateVersionId: Long): AttributeTemplateVersion {
-        val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(attributeTemplateVersionId, attributeTemplateId).orElseThrow {
-            ApplicationObjectNotFoundException(attributeTemplateVersionId, AttributeTemplateVersion::class.java.simpleName.toLowerCase())
-        }
-        return releaseVersion(attributeTemplateId, result)
-    }
+		multipleLanguageContentService.load(ver)
 
-    fun releaseVersion(attributeTemplateId: Long, attributeTemplateVersion: AttributeTemplateVersion): AttributeTemplateVersion {
-        val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(attributeTemplateVersion.id, attributeTemplateId).orElseThrow {
-            ApplicationObjectNotFoundException(attributeTemplateVersion.id, AttributeTemplateVersion::class.java.simpleName.toLowerCase())
-        }
+		return ver
+	}
 
-        if(result.designStatus == DesignStatus.Released)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedAttributeTemplateVersion)
+	fun releaseVersion(attributeTemplateId: Long, attributeTemplateVersionId: Long): AttributeTemplateVersion {
+		val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(
+			attributeTemplateVersionId,
+			attributeTemplateId
+		).orElseThrow {
+			ApplicationObjectNotFoundException(
+				attributeTemplateVersionId,
+				AttributeTemplateVersion::class.java.simpleName.toLowerCase()
+			)
+		}
+		return releaseVersion(attributeTemplateId, result)
+	}
 
-        attributeTemplateVersion.designStatus = DesignStatus.Released
+	fun releaseVersion(
+		attributeTemplateId: Long,
+		attributeTemplateVersion: AttributeTemplateVersion
+	): AttributeTemplateVersion {
+		val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(
+			attributeTemplateVersion.id,
+			attributeTemplateId
+		).orElseThrow {
+			ApplicationObjectNotFoundException(
+				attributeTemplateVersion.id,
+				AttributeTemplateVersion::class.java.simpleName.toLowerCase()
+			)
+		}
 
-        val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
-        repository().flush()
-        entityManager.refresh(ver)
+		if (result.designStatus == DesignStatus.Released)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeReleasedAttributeTemplateVersion)
 
-        multipleLanguageContentService.load(ver)
+		attributeTemplateVersion.designStatus = DesignStatus.Released
 
-        return ver
-    }
+		val ver = attributeTemplateVersionRepository.save(attributeTemplateVersion)
+		repository().flush()
+		entityManager.refresh(ver)
 
-    fun deleteVersion(attributeTemplateId: Long, attributeTemplateVersionId: Long) {
-        val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(attributeTemplateVersionId, attributeTemplateId).orElseThrow {
-            ApplicationObjectNotFoundException(attributeTemplateVersionId, AttributeTemplateVersion::class.java.simpleName.toLowerCase())
-        }
-        deleteVersion(attributeTemplateId, result)
-    }
+		multipleLanguageContentService.load(ver)
 
-    fun deleteVersion(attributeTemplateId: Long, attributeTemplateVersion: AttributeTemplateVersion) {
-        val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(attributeTemplateVersion.id, attributeTemplateId).orElseThrow {
-            ApplicationObjectNotFoundException(attributeTemplateVersion.id, AttributeTemplateVersion::class.java.simpleName.toLowerCase())
-        }
+		return ver
+	}
 
-        var count = attributeStoreRepository.countByAttributeTemplateVersionId(attributeTemplateVersion.id)
-        if (count > 0)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateVersionHasRelatedStoreData)
+	fun deleteVersion(attributeTemplateId: Long, attributeTemplateVersionId: Long) {
+		val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(
+			attributeTemplateVersionId,
+			attributeTemplateId
+		).orElseThrow {
+			ApplicationObjectNotFoundException(
+				attributeTemplateVersionId,
+				AttributeTemplateVersion::class.java.simpleName.toLowerCase()
+			)
+		}
+		deleteVersion(attributeTemplateId, result)
+	}
 
-        // check if there are attribute templates from this repository used in artifact templates from other repositories
-        count = artifactTemplateVersionRepository.countByAttributes_Id(attributeTemplateVersion.id)
-        if (count > 0)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateVersionUsedInArtifactTemplates)
+	fun deleteVersion(attributeTemplateId: Long, attributeTemplateVersion: AttributeTemplateVersion) {
+		val result = attributeTemplateVersionRepository.findOneByIdAndAttributeTemplateId(
+			attributeTemplateVersion.id,
+			attributeTemplateId
+		).orElseThrow {
+			ApplicationObjectNotFoundException(
+				attributeTemplateVersion.id,
+				AttributeTemplateVersion::class.java.simpleName.toLowerCase()
+			)
+		}
 
-        attributeTemplateVersionRepository.delete(result)
-    }
+		var count = attributeStoreRepository.countByAttributeTemplateVersionId(attributeTemplateVersion.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateVersionHasRelatedStoreData)
 
-    // ================================================================================================================
+		// check if there are attribute templates from this repository used in artifact templates from other repositories
+		count = artifactTemplateVersionRepository.countByAttributes_Id(attributeTemplateVersion.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationAttributeTemplateVersionUsedInArtifactTemplates)
 
-    override fun beforeCreate(target: AttributeTemplate) {
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
-        if(result.isNotEmpty()) {
-            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
-        }
-    }
+		attributeTemplateVersionRepository.delete(result)
+	}
 
-    override fun beforeUpdate(target: AttributeTemplate) {
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
-        if(result.isNotEmpty()) {
-            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
-        }
-    }
+	// ================================================================================================================
 
-    override fun beforeDelete(target: AttributeTemplate) {
-        // check if there are attribute stores based on attribute templates from this repository
-        val count = attributeStoreRepository.countByAttributeTemplateRepositoryId(target.id)
-        if(count > 0)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasAttributeTemplatesRelatedStoreData)
-    }
+	override fun beforeCreate(target: AttributeTemplate) {
+		//    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+		val obj = result.find { it.contents == target.name }
+		//if(result.isNotEmpty()) {
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
+		}
+	}
+
+	override fun beforeUpdate(target: AttributeTemplate) {
+		//        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
+			languageManager.currentLanguage.id,
+			"name",
+			target.id
+		)
+		val obj = result.find { it.contents == target.name }
+		//if(result.isNotEmpty()) {
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
+		}
+	}
+
+	override fun beforeDelete(target: AttributeTemplate) {
+		// check if there are attribute stores based on attribute templates from this repository
+		val count = attributeStoreRepository.countByAttributeTemplateRepositoryId(target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasAttributeTemplatesRelatedStoreData)
+	}
 }

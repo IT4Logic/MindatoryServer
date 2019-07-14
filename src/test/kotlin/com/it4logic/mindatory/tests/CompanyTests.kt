@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -23,7 +23,6 @@ package com.it4logic.mindatory.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.model.Company
-import com.it4logic.mindatory.model.CompanyRepository
 import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
@@ -183,7 +182,7 @@ class CompanyTests {
             .andExpect(jsonPath("$.name", equalTo("IT4L")))
             .andReturn().response.contentAsString
 
-        val company = objectMapper.readValue(contents, Company::class.java)
+        val company = objectMapper.readValue(contents, CompanyTest::class.java)
         company.name = "IT4Logic"
         company.country = "EGYPT"
         company.mobile = "0536014030"

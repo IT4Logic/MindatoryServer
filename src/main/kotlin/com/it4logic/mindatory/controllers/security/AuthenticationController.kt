@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -49,12 +49,11 @@ class AuthenticationController {
     @PostMapping("/login")
     fun authenticateUser(@Valid @RequestBody loginRequest: LoginRequest): ResponseEntity<Any> {
         try {
-            authenticationManager.authenticate( UsernamePasswordAuthenticationToken( loginRequest.username, loginRequest.password ) )
-            val jwtToken = jwtTokenHelper.generateToken(loginRequest.username)
+            val authentication = authenticationManager.authenticate( UsernamePasswordAuthenticationToken( loginRequest.username, loginRequest.password ) )
+            val jwtToken = jwtTokenHelper.generateToken(authentication)
             return ResponseEntity.ok<Any>(JwtAuthenticationResponse(jwtToken))
         } catch (e: Exception) {
-            val root = ExceptionHelper.getRootCause(e)
-            when(root) {
+            when(ExceptionHelper.getRootCause(e)) {
                 is ApplicationObjectNotFoundException -> throw ApplicationAuthenticationException(ApplicationErrorCodes.SecurityInvalidUsernameOrPassword)
                 is DisabledException -> throw ApplicationAuthenticationException(ApplicationErrorCodes.SecurityAccountDisabled)
                 is BadCredentialsException -> throw ApplicationAuthenticationException(ApplicationErrorCodes.SecurityInvalidUsernameOrPassword)

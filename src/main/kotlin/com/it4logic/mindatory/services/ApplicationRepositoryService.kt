@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -41,96 +41,110 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 class ApplicationRepositoryService : ApplicationBaseService<ApplicationRepository>() {
-  @Autowired
-  private lateinit var applicationRepositoryRepository: ApplicationRepositoryRepository
+	@Autowired
+	private lateinit var applicationRepositoryRepository: ApplicationRepositoryRepository
 
-  @Autowired
-  private lateinit var artifactTemplateVersionRepository: ArtifactTemplateVersionRepository
+	@Autowired
+	private lateinit var artifactTemplateVersionRepository: ArtifactTemplateVersionRepository
 
-  @Autowired
-  private lateinit var joinTemplateVersionRepository: JoinTemplateVersionRepository
+	@Autowired
+	private lateinit var joinTemplateVersionRepository: JoinTemplateVersionRepository
 
-  @Autowired
-  private lateinit var artifactStoreRepository: ArtifactStoreRepository
+	@Autowired
+	private lateinit var artifactStoreRepository: ArtifactStoreRepository
 
-  @Autowired
-  private lateinit var attributeStoreRepository: AttributeStoreRepository
+	@Autowired
+	private lateinit var attributeStoreRepository: AttributeStoreRepository
 
-  @Autowired
-  private lateinit var joinStoreRepository: JoinStoreRepository
+	@Autowired
+	private lateinit var joinStoreRepository: JoinStoreRepository
 
-  @Autowired
-  protected lateinit var securityAclService: SecurityAclService
+	@Autowired
+	protected lateinit var securityAclService: SecurityAclService
 
-  @Autowired
-  private lateinit var mlcRepository: ApplicationRepositoryMLCRepository
-  
-  @Autowired
-  protected lateinit var languageManager: LanguageManager
-  
-  override fun repository(): ApplicationBaseRepository<ApplicationRepository> = applicationRepositoryRepository
+	@Autowired
+	private lateinit var mlcRepository: ApplicationRepositoryMLCRepository
 
-  override fun type(): Class<ApplicationRepository> = ApplicationRepository::class.java
+	@Autowired
+	protected lateinit var languageManager: LanguageManager
 
-  override fun useAcl() : Boolean = true
+	override fun repository(): ApplicationBaseRepository<ApplicationRepository> = applicationRepositoryRepository
 
-  override fun securityAclService() : SecurityAclService? = securityAclService
+	override fun type(): Class<ApplicationRepository> = ApplicationRepository::class.java
 
-  override fun multipleLanguageContentRepository() : ApplicationRepositoryMLCRepository = mlcRepository
+	override fun useAcl(): Boolean = false
 
-  override fun multipleLanguageContentType() : KClass<*> = ApplicationRepositoryMultipleLanguageContent::class
+	override fun securityAclService(): SecurityAclService? = securityAclService
 
-  override fun beforeCreate(target: ApplicationRepository) {
-    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
-    if(result.isNotEmpty()) {
-      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateApplicationRepositoryName)
-    }
-  }
+	override fun multipleLanguageContentRepository(): ApplicationRepositoryMLCRepository = mlcRepository
 
-  override fun beforeUpdate(target: ApplicationRepository) {
-    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
-    if(result.isNotEmpty()) {
-      throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateApplicationRepositoryName)
-    }
-  }
+	override fun multipleLanguageContentType(): KClass<*> = ApplicationRepositoryMultipleLanguageContent::class
 
-  override fun beforeDelete(target: ApplicationRepository) {
-    // check if there are artifacts stores based on artifact templates from this repository
-    var count = artifactStoreRepository.countByArtifactTemplateRepositoryId(target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesRelatedStoreData)
+	override fun beforeCreate(target: ApplicationRepository) {
+//    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+		val obj = result.find { it.contents == target.name }
+		//if(result.isNotEmpty()) {
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateApplicationRepositoryName)
+		}
+	}
 
-    // check if there are attribute stores based on attribute templates from this repository
-    count = attributeStoreRepository.countByAttributeTemplateRepositoryId(target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasAttributeTemplatesRelatedStoreData)
+	override fun beforeUpdate(target: ApplicationRepository) {
+		//        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
+			languageManager.currentLanguage.id,
+			"name",
+			target.id
+		)
+		val obj = result.find { it.contents == target.name }
+		//if(result.isNotEmpty()) {
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateApplicationRepositoryName)
+		}
+	}
 
-    // check if there are join stores based on join templates from this repository
-    count = joinStoreRepository.countByJoinTemplateRepositoryId(target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasJoinTemplatesRelatedStoreData)
+	override fun beforeDelete(target: ApplicationRepository) {
+		// check if there are artifacts stores based on artifact templates from this repository
+		var count = artifactStoreRepository.countByArtifactTemplateRepositoryId(target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesRelatedStoreData)
 
-    // check if there are artifact templates from this repository used in joins templates from other repositories
-    count = joinTemplateVersionRepository.countByRepositoryIdNotAndSourceArtifacts_RepositoryId(target.id, target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInJoinTemplatesFromOtherRepositories)
+		// check if there are attribute stores based on attribute templates from this repository
+		count = attributeStoreRepository.countByAttributeTemplateRepositoryId(target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasAttributeTemplatesRelatedStoreData)
 
-    count = joinTemplateVersionRepository.countByRepositoryIdNotAndTargetArtifacts_RepositoryId(target.id, target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInJoinTemplatesFromOtherRepositories)
+		// check if there are join stores based on join templates from this repository
+		count = joinStoreRepository.countByJoinTemplateRepositoryId(target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasJoinTemplatesRelatedStoreData)
 
-    // check if there are attribute templates from this repository used in artifact templates from other repositories
-    count = artifactTemplateVersionRepository.countByRepositoryIdNotAndAttributes_RepositoryId(target.id, target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInArtifactTemplatesFromOtherRepositories)
+		// check if there are artifact templates from this repository used in joins templates from other repositories
+		count =
+			joinTemplateVersionRepository.countByRepositoryIdNotAndSourceArtifacts_RepositoryId(target.id, target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInJoinTemplatesFromOtherRepositories)
 
-    // check if there are stereotypes from this repository used in join templates from other repositories
-    count = joinTemplateVersionRepository.countByRepositoryIdNotAndSourceStereotypeRepositoryId(target.id, target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasStereotypesUsedInJoinTemplatesFromOtherRepositories)
+		count =
+			joinTemplateVersionRepository.countByRepositoryIdNotAndTargetArtifacts_RepositoryId(target.id, target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInJoinTemplatesFromOtherRepositories)
 
-    count = joinTemplateVersionRepository.countByRepositoryIdNotAndTargetStereotypeRepositoryId(target.id, target.id)
-    if(count > 0)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasStereotypesUsedInJoinTemplatesFromOtherRepositories)
-  }
+		// check if there are attribute templates from this repository used in artifact templates from other repositories
+		count = artifactTemplateVersionRepository.countByRepositoryIdNotAndAttributes_RepositoryId(target.id, target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasArtifactTemplatesUsedInArtifactTemplatesFromOtherRepositories)
+
+		// check if there are stereotypes from this repository used in join templates from other repositories
+		count =
+			joinTemplateVersionRepository.countByRepositoryIdNotAndSourceStereotypeRepositoryId(target.id, target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasStereotypesUsedInJoinTemplatesFromOtherRepositories)
+
+		count =
+			joinTemplateVersionRepository.countByRepositoryIdNotAndTargetStereotypeRepositoryId(target.id, target.id)
+		if (count > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRepositoryHasStereotypesUsedInJoinTemplatesFromOtherRepositories)
+	}
 }

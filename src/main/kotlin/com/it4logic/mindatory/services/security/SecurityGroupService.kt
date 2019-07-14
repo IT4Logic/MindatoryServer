@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -59,15 +59,21 @@ class SecurityGroupService : ApplicationBaseService<SecurityGroup>() {
     fun getGroupUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByGroupId(id)
 
     override fun beforeCreate(target: SecurityGroup) {
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
-        if(result.isNotEmpty()) {
+        //    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+        val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+        val obj = result.find { it.contents == target.name }
+        //if(result.isNotEmpty()) {
+        if(obj != null) {
             throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityGroupName)
         }
     }
 
     override fun beforeUpdate(target: SecurityGroup) {
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
-        if(result.isNotEmpty()) {
+        //        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(languageManager.currentLanguage.id, "name", target.id)
+        val obj = result.find { it.contents == target.name }
+        //if(result.isNotEmpty()) {
+        if(obj != null) {
             throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityGroupName)
         }
     }

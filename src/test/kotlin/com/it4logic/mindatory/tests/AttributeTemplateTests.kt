@@ -4,12 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.model.ApplicationRepository
-import com.it4logic.mindatory.model.ApplicationRepositoryRepository
-import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.mlc.Language
-import com.it4logic.mindatory.model.repository.AttributeTemplate
-import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
@@ -50,9 +45,6 @@ class AttributeTemplateTests {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
-    @Autowired
-    private lateinit var applicationRepositoryRepository: ApplicationRepositoryRepository
-
     private lateinit var mvc: MockMvc
 
     @Autowired
@@ -79,10 +71,10 @@ class AttributeTemplateTests {
     private lateinit var adminLogin: JwtAuthenticationResponse
     private lateinit var userLogin: JwtAuthenticationResponse
 
-    private lateinit var applicationRepository: ApplicationRepository
-    private lateinit var solution: Solution
+    private lateinit var applicationRepository: ApplicationRepositoryTest
+    private lateinit var solution: SolutionTest
     private lateinit var textDataType: AttributeTemplateDataType
-    private lateinit var attributeCodeTemplate: AttributeTemplate
+    private lateinit var attributeCodeTemplate: AttributeTemplateTest
 
     private val testDataTypeUUID = "19bf955e-00c7-43d6-9b47-d286c20bd0da"
 
@@ -159,23 +151,23 @@ class AttributeTemplateTests {
             post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A")))
+                .content(objectMapper.writeValueAsString(ApplicationRepositoryTest("ApplicationRepository A")))
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("ApplicationRepository A")))
             .andReturn().response.contentAsString
-        applicationRepository = objectMapper.readValue(contents, ApplicationRepository::class.java)
+        applicationRepository = objectMapper.readValue(contents, ApplicationRepositoryTest::class.java)
 
         contents = mvc.perform(
             post(_solutionsEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Solution("Solution A")))
+                .content(objectMapper.writeValueAsString(SolutionTest("Solution A")))
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("Solution A")))
             .andReturn().response.contentAsString
-        solution = objectMapper.readValue(contents, Solution::class.java)
+        solution = objectMapper.readValue(contents, SolutionTest::class.java)
     }
 
     @Test
@@ -202,9 +194,9 @@ class AttributeTemplateTests {
     }
 
     fun basicOperations() {
-        attributeCodeTemplate = AttributeTemplate(identifier = "mindatory.code", name = "Mindatory Code", repository = applicationRepository)
-        var attributeTemplate2 = AttributeTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository, solution = solution)
-        val attributeTemplate3 = AttributeTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository)
+        attributeCodeTemplate = AttributeTemplateTest(identifier = "mindatory.code", name = "Mindatory Code", repository = applicationRepository)
+        var attributeTemplate2 = AttributeTemplateTest(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository, solution = solution)
+        val attributeTemplate3 = AttributeTemplateTest(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository)
 
         // create Attribute Templates
         mvc.perform(post(_attributeTemplatesEntryPointEn).with(SecurityMockMvcRequestPostProcessors.anonymous()))
@@ -219,7 +211,7 @@ class AttributeTemplateTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.identifier", equalTo("mindatory.code")))
             .andReturn().response.contentAsString
-        attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplate::class.java)
+        attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplateTest::class.java)
 
         contents = mvc.perform(
             post(_attributeTemplatesEntryPointEn)
@@ -230,7 +222,7 @@ class AttributeTemplateTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.identifier", equalTo("mindatory.name")))
             .andReturn().response.contentAsString
-        attributeTemplate2 = objectMapper.readValue(contents, AttributeTemplate::class.java)
+        attributeTemplate2 = objectMapper.readValue(contents, AttributeTemplateTest::class.java)
 
         // duplicate check
         mvc.perform(
@@ -327,7 +319,7 @@ class AttributeTemplateTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.description", equalTo("updated")))
             .andReturn().response.contentAsString
-        attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplate::class.java)
+        attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplateTest::class.java)
 
         // change the owner
         mvc.perform(
@@ -384,7 +376,7 @@ class AttributeTemplateTests {
             .andExpect(jsonPath("$", hasSize<Any>(0)))
 
         // create design version
-        var designVersion1 = attributeCodeTemplate.createDesignVersion(testDataTypeUUID, hashMapOf(Pair("length", 50), Pair("nullable",false)))
+        var designVersion1 = AttributeTemplateVersionTest(attributeCodeTemplate, testDataTypeUUID, hashMapOf(Pair("length", 50), Pair("nullable",false)))
         var contents = mvc.perform(
             post(attributeTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -394,10 +386,10 @@ class AttributeTemplateTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.designVersion", equalTo(1)))
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
 
         // create another design version for the same attribute
-        var designVersion2 = attributeCodeTemplate.createDesignVersion(testDataTypeUUID, hashMapOf(Pair("length", 55), Pair("nullable",false)))
+        var designVersion2 = AttributeTemplateVersionTest(attributeCodeTemplate, testDataTypeUUID, hashMapOf(Pair("length", 55), Pair("nullable",false)))
         mvc.perform(
             post(attributeTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -406,6 +398,13 @@ class AttributeTemplateTests {
             )
             .andExpect(status().isNotAcceptable)
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationAttributeTemplateHasInDesignVersion)))
+
+        mvc.perform(
+            get(attributeTemplateDesignVersions)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$", hasSize<Any>(1)))
 
         // modify the created design version
         designVersion1.properties["pattern"] = "999999.99"
@@ -417,7 +416,7 @@ class AttributeTemplateTests {
             )
             .andExpect(status().isOk)
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
 
         // release the design version
         contents = mvc.perform(
@@ -426,7 +425,7 @@ class AttributeTemplateTests {
             )
             .andExpect(status().isOk)
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
 
         // modify the released version
         mvc.perform(
@@ -448,7 +447,7 @@ class AttributeTemplateTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.designVersion", equalTo(2)))
             .andReturn().response.contentAsString
-        designVersion2 = objectMapper.readValue(contents, AttributeTemplateVersion::class.java)
+        designVersion2 = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
 
         // delete the released design version
         mvc.perform(

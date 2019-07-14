@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory stereotype by IT4Logic.
 
@@ -23,10 +23,7 @@ package com.it4logic.mindatory.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.model.ApplicationRepository
-import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.mlc.Language
-import com.it4logic.mindatory.model.repository.Stereotype
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
@@ -94,9 +91,9 @@ class StereotypeTests {
     private lateinit var adminLogin: JwtAuthenticationResponse
     private lateinit var userLogin: JwtAuthenticationResponse
 
-    private lateinit var applicationRepository: ApplicationRepository
+    private lateinit var applicationRepository: ApplicationRepositoryTest
 
-    private lateinit var solution: Solution
+    private lateinit var solution: SolutionTest
 
     private val _stereotypesEntryPointEn: String = ApplicationControllerEntryPoints.Stereotypes + "en/"
     private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
@@ -161,30 +158,30 @@ class StereotypeTests {
             post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A")))
+                .content(objectMapper.writeValueAsString(ApplicationRepositoryTest("ApplicationRepository A")))
             )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("ApplicationRepository A")))
             .andReturn().response.contentAsString
-        applicationRepository = objectMapper.readValue(contents, ApplicationRepository::class.java)
+        applicationRepository = objectMapper.readValue(contents, ApplicationRepositoryTest::class.java)
 
         contents = mvc.perform(
             post(_solutionsEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Solution("Solution A")))
+                .content(objectMapper.writeValueAsString(SolutionTest("Solution A")))
             )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("Solution A")))
             .andReturn().response.contentAsString
-        solution = objectMapper.readValue(contents, Solution::class.java)
+        solution = objectMapper.readValue(contents, SolutionTest::class.java)
     }
 
     @Test
     fun `Stereotypes Management`() {
-        var stereotype1 = Stereotype("Stereotype A", repository = applicationRepository)
-        var stereotype2 = Stereotype("Stereotype B", repository = applicationRepository, solution = solution)
-        val stereotype3 = Stereotype("Stereotype B", repository = applicationRepository)
+        var stereotype1 = StereotypeTest("Stereotype A", repository = applicationRepository)
+        var stereotype2 = StereotypeTest("Stereotype B", repository = applicationRepository, solution = solution)
+        val stereotype3 = StereotypeTest("Stereotype B", repository = applicationRepository)
 
         // create stereotypes
         mvc.perform(post(_stereotypesEntryPointEn).with(anonymous()))
@@ -199,7 +196,7 @@ class StereotypeTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("Stereotype A")))
             .andReturn().response.contentAsString
-        stereotype1 = objectMapper.readValue(contents, Stereotype::class.java)
+        stereotype1 = objectMapper.readValue(contents, StereotypeTest::class.java)
 
         contents = mvc.perform(
             post(_stereotypesEntryPointEn)
@@ -210,7 +207,7 @@ class StereotypeTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("Stereotype B")))
             .andReturn().response.contentAsString
-        stereotype2 = objectMapper.readValue(contents, Stereotype::class.java)
+        stereotype2 = objectMapper.readValue(contents, StereotypeTest::class.java)
 
         // duplicate check
         mvc.perform(
@@ -304,7 +301,7 @@ class StereotypeTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.description", equalTo("updated")))
             .andReturn().response.contentAsString
-        stereotype1 = objectMapper.readValue(contents, Stereotype::class.java)
+        stereotype1 = objectMapper.readValue(contents, StereotypeTest::class.java)
 
         // change the owner
         mvc.perform(

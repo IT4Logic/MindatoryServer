@@ -23,6 +23,7 @@ package com.it4logic.mindatory.model.mlc
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -45,13 +46,16 @@ data class Language (
         var locale: String,
 
         @get: NotBlank
-        @get: Size(min = 2, max = 255)
-        @Column(nullable = false, length = 255)
+        @get: Size(min = 2, max = 100)
+        @Column(nullable = false, length = 100)
         var name: String,
 
+        @Column(name = "is_default")
         var default: Boolean = false
 
-) : ApplicationEntityBase()
+) : ApplicationMLCEntityBase() {
+        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+}
 
 /**
  * Repository

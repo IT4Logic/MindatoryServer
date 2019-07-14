@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -20,63 +20,53 @@
 
 package com.it4logic.mindatory.controllers
 
+import com.it4logic.mindatory.controllers.common.ApplicationBaseController
 import org.springframework.beans.factory.annotation.Autowired
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
-import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.Company
 import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.services.CompanyService
-import com.it4logic.mindatory.services.LanguageService
-import org.springframework.data.rest.core.RepositoryConstraintViolationException
+import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.Errors
 import org.springframework.web.bind.annotation.*
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import javax.validation.Valid
 
 @CrossOrigin
 @RestController
-@RequestMapping(ApplicationControllerEntryPoints.Company + "{locale}/")
-class CompanyController {
+@RequestMapping(ApplicationControllerEntryPoints.Company)
+class CompanyController
+	: ApplicationBaseController<Company>() {
 
-  @Autowired
-  lateinit var companyService: CompanyService
+	@Autowired
+	lateinit var companyService: CompanyService
 
-  @Autowired
-  lateinit var languageService: LanguageService
+	override fun service(): ApplicationBaseService<Company> = companyService
 
-  @Autowired
-  lateinit var languageManager: LanguageManager
+	override fun type(): Class<Company> = Company::class.java
 
-  protected fun propagateLanguage(locale: String?) {
-    val language = languageService.findLanguageByLocaleOrDefault(locale)
-    languageManager.currentLanguage = language
-  }
+	@GetMapping
+	@ResponseBody
+	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.CompanyAdminView}', '${ApplicationSecurityPermissions.CompanyAdminCreate}', '${ApplicationSecurityPermissions.CompanyAdminModify}', '${ApplicationSecurityPermissions.CompanyAdminDelete}')")
+	fun doGet(
+		@PathVariable locale: String, request: HttpServletRequest,
+		response: HttpServletResponse
+	): Company {
+		propagateLanguage(locale)
+		val result = companyService.findFirst()
+		service().refresh(result)
+		response.status = HttpStatus.OK.value()
+		return result
+	}
 
-  @GetMapping
-  @ResponseBody
-  @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.CompanyAdminView}', '${ApplicationSecurityPermissions.CompanyAdminCreate}', '${ApplicationSecurityPermissions.CompanyAdminModify}', '${ApplicationSecurityPermissions.CompanyAdminDelete}')")
-  fun doGet(@PathVariable locale: String) : ResponseEntity<Company> {
-    propagateLanguage(locale)
-    return ResponseEntity.ok().body(companyService.findFirst())
-  }
-
-  @PutMapping
-  @PreAuthorize("hasAuthority('${ApplicationSecurityPermissions.CompanyAdminModify}')")
-  fun doUpdate(@PathVariable locale: String, @Valid @RequestBody target: Company, errors: Errors, request: HttpServletRequest): ResponseEntity<Company> {
-    propagateLanguage(locale)
-    if (errors.hasErrors())
-      throw RepositoryConstraintViolationException(errors)
-
-    val company = companyService.findFirst()
-    if(company.id != target.id)
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null)
-
-    val result = companyService.update(target)
-    companyService.refresh(result)
-
-    return ResponseEntity.ok().body(result)
-  }
+	@PutMapping
+	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.CompanyAdminModify}')")
+	fun doUpdate(
+		@PathVariable locale: String, @Valid @RequestBody target: Company, errors: Errors,
+		request: HttpServletRequest,
+		response: HttpServletResponse
+	): Company = doUpdateInternal(locale, target, errors, request, response)
 }

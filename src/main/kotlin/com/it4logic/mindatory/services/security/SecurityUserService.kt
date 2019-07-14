@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -25,10 +25,7 @@ import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.security.SecurityUser
-import com.it4logic.mindatory.model.security.SecurityUserMLCRepository
-import com.it4logic.mindatory.model.security.SecurityUserMultipleLanguageContent
-import com.it4logic.mindatory.model.security.SecurityUserRepository
+import com.it4logic.mindatory.model.security.*
 import com.it4logic.mindatory.security.ChangePasswordRequest
 import com.it4logic.mindatory.security.SecurityFactory
 import com.it4logic.mindatory.services.common.ApplicationBaseService
@@ -63,6 +60,10 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
     override fun multipleLanguageContentType() : KClass<*> = SecurityUserMultipleLanguageContent::class
 
     override fun beforeCreate(target: SecurityUser) {
+        if(target.preferences == null)
+            target.preferences = SecurityUserPreferences(/*user = target*/)
+//        else
+//            target.preferences?.user = target
         target.password = passwordEncoder.encode(target.password)
     }
 
@@ -72,9 +73,9 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
      * @param id SecurityUser Id
      * @param changePasswordRequest ChangePasswordRequest object
      */
-    fun changeUserPassword(id: Long, changePasswordRequest: ChangePasswordRequest) {
+    fun changeUserPassword(id: Long, changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
         val user = findById(id)
-        changeUserPassword(user, changePasswordRequest)
+        changeUserPassword(user, changePasswordRequest, verifyCurrent)
     }
 
     /**
@@ -83,13 +84,15 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
      * @param target SecurityUser object
      * @param changePasswordRequest ChangePasswordRequest object
      */
-    fun changeUserPassword(target: SecurityUser, changePasswordRequest: ChangePasswordRequest) {
+    fun changeUserPassword(target: SecurityUser, changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
         if(changePasswordRequest.newPassword.compareTo(changePasswordRequest.confirmPassword) != 0)
             throw ApplicationValidationException(ApplicationErrorCodes.ValidationPasswordsNotMatched)
 
-        // check the current user password
-        if(!passwordEncoder.matches(changePasswordRequest.currentPassword, target.password))
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationIncorrectUserPassword)
+        if(verifyCurrent) {
+            // check the current user password
+            if (!passwordEncoder.matches(changePasswordRequest.currentPassword, target.password))
+                throw ApplicationValidationException(ApplicationErrorCodes.ValidationIncorrectUserPassword)
+        }
 
         target.password = passwordEncoder.encode(changePasswordRequest.newPassword)
 
@@ -164,8 +167,8 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
      *
      * @param changePasswordRequest ChangePasswordRequest object
      */
-    fun changeCurrentUserPassword(changePasswordRequest: ChangePasswordRequest) {
+    fun changeCurrentUserPassword(changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
         val currentUser = getCurrentSecurityUser()
-        changeUserPassword(currentUser, changePasswordRequest)
+        changeUserPassword(currentUser, changePasswordRequest, verifyCurrent)
     }
 }

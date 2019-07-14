@@ -39,14 +39,14 @@ interface ApplicationBaseRepository<T> : ExtendedJpaRepository<T, Long>, JpaRepo
 /**
  * Base interface for company common functionality for entity repositories
  */
-@NoRepositoryBean
-interface ApplicationCompanyBaseRepository<T> : ApplicationBaseRepository<T>
+//@NoRepositoryBean
+//interface ApplicationCompanyRepository<T> : ApplicationBaseRepository<T>
 
 /**
  * Base interface for solution common functionality for entity repositories
  */
 @NoRepositoryBean
-interface ApplicationSolutionBaseRepository<T> : ApplicationCompanyBaseRepository<T> {
+interface ApplicationSolutionBaseRepository<T> : ApplicationBaseRepository<T> {
     fun findAllBySolutionId(id: Long, @Nullable spec: Specification<T>?, pageable: Pageable): Page<T>
     fun findAllBySolutionId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): List<T>
     fun findAllBySolutionId(id: Long, sort: Sort): List<T>

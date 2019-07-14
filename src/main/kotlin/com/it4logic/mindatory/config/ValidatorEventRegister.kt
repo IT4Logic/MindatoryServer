@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -28,7 +28,7 @@ import org.springframework.data.rest.core.event.ValidatingRepositoryEventListene
 import org.springframework.validation.Validator
 
 /**
- * Utility class solved the current Spring Boot problem for automatic descavery for Entity Repository Listener
+ * Utility class to solve the current Spring Boot problem for automatic discovery for Entity Repository Listener
  * through Component annotation
  */
 @Configuration

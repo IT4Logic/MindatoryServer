@@ -28,6 +28,7 @@ import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityReposit
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
@@ -53,18 +54,25 @@ data class Solution (
         @Transient
         var description: String = "",
 
+        @NotAudited
         @OneToMany
         @JoinColumn(name="parent", referencedColumnName="id")
         @JsonIgnore
         var mlcs: MutableList<SolutionMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationCompanyEntityBase()
+) : ApplicationMLCEntityBase() {
+        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+                if(mlcs == null)
+                        mlcs = mutableListOf()
+                return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+        }
+}
 
 /**
  * Repository
  */
 @RepositoryRestResource(exported = false)
-interface SolutionRepository : ApplicationCompanyBaseRepository<Solution>
+interface SolutionRepository : ApplicationBaseRepository<Solution>
 
 /**
  * Multiple Language Content support entity

@@ -24,12 +24,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
-import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationEntityBase
-import com.it4logic.mindatory.model.common.ApplicationRepositoryBaseRepository
+import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
@@ -40,13 +39,13 @@ import javax.validation.constraints.Size
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_join_templates", uniqueConstraints = [
+@Table(name = "t_join_templs", uniqueConstraints = [
     (UniqueConstraint(name = ApplicationConstraintCodes.JoinTemplateIdentifierUniqueIndex, columnNames = ["identifier"]))
 ])
 data class JoinTemplate (
     @get: NotBlank
-    @get: Size(min = 2, max = 255)
-    @Column(nullable = false, length = 255)
+    @get: Size(min = 2, max = 200)
+    @Column(nullable = false, length = 200)
     var identifier: String,
 
     @get: Size(max = 255)
@@ -62,14 +61,26 @@ data class JoinTemplate (
     @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "repository_id", nullable = false)
-    var repository: ApplicationRepository? = null,
+    var repository: ApplicationRepository,
 
     @get: MultipleLanguageContent
     @ManyToOne(optional=true)
     @JoinColumn(name = "solution_id")
-    var solution: Solution? = null
+    var solution: Solution? = null,
 
-) : ApplicationEntityBase() {
+    @NotAudited
+    @OneToMany
+    @JoinColumn(name="parent", referencedColumnName="id")
+    @JsonIgnore
+    var mlcs: MutableList<JoinTemplateMultipleLanguageContent> = mutableListOf()
+
+) : ApplicationMLCEntityBase() {
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+        if(mlcs == null)
+            mlcs = mutableListOf()
+        return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+    }
+
     fun createDesignVersion(sourceStereotype: Stereotype, sourceArtifacts: MutableList<ArtifactTemplateVersion>,
                             targetStereotype: Stereotype, targetArtifacts: MutableList<ArtifactTemplateVersion>): JoinTemplateVersion {
         return JoinTemplateVersion (
@@ -97,7 +108,7 @@ interface JoinTemplateRepository : ApplicationRepositoryBaseRepository<JoinTempl
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_join_template_mlcs", uniqueConstraints = [
+@Table(name = "t_join_templ_mlcs", uniqueConstraints = [
     (UniqueConstraint(name = ApplicationConstraintCodes.JoinTemplateMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class JoinTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()

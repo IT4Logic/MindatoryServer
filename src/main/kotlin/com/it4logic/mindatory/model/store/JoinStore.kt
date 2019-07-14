@@ -20,9 +20,13 @@
 
 package com.it4logic.mindatory.model.store
 
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationSolutionEntityBase
 import com.it4logic.mindatory.model.common.StoreObjectStatus
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.repository.JoinTemplate
 import com.it4logic.mindatory.model.repository.JoinTemplateVersion
 import org.hibernate.envers.Audited
@@ -39,28 +43,39 @@ import javax.validation.constraints.NotNull
 @Table(name = "t_join_stores")
 data class JoinStore (
     @get: NotEmpty
-    @ManyToMany()
-    @JoinTable(name = "t_source_artifact_join_stores", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
+    @get: MultipleLanguageContent
+    @ManyToMany
+    @JoinTable(name = "t_source_artf_join_stores", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
     var sourceArtifacts: MutableList<ArtifactStore> = mutableListOf(),
 
     @get: NotEmpty
-    @ManyToMany()
-    @JoinTable(name = "t_target_artifact_join_stores", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
+    @get: MultipleLanguageContent
+    @ManyToMany
+    @JoinTable(name = "t_target_artf_join_stores", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
     var targetArtifacts: MutableList<ArtifactStore> = mutableListOf(),
 
-    @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "join_template_id", nullable = false)
-    var joinTemplate: JoinTemplate,
+    var joinTemplate: JoinTemplate? = null,
 
     @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "join_template_ver_id", nullable = false)
     var joinTemplateVersion: JoinTemplateVersion,
 
-    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active
+    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
 
-) : ApplicationSolutionEntityBase()
+    @get: NotNull
+    @get: MultipleLanguageContent
+    @ManyToOne
+    @JoinColumn(name = "solution_id", nullable = false)
+    var solution: Solution
+
+) : ApplicationMLCEntityBase() {
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+}
 
 /**
  * Repository
@@ -74,5 +89,8 @@ interface JoinStoreRepository : ApplicationSolutionBaseRepository<JoinStore> {
 
     fun countByJoinTemplateVersionIdAndSourceArtifacts_Id(id1: Long, id2: Long): Long
     fun countByJoinTemplateVersionIdAndTargetArtifacts_Id(id1: Long, id2: Long): Long
+
+    fun countBySourceArtifacts_Id(id1: Long): Long
+    fun countByTargetArtifacts_Id(id1: Long): Long
 
 }

@@ -3,8 +3,6 @@ package com.it4logic.mindatory.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.model.ApplicationRepository
-import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
@@ -74,7 +72,7 @@ class ApplicationRepositoryTests {
     private lateinit var adminLogin: JwtAuthenticationResponse
     private lateinit var userLogin: JwtAuthenticationResponse
 
-    private lateinit var solution1: Solution
+    private lateinit var solution1: SolutionTest
 
     @Autowired
     private lateinit var languageService: LanguageService
@@ -143,19 +141,19 @@ class ApplicationRepositoryTests {
             post(_solutionsEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Solution("Solution A")))
+                .content(objectMapper.writeValueAsString(SolutionTest("Solution A")))
             )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("Solution A")))
             .andReturn().response.contentAsString
-        solution1 = objectMapper.readValue(contents, Solution::class.java)
+        solution1 = objectMapper.readValue(contents, SolutionTest::class.java)
     }
 
     @Test
     fun `ApplicationRepositories Management`() {
-        var applicationRepository1 = ApplicationRepository("ApplicationRepository A", solution = solution1)
-        var applicationRepository2 = ApplicationRepository("ApplicationRepository B")
-        val applicationRepository3 = ApplicationRepository("ApplicationRepository B")
+        var applicationRepository1 = ApplicationRepositoryTest("ApplicationRepository A", solution = solution1)
+        var applicationRepository2 = ApplicationRepositoryTest("ApplicationRepository B")
+        val applicationRepository3 = ApplicationRepositoryTest("ApplicationRepository B")
 
         // create applicationRepositories
         mvc.perform(post(_repositoriesEntryPoint).with(anonymous()))
@@ -170,7 +168,7 @@ class ApplicationRepositoryTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("ApplicationRepository A")))
             .andReturn().response.contentAsString
-        applicationRepository1 = objectMapper.readValue(contents, ApplicationRepository::class.java)
+        applicationRepository1 = objectMapper.readValue(contents, ApplicationRepositoryTest::class.java)
 
         contents = mvc.perform(
             post(_repositoriesEntryPoint)
@@ -181,7 +179,7 @@ class ApplicationRepositoryTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("ApplicationRepository B")))
             .andReturn().response.contentAsString
-        applicationRepository2 = objectMapper.readValue(contents, ApplicationRepository::class.java)
+        applicationRepository2 = objectMapper.readValue(contents, ApplicationRepositoryTest::class.java)
 
         // duplicate check
         mvc.perform(
@@ -275,7 +273,7 @@ class ApplicationRepositoryTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.description", equalTo("updated")))
             .andReturn().response.contentAsString
-        applicationRepository1 = objectMapper.readValue(contents, ApplicationRepository::class.java)
+        applicationRepository1 = objectMapper.readValue(contents, ApplicationRepositoryTest::class.java)
 
         // change the owner
         mvc.perform(

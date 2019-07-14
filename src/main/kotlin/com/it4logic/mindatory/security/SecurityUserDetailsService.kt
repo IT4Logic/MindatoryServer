@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -30,7 +30,9 @@ import org.springframework.stereotype.Service
  * Service for implementing Spring Security [UserDetailsService] class
  */
 @Service
-class SecurityUserDetailsService(@Autowired private val securityUserService: SecurityUserService) : UserDetailsService {
+class SecurityUserDetailsService(
+    @Autowired private val securityUserService: SecurityUserService
+) : UserDetailsService {
 
     override fun loadUserByUsername(username: String): UserDetails {
         val secUser = securityUserService.findByUsername(username)

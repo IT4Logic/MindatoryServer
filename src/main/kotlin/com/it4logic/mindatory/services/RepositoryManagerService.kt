@@ -3,6 +3,7 @@ package com.it4logic.mindatory.services
 import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
 import com.it4logic.mindatory.api.plugins.AttributeTemplateDataTypeManager
 import com.it4logic.mindatory.api.plugins.MindatoryPlugin
+import com.it4logic.mindatory.api.plugins.MindatoryPluginManagerCodes
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import org.pf4j.spring.SpringPluginManager
@@ -23,7 +24,10 @@ class RepositoryManagerService {
         val attributeDataTypes = mutableListOf<AttributeTemplateDataType>()
         val plugins = pluginManager.getExtensions(MindatoryPlugin::class.java)
         for(plugin in plugins) {
-            attributeDataTypes.addAll(plugin.attributeTemplateDataTypeManager().dataTypes())
+            val manager = plugin.getManager(MindatoryPluginManagerCodes.AttributeTemplateDataTypeManager)
+            if(!manager.isPresent)
+                continue
+            attributeDataTypes.addAll((manager.get() as AttributeTemplateDataTypeManager).dataTypes())
         }
         return attributeDataTypes
     }
@@ -32,7 +36,10 @@ class RepositoryManagerService {
     fun getAttributeTemplateDataType(typeUUID: String): AttributeTemplateDataType {
         val plugins = pluginManager.getExtensions(MindatoryPlugin::class.java)
         for(plugin in plugins) {
-            val dataType = plugin.attributeTemplateDataTypeManager().dataType(UUID.fromString(typeUUID))
+            val manager = plugin.getManager(MindatoryPluginManagerCodes.AttributeTemplateDataTypeManager)
+            if(!manager.isPresent)
+                continue
+            val dataType = (manager.get() as AttributeTemplateDataTypeManager).dataType(UUID.fromString(typeUUID))
             if(dataType != null)
                 return dataType
         }
@@ -42,21 +49,26 @@ class RepositoryManagerService {
     fun getAttributeTemplateDataTypeManager(typeUUID: String) : AttributeTemplateDataTypeManager {
         val plugins = pluginManager.getExtensions(MindatoryPlugin::class.java)
         for(plugin in plugins) {
-            val manager = plugin.attributeTemplateDataTypeManager()
-            if(manager.dataType(UUID.fromString(typeUUID)) != null)
-                return manager
+            val manager = plugin.getManager(MindatoryPluginManagerCodes.AttributeTemplateDataTypeManager)
+            if(!manager.isPresent)
+                continue
+            if((manager.get() as AttributeTemplateDataTypeManager).dataType(UUID.fromString(typeUUID)) != null)
+                return (manager.get() as AttributeTemplateDataTypeManager)
         }
         throw ApplicationObjectNotFoundException(typeUUID, ApplicationErrorCodes.NotFoundAttributeTemplateDataType)
     }
 
-    fun hasAttributeTemplateDataType(typeUUID: String) : Boolean {
-        val plugins = pluginManager.getExtensions(MindatoryPlugin::class.java)
-        for(plugin in plugins) {
-            if(plugin.attributeTemplateDataTypeManager().dataType(UUID.fromString(typeUUID)) != null)
-                return true
-        }
-        return false
-    }
+//    fun hasAttributeTemplateDataType(typeUUID: String) : Boolean {
+//        val plugins = pluginManager.getExtensions(MindatoryPlugin::class.java)
+//        for(plugin in plugins) {
+//            val manager = plugin.getManager(MindatoryPluginManagerCodes.AttributeTemplateDataTypeManager)
+//            if(!manager.isPresent)
+//                continue
+//            if((manager.get() as AttributeTemplateDataTypeManager).dataType(UUID.fromString(typeUUID)) != null)
+//                return true
+//        }
+//        return false
+//    }
 
 
 }

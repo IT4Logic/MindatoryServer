@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -20,13 +20,16 @@
 
 package com.it4logic.mindatory
 
+import com.it4logic.mindatory.config.AppProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 
 /**
  * Main application class that will annotated with default spring boot configuration
  */
 @SpringBootApplication
+@EnableConfigurationProperties(AppProperties::class)
 class MindatoryApplication
 
 /**

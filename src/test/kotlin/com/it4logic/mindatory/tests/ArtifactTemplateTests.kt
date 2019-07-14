@@ -3,15 +3,7 @@ package com.it4logic.mindatory.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.model.ApplicationRepository
-import com.it4logic.mindatory.model.ApplicationRepositoryRepository
-import com.it4logic.mindatory.model.Solution
-import com.it4logic.mindatory.model.common.DesignStatus
 import com.it4logic.mindatory.model.mlc.Language
-import com.it4logic.mindatory.model.repository.ArtifactTemplate
-import com.it4logic.mindatory.model.repository.ArtifactTemplateVersion
-import com.it4logic.mindatory.model.repository.AttributeTemplate
-import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
@@ -53,9 +45,6 @@ class ArtifactTemplateTests {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
-    @Autowired
-    private lateinit var applicationRepositoryRepository: ApplicationRepositoryRepository
-
     private lateinit var mvc: MockMvc
 
     @Autowired
@@ -85,22 +74,23 @@ class ArtifactTemplateTests {
     private lateinit var adminLogin: JwtAuthenticationResponse
     private lateinit var userLogin: JwtAuthenticationResponse
 
-    private lateinit var applicationRepository: ApplicationRepository
-    private lateinit var solution: Solution
-    private lateinit var artifactTemplate: ArtifactTemplate
-    private lateinit var artifactTemplateVersion: ArtifactTemplateVersion
+    private lateinit var applicationRepository: ApplicationRepositoryTest
+    private lateinit var solution: SolutionTest
+    private lateinit var artifactTemplate: ArtifactTemplateTest
+    private lateinit var artifactTemplateVersion: ArtifactTemplateVersionTest
 
-    private lateinit var attributeCodeTemplate: AttributeTemplate
-    private lateinit var attributeCodeTemplateVersion: AttributeTemplateVersion
-    private lateinit var attributeNameTemplate: AttributeTemplate
-    private lateinit var attributeNameTemplateVersion: AttributeTemplateVersion
-    private lateinit var attributeDescTemplate: AttributeTemplate
-    private lateinit var attributeDescTemplateVersion: AttributeTemplateVersion
-    private lateinit var attributeVersions: MutableList<AttributeTemplateVersion>
+    private lateinit var attributeCodeTemplate: AttributeTemplateTest
+    private lateinit var attributeCodeTemplateVersion: AttributeTemplateVersionTest
+    private lateinit var attributeNameTemplate: AttributeTemplateTest
+    private lateinit var attributeNameTemplateVersion: AttributeTemplateVersionTest
+    private lateinit var attributeDescTemplate: AttributeTemplateTest
+    private lateinit var attributeDescTemplateVersion: AttributeTemplateVersionTest
+    private lateinit var attributeVersions: MutableList<AttributeTemplateVersionTest>
 
     private val testDataTypeUUID = "19bf955e-00c7-43d6-9b47-d286c20bd0da"
 
     private val _artifactTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.ArtifactTemplates + "en/"
+    private val _attributeTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.AttributeTemplates + "en/"
     private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
     private val _solutionsEntryPointEn: String = ApplicationControllerEntryPoints.Solutions + "en/"
 
@@ -129,6 +119,7 @@ class ArtifactTemplateTests {
                     ApplicationSecurityPermissions.ArtifactTemplateAdminCreate,
                     ApplicationSecurityPermissions.ArtifactTemplateAdminModify,
                     ApplicationSecurityPermissions.ArtifactTemplateAdminDelete,
+                    ApplicationSecurityPermissions.AttributeTemplateAdminCreate,
                     ApplicationSecurityPermissions.ApplicationRepositoryAdminCreate,
                     ApplicationSecurityPermissions.SolutionAdminCreate
                 ))
@@ -173,41 +164,119 @@ class ArtifactTemplateTests {
             post(_repositoriesEntryPoint)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ApplicationRepository("ApplicationRepository A")))
+                .content(objectMapper.writeValueAsString(ApplicationRepositoryTest("ApplicationRepository A")))
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("ApplicationRepository A")))
             .andReturn().response.contentAsString
-        applicationRepository = objectMapper.readValue(contents, ApplicationRepository::class.java)
+        applicationRepository = objectMapper.readValue(contents, ApplicationRepositoryTest::class.java)
 
         contents = mvc.perform(
             post(_solutionsEntryPointEn)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Solution("Solution A")))
+                .content(objectMapper.writeValueAsString(SolutionTest("Solution A")))
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("Solution A")))
             .andReturn().response.contentAsString
-        solution = objectMapper.readValue(contents, Solution::class.java)
+        solution = objectMapper.readValue(contents, SolutionTest::class.java)
 
 
-        attributeCodeTemplate = attributeTemplateService.create(AttributeTemplate(identifier = "mindatory.code", name = "Mindatory Code", repository = applicationRepository))
-        attributeCodeTemplateVersion = attributeCodeTemplate.createDesignVersion(testDataTypeUUID, hashMapOf(Pair("length", 50), Pair("nullable",false)))
-        attributeCodeTemplateVersion.designStatus = DesignStatus.Released
-        attributeCodeTemplateVersion = attributeTemplateService.createVersion(attributeCodeTemplate,attributeCodeTemplateVersion)
-        attributeCodeTemplateVersion = attributeTemplateService.releaseVersion(attributeCodeTemplate.id,attributeCodeTemplateVersion)
+        contents = mvc.perform(
+            post(_attributeTemplatesEntryPointEn)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(AttributeTemplateTest(identifier = "mindatory.code", name = "Mindatory Code", repository = applicationRepository)))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.identifier", equalTo("mindatory.code")))
+            .andReturn().response.contentAsString
+        attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplateTest::class.java)
 
-        attributeNameTemplate = attributeTemplateService.create(AttributeTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository))
-        attributeNameTemplateVersion = attributeNameTemplate.createDesignVersion(testDataTypeUUID, hashMapOf(Pair("length", 55), Pair("nullable",true)))
-        attributeNameTemplateVersion.designStatus = DesignStatus.Released
-        attributeNameTemplateVersion = attributeTemplateService.createVersion(attributeNameTemplate, attributeNameTemplateVersion)
-        attributeNameTemplateVersion = attributeTemplateService.releaseVersion(attributeNameTemplate.id, attributeNameTemplateVersion)
+        attributeCodeTemplateVersion = AttributeTemplateVersionTest(attributeCodeTemplate, testDataTypeUUID, hashMapOf(Pair("length", 50), Pair("nullable",false)))
+        contents = mvc.perform(
+            post("$_attributeTemplatesEntryPointEn/${attributeCodeTemplate.id}/design-versions")
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(attributeCodeTemplateVersion))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.designVersion", equalTo(1)))
+            .andReturn().response.contentAsString
+        attributeCodeTemplateVersion = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
 
-        attributeDescTemplate = attributeTemplateService.create(AttributeTemplate(identifier = "mindatory.desc", name = "Mindatory Desc", repository = applicationRepository))
-        attributeDescTemplateVersion = attributeDescTemplate.createDesignVersion(testDataTypeUUID,  hashMapOf(Pair("length", 255), Pair("nullable",true)))
-        attributeDescTemplateVersion = attributeTemplateService.createVersion(attributeDescTemplate, attributeDescTemplateVersion)
-        attributeDescTemplateVersion = attributeTemplateService.releaseVersion(attributeDescTemplate.id, attributeDescTemplateVersion)
+        contents = mvc.perform(
+            post("$_attributeTemplatesEntryPointEn/${attributeCodeTemplate.id}/design-versions/${attributeCodeTemplateVersion.id}/release")
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+        )
+            .andExpect(status().isOk)
+            .andReturn().response.contentAsString
+        attributeCodeTemplateVersion = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
+
+
+        contents = mvc.perform(
+            post(_attributeTemplatesEntryPointEn)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(AttributeTemplateTest(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository)))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.identifier", equalTo("mindatory.name")))
+            .andReturn().response.contentAsString
+        attributeNameTemplate = objectMapper.readValue(contents, AttributeTemplateTest::class.java)
+
+        attributeNameTemplateVersion = AttributeTemplateVersionTest(attributeNameTemplate, testDataTypeUUID, hashMapOf(Pair("length", 55), Pair("nullable",true)))
+        contents = mvc.perform(
+            post("$_attributeTemplatesEntryPointEn/${attributeNameTemplate.id}/design-versions")
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(attributeNameTemplateVersion))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.designVersion", equalTo(1)))
+            .andReturn().response.contentAsString
+        attributeNameTemplateVersion = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
+
+        contents = mvc.perform(
+            post("$_attributeTemplatesEntryPointEn/${attributeNameTemplate.id}/design-versions/${attributeNameTemplateVersion.id}/release")
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+        )
+            .andExpect(status().isOk)
+            .andReturn().response.contentAsString
+        attributeNameTemplateVersion = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
+
+
+        contents = mvc.perform(
+            post(_attributeTemplatesEntryPointEn)
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(AttributeTemplateTest(identifier = "mindatory.desc", name = "Mindatory Desc", repository = applicationRepository)))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.identifier", equalTo("mindatory.desc")))
+            .andReturn().response.contentAsString
+        attributeDescTemplate = objectMapper.readValue(contents, AttributeTemplateTest::class.java)
+
+        attributeDescTemplateVersion = AttributeTemplateVersionTest(attributeDescTemplate, testDataTypeUUID, hashMapOf(Pair("length", 255), Pair("nullable",true)))
+        contents = mvc.perform(
+            post("$_attributeTemplatesEntryPointEn/${attributeDescTemplate.id}/design-versions")
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(attributeDescTemplateVersion))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.designVersion", equalTo(1)))
+            .andReturn().response.contentAsString
+        attributeDescTemplateVersion = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
+
+        contents = mvc.perform(
+            post("$_attributeTemplatesEntryPointEn/${attributeDescTemplate.id}/design-versions/${attributeDescTemplateVersion.id}/release")
+                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+        )
+            .andExpect(status().isOk)
+            .andReturn().response.contentAsString
+        attributeDescTemplateVersion = objectMapper.readValue(contents, AttributeTemplateVersionTest::class.java)
 
         attributeVersions = mutableListOf(attributeCodeTemplateVersion, attributeNameTemplateVersion)
     }
@@ -216,13 +285,13 @@ class ArtifactTemplateTests {
     fun `Artifact Templates Tests`() {
         basicOperations()
         designVersions()
-        attributes()
+//        attributes()
     }
 
     fun basicOperations() {
-        artifactTemplate = ArtifactTemplate(identifier = "mindatory.code", name = "Mindatory Code", repository = applicationRepository)
-        var attributeTemplate2 = ArtifactTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository, solution = solution)
-        val attributeTemplate3 = ArtifactTemplate(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository)
+        artifactTemplate = ArtifactTemplateTest(identifier = "mindatory.code", name = "Mindatory Code", repository = applicationRepository)
+        var attributeTemplate2 = ArtifactTemplateTest(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository, solution = solution)
+        val attributeTemplate3 = ArtifactTemplateTest(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository)
 
         // create Attribute Templates
         mvc.perform(post(_artifactTemplatesEntryPointEn).with(SecurityMockMvcRequestPostProcessors.anonymous()))
@@ -237,7 +306,7 @@ class ArtifactTemplateTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.identifier", equalTo("mindatory.code")))
             .andReturn().response.contentAsString
-        artifactTemplate = objectMapper.readValue(contents, ArtifactTemplate::class.java)
+        artifactTemplate = objectMapper.readValue(contents, ArtifactTemplateTest::class.java)
 
         contents = mvc.perform(
             post(_artifactTemplatesEntryPointEn)
@@ -248,7 +317,7 @@ class ArtifactTemplateTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.identifier", equalTo("mindatory.name")))
             .andReturn().response.contentAsString
-        attributeTemplate2 = objectMapper.readValue(contents, ArtifactTemplate::class.java)
+        attributeTemplate2 = objectMapper.readValue(contents, ArtifactTemplateTest::class.java)
 
         // duplicate check
         mvc.perform(
@@ -345,7 +414,7 @@ class ArtifactTemplateTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.description", equalTo("updated")))
             .andReturn().response.contentAsString
-        artifactTemplate = objectMapper.readValue(contents, ArtifactTemplate::class.java)
+        artifactTemplate = objectMapper.readValue(contents, ArtifactTemplateTest::class.java)
 
         // change the owner
         mvc.perform(
@@ -389,7 +458,7 @@ class ArtifactTemplateTests {
 
     fun designVersions() {
         // get design versions
-        val attributeTemplateDesignVersions = "${_artifactTemplatesEntryPointEn}/${artifactTemplate.id}/design-versions"
+        val attributeTemplateDesignVersions = "$_artifactTemplatesEntryPointEn/${artifactTemplate.id}/design-versions"
 
         mvc.perform(get(attributeTemplateDesignVersions).with(SecurityMockMvcRequestPostProcessors.anonymous()))
             .andExpect(status().isUnauthorized)
@@ -402,7 +471,7 @@ class ArtifactTemplateTests {
             .andExpect(jsonPath("$", hasSize<Any>(0)))
 
         // create design version
-        var designVersion1 = artifactTemplate.createDesignVersion(attributeVersions)
+        var designVersion1 = ArtifactTemplateVersionTest(artifactTemplate, mutableListOf(attributeCodeTemplateVersion, attributeNameTemplateVersion))
         var contents = mvc.perform(
             post(attributeTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -411,11 +480,12 @@ class ArtifactTemplateTests {
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.designVersion", equalTo(1)))
+            .andExpect(jsonPath("$.attributes", hasSize<Any>(2)))
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, ArtifactTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, ArtifactTemplateVersionTest::class.java)
 
         // create another design version for the same attribute
-        var designVersion2 = artifactTemplate.createDesignVersion(attributeVersions)
+        var designVersion2 = ArtifactTemplateVersionTest(artifactTemplate)
         mvc.perform(
             post(attributeTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -425,6 +495,7 @@ class ArtifactTemplateTests {
             .andExpect(status().isNotAcceptable)
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationArtifactTemplateHasInDesignVersion)))
 
+        designVersion1.attributes = mutableListOf(attributeCodeTemplateVersion, attributeDescTemplateVersion)
         // modify the created design version
         contents = mvc.perform(
             put(attributeTemplateDesignVersions)
@@ -433,8 +504,9 @@ class ArtifactTemplateTests {
                 .content(objectMapper.writeValueAsString(designVersion1))
         )
             .andExpect(status().isOk)
+            .andExpect(jsonPath("$.attributes", hasSize<Any>(2)))
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, ArtifactTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, ArtifactTemplateVersionTest::class.java)
 
         // release the design version
         contents = mvc.perform(
@@ -443,7 +515,7 @@ class ArtifactTemplateTests {
         )
             .andExpect(status().isOk)
             .andReturn().response.contentAsString
-        designVersion1 = objectMapper.readValue(contents, ArtifactTemplateVersion::class.java)
+        designVersion1 = objectMapper.readValue(contents, ArtifactTemplateVersionTest::class.java)
 
         // modify the released version
         mvc.perform(
@@ -465,7 +537,7 @@ class ArtifactTemplateTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.designVersion", equalTo(2)))
             .andReturn().response.contentAsString
-        designVersion2 = objectMapper.readValue(contents, ArtifactTemplateVersion::class.java)
+        designVersion2 = objectMapper.readValue(contents, ArtifactTemplateVersionTest::class.java)
 
         // delete the released design version
         mvc.perform(
@@ -485,86 +557,86 @@ class ArtifactTemplateTests {
             post(attributeTemplateDesignVersions)
                 .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(artifactTemplate.createDesignVersion(mutableListOf())))
+                .content(objectMapper.writeValueAsString(ArtifactTemplateVersionTest(artifactTemplate)))
         )
             .andExpect(status().isCreated)
             .andReturn().response.contentAsString
-        artifactTemplateVersion = objectMapper.readValue(contents, ArtifactTemplateVersion::class.java)
+        artifactTemplateVersion = objectMapper.readValue(contents, ArtifactTemplateVersionTest::class.java)
     }
 
-    fun attributes() {
-        val attributeTemplateDesignVersion = "${_artifactTemplatesEntryPointEn}/${artifactTemplate.id}/design-versions/${artifactTemplateVersion.id}/attributes"
-
-        // get attributes count
-        mvc.perform(get(attributeTemplateDesignVersion).with(SecurityMockMvcRequestPostProcessors.anonymous()))
-            .andExpect(status().isUnauthorized)
-
-        mvc.perform(
-            get(attributeTemplateDesignVersion)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$", hasSize<Any>(0)))
-
-        // add attributes
-        mvc.perform(
-            post("$attributeTemplateDesignVersion/add")
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(listOf(attributeCodeTemplateVersion.id, attributeNameTemplateVersion.id)))
-        )
-            .andExpect(status().isOk)
-
-        // get attributes count after adding
-        mvc.perform(
-            get(attributeTemplateDesignVersion)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$", hasSize<Any>(2)))
-
-        // remove attribute
-        mvc.perform(
-            post("$attributeTemplateDesignVersion/remove")
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(listOf(attributeNameTemplateVersion.id)))
-        )
-            .andExpect(status().isOk)
-
-        // get attributes count after removing
-        mvc.perform(
-            get(attributeTemplateDesignVersion)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$", hasSize<Any>(1)))
-
-        // add already added attribute
-        mvc.perform(
-            post("$attributeTemplateDesignVersion/add")
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(listOf(attributeCodeTemplateVersion.id)))
-        )
-            .andExpect(status().isNotAcceptable)
-            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationAttributeAlreadyAddedToThisArtifactTemplateVersion)))
-
-        // add another attribute
-        mvc.perform(
-            post("$attributeTemplateDesignVersion/add")
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(listOf(attributeDescTemplateVersion.id)))
-        )
-            .andExpect(status().isOk)
-
-        // get attributes count after removing
-        mvc.perform(
-            get(attributeTemplateDesignVersion)
-                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$", hasSize<Any>(2)))
-    }
+//    fun attributes() {
+//        val attributeTemplateDesignVersion = "${_artifactTemplatesEntryPointEn}/${artifactTemplate.id}/design-versions/${artifactTemplateVersion.id}/attributes"
+//
+//        // get attributes count
+//        mvc.perform(get(attributeTemplateDesignVersion).with(SecurityMockMvcRequestPostProcessors.anonymous()))
+//            .andExpect(status().isUnauthorized)
+//
+//        mvc.perform(
+//            get(attributeTemplateDesignVersion)
+//                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+//        )
+//            .andExpect(status().isOk)
+//            .andExpect(jsonPath("$", hasSize<Any>(0)))
+//
+//        // add attributes
+//        mvc.perform(
+//            post("$attributeTemplateDesignVersion/add")
+//                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(objectMapper.writeValueAsString(listOf(attributeCodeTemplateVersion.id, attributeNameTemplateVersion.id)))
+//        )
+//            .andExpect(status().isOk)
+//
+//        // get attributes count after adding
+//        mvc.perform(
+//            get(attributeTemplateDesignVersion)
+//                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+//        )
+//            .andExpect(status().isOk)
+//            .andExpect(jsonPath("$", hasSize<Any>(2)))
+//
+//        // remove attribute
+//        mvc.perform(
+//            post("$attributeTemplateDesignVersion/remove")
+//                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(objectMapper.writeValueAsString(listOf(attributeNameTemplateVersion.id)))
+//        )
+//            .andExpect(status().isOk)
+//
+//        // get attributes count after removing
+//        mvc.perform(
+//            get(attributeTemplateDesignVersion)
+//                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+//        )
+//            .andExpect(status().isOk)
+//            .andExpect(jsonPath("$", hasSize<Any>(1)))
+//
+//        // add already added attribute
+//        mvc.perform(
+//            post("$attributeTemplateDesignVersion/add")
+//                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(objectMapper.writeValueAsString(listOf(attributeCodeTemplateVersion.id)))
+//        )
+//            .andExpect(status().isNotAcceptable)
+//            .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.ValidationAttributeAlreadyAddedToThisArtifactTemplateVersion)))
+//
+//        // add another attribute
+//        mvc.perform(
+//            post("$attributeTemplateDesignVersion/add")
+//                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(objectMapper.writeValueAsString(listOf(attributeDescTemplateVersion.id)))
+//        )
+//            .andExpect(status().isOk)
+//
+//        // get attributes count after removing
+//        mvc.perform(
+//            get(attributeTemplateDesignVersion)
+//                .header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
+//        )
+//            .andExpect(status().isOk)
+//            .andExpect(jsonPath("$", hasSize<Any>(2)))
+//    }
 }

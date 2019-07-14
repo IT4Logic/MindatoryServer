@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -33,15 +33,16 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping(ApplicationControllerEntryPoints.AttributeTemplateDataTypes)
 class AttributeTemplateDataTypeController /*: AttributeTemplateController()*/ {
 
-    @Autowired
-    lateinit var repositoryManagerService: RepositoryManagerService
+	@Autowired
+	lateinit var repositoryManagerService: RepositoryManagerService
 
-    @GetMapping
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')")
-    fun doGetDataTypes(): List<AttributeTemplateDataType> = repositoryManagerService.getAttributeTemplateDataTypes()
+	@GetMapping
+	@ResponseBody
+	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.AttributeTemplateAdminView}') ")
+	fun doGetDataTypes(): List<AttributeTemplateDataType> = repositoryManagerService.getAttributeTemplateDataTypes()
 
-    @GetMapping("{uuid}")
-    @PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.AttributeTemplateAdminView}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}', '${ApplicationSecurityPermissions.AttributeTemplateAdminModify}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')")
-    fun doGetDataType(@PathVariable uuid: String): AttributeTemplateDataType = repositoryManagerService.getAttributeTemplateDataType(uuid)
+	@GetMapping("{uuid}")
+	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.AttributeTemplateAdminView}') ")
+	fun doGetDataType(@PathVariable uuid: String): AttributeTemplateDataType =
+		repositoryManagerService.getAttributeTemplateDataType(uuid)
 }

@@ -20,11 +20,16 @@
 
 package com.it4logic.mindatory.model.store
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
+import com.it4logic.mindatory.model.ApplicationRepository
+import com.it4logic.mindatory.model.Solution
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.common.ApplicationSolutionBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationSolutionEntityBase
 import com.it4logic.mindatory.model.common.StoreObjectStatus
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.repository.AttributeTemplate
 import com.it4logic.mindatory.model.repository.AttributeTemplateVersion
 import org.hibernate.envers.Audited
@@ -37,39 +42,52 @@ import javax.validation.constraints.NotNull
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_attribute_stores")
+@Table(name = "t_attr_stores")
 data class AttributeStore (
-
-    @get: NotBlank
     @Lob
-    var contents: String,
+    var contents: String = "",
 
-    @Transient
-    var contentsJson: JsonNode,
+//    @Transient
+//    var contents: JsonNode,
 
-    @get: NotNull
+//    @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "attribute_template_id", nullable = false)
-    var attributeTemplate: AttributeTemplate,
+    @JsonIgnore
+    var attributeTemplate: AttributeTemplate?= null,
 
     @get: NotNull
+    @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "attribute_template_ver_id", nullable = false)
     var attributeTemplateVersion: AttributeTemplateVersion,
 
-    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active
+    var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
 
-) : ApplicationSolutionEntityBase() {
+//    @JsonIgnore
+//    @ManyToMany(mappedBy = "attributeStores")
+//    var artifactStores: MutableList<ArtifactStore> = mutableListOf(),
+
+//    @get: NotNull
+    @get: MultipleLanguageContent
+    @ManyToOne
+    @JoinColumn(name = "solution_id", nullable = false)
+    var solution: Solution? = null
+
+) : ApplicationMLCEntityBase() {
     @PrePersist
     @PreUpdate
     fun preSave() {
-        contents = ObjectMapper().writeValueAsString(contentsJson)
+//        contentsRaw = ObjectMapper().writeValueAsString(contents)
     }
 
     @PostLoad
     fun postLoad() {
-        contentsJson = ObjectMapper().readTree(contents)
+//        contents = ObjectMapper().readTree(contentsRaw)
     }
+
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 
 /**

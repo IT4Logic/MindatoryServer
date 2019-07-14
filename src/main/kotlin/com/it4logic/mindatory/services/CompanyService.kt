@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -59,15 +59,21 @@ class CompanyService : ApplicationBaseService<Company>() {
   }
 
   override fun beforeCreate(target: Company) {
-    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
-    if(result.isNotEmpty()) {
+    //    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+    val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+    val obj = result.find { it.contents == target.name }
+    //if(result.isNotEmpty()) {
+    if(obj != null) {
       throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateCompanyName)
     }
   }
 
   override fun beforeUpdate(target: Company) {
-    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
-    if(result.isNotEmpty()) {
+    //        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(languageManager.currentLanguage.id, "name", target.id)
+    val obj = result.find { it.contents == target.name }
+    //if(result.isNotEmpty()) {
+    if(obj != null) {
       throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateCompanyName)
     }
   }

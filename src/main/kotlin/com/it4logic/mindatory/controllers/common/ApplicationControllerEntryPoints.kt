@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -25,28 +25,37 @@ package com.it4logic.mindatory.controllers.common
  */
 interface ApplicationControllerEntryPoints {
     companion object {
+        const val Locale: String = "{locale}"
+
+        const val Security: String = "/security/$Locale/"
+
         const val Authentication: String = "/auth/"
 
-        const val Languages : String = "/api/mlc/"
+        const val Actuator: String = "/actuator/"
 
-        const val Company: String = "/api/company/"
+        const val Languages : String = "/api/languages/$Locale/"
 
-        const val SecurityRoles: String = "/api/security/roles/"
-        const val SecurityGroups: String = "/api/security/groups/"
-        const val SecurityUsers: String = "/api/security/users/"
-        const val SecurityUserProfile: String = "/api/security/profile/"
+        const val Company: String = "/api/company/$Locale/"
 
-        const val Solutions: String = "/api/solutions/"
+        const val Preferences: String = "/api/preferences/$Locale/"
 
-        const val Repositories: String = "/api/repositories/"
-        const val Stereotypes: String = "/api/repository/stereotypes/"
-        const val AttributeTemplates: String = "/api/repository/attribute-templates/"
+        const val MailTemplates: String = "/api/mail-templates/$Locale/"
+
+        const val SecurityRoles: String = "/api/security/roles/$Locale/"
+        const val SecurityGroups: String = "/api/security/groups/$Locale/"
+        const val SecurityUsers: String = "/api/security/users/$Locale/"
+        const val SecurityUserProfile: String = "/api/security/profile/$Locale/"
+
+        const val Solutions: String = "/api/solutions/$Locale/"
+
+        const val Repositories: String = "/api/repositories/$Locale/"
+        const val Stereotypes: String = "/api/repository/stereotypes/$Locale/"
+        const val AttributeTemplates: String = "/api/repository/attribute-templates/$Locale/"
         const val AttributeTemplateDataTypes: String = "$AttributeTemplates/data-types/"
-        const val ArtifactTemplates: String = "/api/repository/artifact-templates/"
-        const val JoinTemplates: String = "/api/repository/join-templates/"
+        const val ArtifactTemplates: String = "/api/repository/artifact-templates/$Locale/"
+        const val JoinTemplates: String = "/api/repository/join-templates/$Locale/"
 
-        const val AttributeStores: String = "/api/store/attributes/"
-        const val ArtifactStores: String = "/api/store/artifacts/"
-        const val JoinStores: String = "/api/store/joins/"
+        const val ArtifactStores: String = "/api/store/artifacts/$Locale/"
+        const val JoinStores: String = "/api/store/joins/$Locale/"
     }
 }

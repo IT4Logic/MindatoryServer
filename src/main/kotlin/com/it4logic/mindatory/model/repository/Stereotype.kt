@@ -20,6 +20,7 @@
 
 package com.it4logic.mindatory.model.repository
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
@@ -27,6 +28,7 @@ import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
@@ -37,7 +39,7 @@ import javax.validation.constraints.Size
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_stereotypes", uniqueConstraints = [])
+@Table(name = "t_sts", uniqueConstraints = [])
 data class Stereotype (
     @get: NotBlank
     @get: Size(min = 2, max = 100)
@@ -54,14 +56,26 @@ data class Stereotype (
     @get: MultipleLanguageContent
     @ManyToOne(optional = false)
     @JoinColumn(name = "repository_id", nullable = false)
-    var repository: ApplicationRepository? = null,
+    var repository: ApplicationRepository,
 
     @get: MultipleLanguageContent
     @ManyToOne(optional=true)
     @JoinColumn(name = "solution_id")
-    var solution: Solution? = null
+    var solution: Solution? = null,
 
-) : ApplicationEntityBase()
+    @NotAudited
+    @OneToMany
+    @JoinColumn(name="parent", referencedColumnName="id")
+    @JsonIgnore
+    var mlcs: MutableList<StereotypeMultipleLanguageContent> = mutableListOf()
+
+) : ApplicationMLCEntityBase() {
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+        if(mlcs == null)
+            mlcs = mutableListOf()
+        return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+    }
+}
 
 /**
  * Repository
@@ -76,7 +90,7 @@ interface StereotypeRepository : ApplicationRepositoryBaseRepository<Stereotype>
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_stereotype_mlcs", uniqueConstraints = [
+@Table(name = "t_st_mlcs", uniqueConstraints = [
     (UniqueConstraint(name = ApplicationConstraintCodes.StereotypeMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class StereotypeMultipleLanguageContent : MultipleLanguageContentBaseEntity()

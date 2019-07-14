@@ -25,7 +25,10 @@ import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import org.hibernate.annotations.LazyCollection
+import org.hibernate.annotations.LazyCollectionOption
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import java.util.*
@@ -35,7 +38,7 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_security_users", uniqueConstraints = [
+@Table(name = "t_sec_users", uniqueConstraints = [
             UniqueConstraint(name = ApplicationConstraintCodes.SecurityUserUsernameUniqueIndex, columnNames = ["username"])
         ]
 )
@@ -89,28 +92,36 @@ data class SecurityUser (
         @JoinColumn(name = "group_id", nullable = false)
         var group: SecurityGroup? = null,
 
+        @OneToOne(cascade = [CascadeType.ALL])
+        @JoinColumn(name = "pref_id", referencedColumnName = "id")
+        var preferences: SecurityUserPreferences? = null,
+
+
         @get: MultipleLanguageContent
-        @ManyToMany(fetch = FetchType.EAGER)
-        @JoinTable(name = "t_security_users_roles", joinColumns = [JoinColumn(name = "user_id")], inverseJoinColumns = [JoinColumn(name = "role_id")])
+        @ManyToMany
+        @JoinTable(name = "t_sec_users_roles", joinColumns = [JoinColumn(name = "user_id")], inverseJoinColumns = [JoinColumn(name = "role_id")])
+        @LazyCollection(LazyCollectionOption.FALSE)
         var roles: MutableList<SecurityRole> = mutableListOf(),
 
-        @OneToMany(orphanRemoval=true)
+        @NotAudited
+        @OneToMany
         @JoinColumn(name="parent", referencedColumnName="id")
+        @LazyCollection(LazyCollectionOption.FALSE)
         @JsonIgnore
         var mlcs: MutableList<SecurityUserMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationCompanyEntityBase() {
+) : ApplicationMLCEntityBase() {
         override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
-                if(mlcs == null) mlcs = mutableListOf()
+                if(mlcs == null)
+                        mlcs = mutableListOf()
                 return mlcs as MutableList<MultipleLanguageContentBaseEntity>
         }
 
         private fun isRoleExists(role: SecurityRole) : Boolean {
-                for(r in roles) {
-                        if(r.id == role.id)
-                                return true
-                }
-                return false
+                val result = roles.filter { it.id == role.id }
+                if(result.isEmpty())
+                        return false
+                return true
         }
 
         fun addRole(role: SecurityRole) {
@@ -133,7 +144,7 @@ data class SecurityUser (
  * SecurityUsers Entity Repository
  */
 @RepositoryRestResource(exported = false)
-interface SecurityUserRepository : ApplicationCompanyBaseRepository<SecurityUser> {
+interface SecurityUserRepository : ApplicationBaseRepository<SecurityUser> {
 //        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>) : MutableList<SecurityUser>
 //        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>, pageable: Pageable) : Page<SecurityUser>
 //        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>, sort: Sort) : MutableList<SecurityUser>
@@ -148,7 +159,7 @@ interface SecurityUserRepository : ApplicationCompanyBaseRepository<SecurityUser
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_security_user_mlcs", uniqueConstraints = [
+@Table(name = "t_sec_user_mlcs", uniqueConstraints = [
         (UniqueConstraint(name = ApplicationConstraintCodes.SecurityUserMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class SecurityUserMultipleLanguageContent : MultipleLanguageContentBaseEntity()

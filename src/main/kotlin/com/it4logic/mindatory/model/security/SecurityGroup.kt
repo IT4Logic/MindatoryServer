@@ -22,12 +22,15 @@ package com.it4logic.mindatory.model.security
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
-import com.it4logic.mindatory.model.common.ApplicationCompanyBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationCompanyEntityBase
+import com.it4logic.mindatory.model.common.ApplicationBaseRepository
+import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import com.it4logic.mindatory.model.repository.ArtifactTemplate
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
@@ -37,7 +40,7 @@ import javax.validation.constraints.Size
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_security_groups", uniqueConstraints = [])
+@Table(name = "t_sec_groups", uniqueConstraints = [])
 data class SecurityGroup (
         @get: NotNull
         @get: Size(min = 2, max = 100)
@@ -50,14 +53,16 @@ data class SecurityGroup (
         @Transient
         var description: String = "",
 
-        @OneToMany
+        @NotAudited
+        @OneToMany(fetch = FetchType.EAGER)
         @JoinColumn(name="parent", referencedColumnName="id")
         @JsonIgnore
         var mlcs: MutableList<SecurityGroupMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationCompanyEntityBase() {
+) : ApplicationMLCEntityBase() {
         override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
-                if(mlcs == null) mlcs = mutableListOf()
+                if(mlcs == null)
+                        mlcs = mutableListOf()
                 return mlcs as MutableList<MultipleLanguageContentBaseEntity>
         }
 }
@@ -67,7 +72,7 @@ data class SecurityGroup (
  * SecurityGroup Entity Repository
  */
 @RepositoryRestResource(exported = false)
-interface SecurityGroupRepository : ApplicationCompanyBaseRepository<SecurityGroup>
+interface SecurityGroupRepository : ApplicationBaseRepository<SecurityGroup>
 
 
 /**
@@ -76,7 +81,7 @@ interface SecurityGroupRepository : ApplicationCompanyBaseRepository<SecurityGro
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_security_group_mlcs", uniqueConstraints = [
+@Table(name = "t_sec_group_mlcs", uniqueConstraints = [
         (UniqueConstraint(name = ApplicationConstraintCodes.SecurityGroupMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
 ])
 class SecurityGroupMultipleLanguageContent : MultipleLanguageContentBaseEntity()

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory language by IT4Logic.
 
@@ -157,9 +157,9 @@ class LanguageTests {
 
     @Test
     fun `Languages Management`() {
-        var language1 = Language("ar", "عربي", false)
-        var language2 = Language("fr", "France", false)
-        val language3 = Language("fr", "France", false)
+        var language1 = LanguageTest("ar", "عربي", false)
+        var language2 = LanguageTest("fr", "France", false)
+        val language3 = LanguageTest("fr", "France", false)
 
         // create languages
         mvc.perform(post(_languagesEntryPointEn).with(anonymous()))
@@ -174,7 +174,7 @@ class LanguageTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("عربي")))
             .andReturn().response.contentAsString
-        language1 = objectMapper.readValue(contents, Language::class.java)
+        language1 = objectMapper.readValue(contents, LanguageTest::class.java)
 
         contents = mvc.perform(
             post(_languagesEntryPointEn)
@@ -185,7 +185,7 @@ class LanguageTests {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name", equalTo("France")))
             .andReturn().response.contentAsString
-        language2 = objectMapper.readValue(contents, Language::class.java)
+        language2 = objectMapper.readValue(contents, LanguageTest::class.java)
 
         // duplicate check
         mvc.perform(
@@ -253,7 +253,7 @@ class LanguageTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.name", equalTo("اللغة العربية")))
             .andReturn().response.contentAsString
-        language1 = objectMapper.readValue(contents, Language::class.java)
+        language1 = objectMapper.readValue(contents, LanguageTest::class.java)
 
         // getting in Arabic
         mvc.perform(

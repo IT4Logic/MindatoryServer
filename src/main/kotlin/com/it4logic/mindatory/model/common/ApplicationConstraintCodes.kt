@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -46,6 +46,8 @@ abstract class ApplicationConstraintCodes {
         const val AttributeTemplateIdentifierUniqueIndex        = "attribute_template_identifier_unq_idx"
         const val AttributeTemplateVersionUniqueIndex           = "attribute_template_ver_unq_idx"
         const val SecurityUserUsernameUniqueIndex               = "security_user_username_unq_idx"
+	    const val MailTemplateUUIDUniqueIndex                   = "mail_tmpl_uuid_mcl_unq_idx"
+
 
         const val CompanyMCLUniqueIndex                         = "company_mcl_unq_idx"
         const val SolutionMCLUniqueIndex                        = "solution_mcl_unq_idx"
@@ -57,6 +59,10 @@ abstract class ApplicationConstraintCodes {
         const val SecurityUserMCLUniqueIndex                    = "sec_user_mcl_unq_idx"
         const val SecurityRoleMCLUniqueIndex                    = "sec_role_mcl_unq_idx"
         const val SecurityGroupMCLUniqueIndex                   = "sec_group_mcl_unq_idx"
+	    const val MailTemplateMCLUniqueIndex                    = "mail_tmpl_mcl_unq_idx"
+
+
+
 
 
         val map: HashMap<String, String> = hashMapOf(
@@ -75,6 +81,7 @@ abstract class ApplicationConstraintCodes {
                 ArtifactTemplateIdentifierUniqueIndex to ApplicationErrorCodes.DuplicateArtifactTemplateIdentification,
                 AttributeTemplateIdentifierUniqueIndex to ApplicationErrorCodes.DuplicateAttributeTemplateIdentification,
                 SecurityUserUsernameUniqueIndex to ApplicationErrorCodes.DuplicateSecurityUserUsername,
+	            MailTemplateUUIDUniqueIndex to ApplicationErrorCodes.DuplicateMailTemplateUUID,
 
                 CompanyMCLUniqueIndex to ApplicationErrorCodes.DuplicateCompanyMCL,
                 SolutionMCLUniqueIndex to ApplicationErrorCodes.DuplicateSolutionMCL,
@@ -85,7 +92,9 @@ abstract class ApplicationConstraintCodes {
                 StereotypeMCLUniqueIndex to ApplicationErrorCodes.DuplicateStereotypeMCL,
                 SecurityUserMCLUniqueIndex to ApplicationErrorCodes.DuplicateSecurityUserMCL,
                 SecurityRoleMCLUniqueIndex to ApplicationErrorCodes.DuplicateSecurityRoleMCL,
-                SecurityGroupMCLUniqueIndex to ApplicationErrorCodes.DuplicateSecurityGroupMCL
+                SecurityGroupMCLUniqueIndex to ApplicationErrorCodes.DuplicateSecurityGroupMCL,
+	            MailTemplateMCLUniqueIndex to ApplicationErrorCodes.DuplicateMailTemplateMCL
+
         )
     }
 }

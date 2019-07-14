@@ -2,7 +2,6 @@ ok - controller for ACL
 ok - acl unit tests included in the other tests
 ok - solution before delete rules
 - move test data type to a separated plugin
-- protect root properties (e.g. id, create by, ..) and design version
 ====================================
 multiple content languages
 ---------------------------
@@ -22,6 +21,14 @@ ok 9- system must have at least one language
 ok 10- exception if no default language
 ok 11- passing language selection in controllers
 ok 12- languages test case
-13- MLC search through search criteria (JPA RSQL)
+ok 13- MLC search through search criteria (JPA RSQL)
 =======================================
 update plugins kotlin and spring version
+=======================================
+- mail service
+- reset password
+- forgot password
+- mail template (MLC)
+    - mail template type
+    - mail template variables  (MLC)
+- protect root properties (e.g. id, create by, ..) and design version

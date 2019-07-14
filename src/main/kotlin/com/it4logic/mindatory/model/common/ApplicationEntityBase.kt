@@ -42,8 +42,7 @@ import javax.validation.constraints.NotNull
  */
 @MappedSuperclass
 @DynamicUpdate
-open class ApplicationEntityBase {
-
+abstract class ApplicationEntityBase {
     @CreatedBy
     @Column(length = 100, updatable = false, nullable = false)
     open var createdBy: String? = null
@@ -68,8 +67,10 @@ open class ApplicationEntityBase {
     @GenericGenerator(name = "UseExistingOrGenerateIdGenerator", strategy = "com.it4logic.mindatory.helpers.UseExistingOrGenerateIdGenerator")
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "UseExistingOrGenerateIdGenerator")
     open var id: Long = -1
+}
 
-    open fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+abstract class ApplicationMLCEntityBase : ApplicationEntityBase() {
+    abstract fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity>
 
     open fun addMLC(mlc: MultipleLanguageContentBaseEntity) {
         val result = obtainMLCs().filter { it.id == mlc.id }
@@ -85,73 +86,73 @@ open class ApplicationEntityBase {
         obtainMLCs().remove(mlc)
     }
 
-    open fun copyMLCs(target: ApplicationEntityBase) {
+    open fun copyMLCs(target: ApplicationMLCEntityBase) {
         for(mlc in target.obtainMLCs()) {
             addMLC(mlc)
         }
     }
 }
 
-/**
- * Base entity class for company common entity functionaries
- */
-@MappedSuperclass
-@DynamicUpdate
-open class ApplicationCompanyEntityBase (
+///**
+// * Base entity class for company common entity functionaries
+// */
+//@MappedSuperclass
+//@DynamicUpdate
+//abstract class ApplicationCompanyEntityBase (
+//
+//        @Column(name = "company_id")
+//        open var companyId: Long = 1
+//
+//) : ApplicationMLCEntityBase()
 
-        @Column(name = "company_id")
-        open var companyId: Long = 1
-
-) : ApplicationEntityBase()
-
-/**
- * Base entity class for solution common entity functionaries
- */
-@MappedSuperclass
-@DynamicUpdate
-open class ApplicationSolutionEntityBase (
-
-    @get: NotNull
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "solution_id", nullable = false)
-    open var solution: Solution? = null
-
-) : ApplicationCompanyEntityBase()
+///**
+// * Base entity class for solution common entity functionaries
+// */
+//@MappedSuperclass
+//@DynamicUpdate
+//abstract class ApplicationSolutionEntityBase (
+//
+//    @get: NotNull
+//    @ManyToOne(optional = false)
+//    @JoinColumn(name = "solution_id", nullable = false)
+//    open var solution: Solution
+//
+//) : ApplicationMLCEntityBase()
 
 
-/**
- * Base entity class for solution common entity functionaries
- */
-@MappedSuperclass
-@DynamicUpdate
-open class ApplicationRepositoryEntityBase (
-    @get: NotNull
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "repository_id", nullable = false)
-    open var repository: ApplicationRepository? = null
+///**
+// * Base entity class for solution common entity functionaries
+// */
+//@MappedSuperclass
+//@DynamicUpdate
+//open class ApplicationRepositoryEntityBase (
+//    @get: NotNull
+//    @ManyToOne(optional = false)
+//    @JoinColumn(name = "repository_id", nullable = false)
+//    open var repository: ApplicationRepository? = null
+//
+//) : ApplicationSolutionEntityBase()
 
-) : ApplicationSolutionEntityBase()
-
-/**
- * Base entity class for solution common entity functionaries
- */
-@MappedSuperclass
-@DynamicUpdate
-open class LanguageContentEntityBase (
-    @get: NotNull
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "language_id", nullable = false)
-    open var language: Language? = null,
-
-    @get: NotBlank
-    @Column(nullable = false, length = 255)
-    open var fieldName: String = "",
-
-    @get: NotNull
-    @Lob
-    open var contents: String = ""
-
-) : ApplicationEntityBase()
+///**
+// * Base entity class for solution common entity functionaries
+// */
+//@MappedSuperclass
+//@DynamicUpdate
+//open class LanguageContentEntityBase (
+//    @get: NotNull
+//    @ManyToOne(optional = false)
+//    @JoinColumn(name = "language_id", nullable = false)
+//    open var language: Language? = null,
+//
+//    @get: NotBlank
+//    @Column(nullable = false, length = 255)
+//    open var fieldName: String = "",
+//
+//    @get: NotNull
+//    @Lob
+//    open var contents: String = ""
+//
+//) : ApplicationEntityBase()
 
 
 enum class DesignStatus(private val status: Int) {

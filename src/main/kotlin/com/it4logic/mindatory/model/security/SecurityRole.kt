@@ -27,6 +27,7 @@ import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
@@ -37,110 +38,108 @@ import kotlin.collections.ArrayList
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_security_roles", uniqueConstraints = [])
-data class SecurityRole (
+@Table(name = "t_sec_roles", uniqueConstraints = [])
+data class SecurityRole(
 
-        @get: NotNull
-        @get: Size(min = 2, max = 50)
-        @get: MultipleLanguageContent
-        @Transient
-        var name: String = "",
+	@get: NotNull
+	@get: Size(min = 2, max = 50)
+	@get: MultipleLanguageContent
+	@Transient
+	var name: String = "",
 
-        @get: Size(max = 255)
-        @get: MultipleLanguageContent
-        @Transient
-        var description: String = "",
+	@get: Size(max = 255)
+	@get: MultipleLanguageContent
+	@Transient
+	var description: String = "",
 
-        @Column
-        var company: Long = 1,
+	@Column(insertable = false, updatable = false, length = 1)
+	var permissions: ArrayList<String> = ArrayList(),
 
-        @Column(insertable=false, updatable = false, length = 1)
-        var permissions: ArrayList<String> = ArrayList(),
+	@Lob
+	@JsonIgnore
+	var authorities: ByteArray? = null,
 
-        @Lob
-        @JsonIgnore
-        var authorities: ByteArray? = null,
+	@NotAudited
+	@OneToMany(fetch = FetchType.EAGER)
+	@JoinColumn(name = "parent", referencedColumnName = "id")
+	@JsonIgnore
+	var mlcs: MutableList<SecurityRoleMultipleLanguageContent> = mutableListOf()
 
-        @OneToMany
-        @JoinColumn(name="parent", referencedColumnName="id")
-        @JsonIgnore
-        var mlcs: MutableList<SecurityRoleMultipleLanguageContent> = mutableListOf()
+) : ApplicationMLCEntityBase() {
 
-) : ApplicationCompanyEntityBase() {
+	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+		if (mlcs == null)
+			mlcs = mutableListOf()
+		return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+	}
 
-        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
-                if(mlcs == null) mlcs = mutableListOf()
-                return mlcs as MutableList<MultipleLanguageContentBaseEntity>
-        }
+	/**
+	 * Converts permissions from encoded format into string array
+	 */
+	@PrePersist
+	@PreUpdate
+	fun prePersistOrUpdate() {
+		var perms = ""
+		permissions.forEach { perms += "$it;" }
+		perms = perms.removeSuffix(";")
+		authorities = ZipManager.compress(perms)
+	}
 
-        /**
-         * Converts permissions from encoded format into string array
-         */
-        @PrePersist
-        @PreUpdate
-        fun prePersistOrUpdate() {
-                var perms = ""
-                permissions.forEach { perms += "$it;" }
-                perms = perms.removeSuffix(";")
-                authorities = ZipManager.gzip(perms)
-        }
+	/**
+	 * Converts permissions from string array to encoded format
+	 */
+	@PostLoad
+	fun postLoad() {
+		permissions = ArrayList()
+		if (authorities == null)
+			return
+		val perms = ZipManager.decompress(authorities)
+		if (!perms.isBlank())
+			permissions.addAll(perms.split(";"))
+	}
 
-        /**
-         * Converts permissions from string array to encoded format
-         */
-        @PostLoad
-        fun postLoad() {
-                permissions = ArrayList()
-                if(authorities == null)
-                        return
-                val perms = ZipManager.ungzip(authorities)
-                permissions.addAll(perms.split(";"))
-        }
+	// implementing equals method to avoid the byte array variable
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
 
-        // implementing equals method to avoid the byte array variable
-        override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (javaClass != other?.javaClass) return false
+		other as SecurityRole
 
-                other as SecurityRole
+		if (name != other.name) return false
+		if (description != other.description) return false
+		if (permissions != other.permissions) return false
 
-                if (name != other.name) return false
-                if (description != other.description) return false
-                if (permissions != other.permissions) return false
+		return true
+	}
 
-                return true
-        }
+	// implementing hashCode method to avoid the byte array variable
+	override fun hashCode(): Int {
+		var result = name.hashCode()
+		result = 31 * result + description.hashCode()
+		result = 31 * result + permissions.hashCode()
+		return result
+	}
 
-        // implementing hashCode method to avoid the byte array variable
-        override fun hashCode(): Int {
-                var result = name.hashCode()
-                result = 31 * result + description.hashCode()
-                result = 31 * result + permissions.hashCode()
-                return result
-        }
+	private fun isPermissionExists(perm: String): Boolean = permissions.contains(perm)
 
-        private fun isPermissionExists(perm: String) : Boolean {
-                return permissions.contains(perm)
-        }
+	fun addPermission(perm: String) {
+		if (isPermissionExists(perm))
+			return
+		permissions.add(perm)
+	}
 
-        fun addPermission(perm: String) {
-                if(permissions.contains(perm))
-                        return
-                permissions.add(perm)
-        }
-
-        fun removePermission(perm: String) {
-                if(!permissions.contains(perm))
-                        return
-                permissions.remove(perm)
-        }
+	fun removePermission(perm: String) {
+		if (isPermissionExists(perm))
+			return
+		permissions.remove(perm)
+	}
 }
 
 /**
  * SecurityRoles Entity Repository
  */
 @RepositoryRestResource(exported = false)
-interface SecurityRoleRepository : ApplicationCompanyBaseRepository<SecurityRole>
+interface SecurityRoleRepository : ApplicationBaseRepository<SecurityRole>
 
 /**
  * Multiple Language Content support entity
@@ -148,9 +147,14 @@ interface SecurityRoleRepository : ApplicationCompanyBaseRepository<SecurityRole
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_security_role_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityRoleMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
-])
+@Table(
+	name = "t_sec_role_mlcs", uniqueConstraints = [
+		(UniqueConstraint(
+			name = ApplicationConstraintCodes.SecurityRoleMCLUniqueIndex,
+			columnNames = ["parent", "languageId", "fieldName"]
+		))
+	]
+)
 class SecurityRoleMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**

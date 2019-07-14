@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -43,18 +43,28 @@ class JoinStoreService : ApplicationBaseService<JoinStore>() {
   override fun type(): Class<JoinStore> = JoinStore::class.java
 
   override fun beforeCreate(target: JoinStore) {
-    if(target.joinTemplate.id != target.joinTemplateVersion.joinTemplate.id)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
+//    if(target.joinTemplate.id != target.joinTemplateVersion.joinTemplate.id)
+//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
 
     if(target.joinTemplateVersion.designStatus != DesignStatus.Released)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
   }
 
   override fun beforeUpdate(target: JoinStore) {
-    if(target.joinTemplate.id != target.joinTemplateVersion.joinTemplate.id)
-      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
+//    if(target.joinTemplate.id != target.joinTemplateVersion.joinTemplate.id)
+//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
 
     if(target.joinTemplateVersion.designStatus != DesignStatus.Released)
       throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
+  }
+
+  override fun create(target: JoinStore): JoinStore {
+    target.joinTemplate = target.joinTemplateVersion.joinTemplate
+    return super.create(target)
+  }
+
+  override fun update(target: JoinStore): JoinStore {
+    target.joinTemplate = target.joinTemplateVersion.joinTemplate
+    return super.update(target)
   }
 }

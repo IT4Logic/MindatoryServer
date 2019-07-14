@@ -20,11 +20,15 @@
 
 package com.it4logic.mindatory.model.repository
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.it4logic.mindatory.api.plugins.AttributeTemplateDataType
+import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.*
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.jpa.repository.Query
@@ -38,21 +42,21 @@ import kotlin.collections.HashMap
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_attribute_template_versions", uniqueConstraints = [
+@Table(name = "t_attr_templ_vers", uniqueConstraints = [
     (UniqueConstraint(name = ApplicationConstraintCodes.AttributeTemplateVersionUniqueIndex, columnNames = ["attribute_template_id", "designVersion"]))
 ])
 data class AttributeTemplateVersion (
+    @get: MultipleLanguageContent
     @ManyToOne
     @JoinColumn(name = "attribute_template_id", nullable = false)
-    @JsonIgnore
     var attributeTemplate: AttributeTemplate,
 
     @get: NotNull
     var typeUUID: String,
 
-    @Transient
-    @JsonIgnore
-    var type: AttributeTemplateDataType? = null,
+//    @Transient
+//    @JsonIgnore
+//    var type: AttributeTemplateDataType? = null,
 
     @Lob
     var properties: HashMap<String, Any> = hashMapOf(),
@@ -64,14 +68,16 @@ data class AttributeTemplateVersion (
     @ManyToOne
     @JoinColumn(name = "repository_id", nullable = false)
     @JsonIgnore
-    var repository: ApplicationRepository? = null,
+    var repository: ApplicationRepository,
 
     @ManyToOne
     @JoinColumn(name = "solution_id")
     @JsonIgnore
     var solution: Solution? = null
 
-) : ApplicationEntityBase()
+) : ApplicationMLCEntityBase() {
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+}
 
 
 @RepositoryRestResource(exported = false)

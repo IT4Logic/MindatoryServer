@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -23,12 +23,14 @@ package com.it4logic.mindatory.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
+import com.it4logic.mindatory.model.ApplicationMetadataRepository
 import com.it4logic.mindatory.model.security.SecurityGroup
 import com.it4logic.mindatory.model.security.SecurityRole
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.security.JwtAuthenticationResponse
 import com.it4logic.mindatory.security.LoginRequest
+import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
 import com.it4logic.mindatory.services.security.SecurityUserService
@@ -51,7 +53,6 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 
-
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -65,6 +66,9 @@ class AuthenticationTests {
     private lateinit var objectMapper: ObjectMapper
 
     @Autowired
+    private lateinit var applicationMetadataRepository: ApplicationMetadataRepository
+
+    @Autowired
     private lateinit var securityRoleService: SecurityRoleService
 
     @Autowired
@@ -73,17 +77,21 @@ class AuthenticationTests {
     @Autowired
     private lateinit var securityUserService: SecurityUserService
 
+    @Autowired
+    private lateinit var languageService: LanguageService
+
     private lateinit var mvc: MockMvc
 
-    private lateinit var roleAdmin: SecurityRole
     private lateinit var roleUser: SecurityRole
 
-    private lateinit var adminGroup: SecurityGroup
     private lateinit var userGroup: SecurityGroup
 
-    private lateinit var adminUser: SecurityUser
     private lateinit var normalUser: SecurityUser
 
+    private val _usersEntryPointEn = TestHelper.setLocaleForEntryPoint(ApplicationControllerEntryPoints.SecurityUsers, "en")
+    private val _rolesEntryPointEn = TestHelper.setLocaleForEntryPoint(ApplicationControllerEntryPoints.SecurityRoles, "en")
+    private val _groupsEntryPointEn = TestHelper.setLocaleForEntryPoint(ApplicationControllerEntryPoints.SecurityGroups, "en")
+    
     @Before
     fun setup() {
         mvc = MockMvcBuilders
@@ -95,20 +103,10 @@ class AuthenticationTests {
     }
 
     fun setupSecurityData() {
-        roleAdmin = securityRoleService.create(SecurityRole("ROLE_ADMIN", "Admins Role",
-                permissions = arrayListOf(
-                        ApplicationSecurityPermissions.SecurityRoleAdminView,
-                        ApplicationSecurityPermissions.SecurityRoleAdminCreate,
-                        ApplicationSecurityPermissions.SecurityGroupAdminView
-                        )))
         roleUser = securityRoleService.create(SecurityRole("ROLE_USER", "Users Role",
                 permissions = arrayListOf(ApplicationSecurityPermissions.SecurityRoleAdminView)))
 
-        adminGroup = securityGroupService.create(SecurityGroup("Admins Group", "Group for Admins"))
         userGroup = securityGroupService.create(SecurityGroup("Users Group", "Group for Users"))
-
-        adminUser = securityUserService.create(SecurityUser("admin", "password", fullName = "Admin User", email = "admin@it4logic.com",
-                roles = mutableListOf(roleAdmin), group = adminGroup))
 
         normalUser = securityUserService.create(SecurityUser("user", "password", fullName = "Manager User", email = "manager@it4logic.com",
                 roles = mutableListOf(roleUser), group = userGroup))
@@ -146,17 +144,10 @@ class AuthenticationTests {
         var loginResponse = objectMapper.readValue(contents, JwtAuthenticationResponse::class.java)
 
         // check using token with granted permission
-        mvc.perform(get(ApplicationControllerEntryPoints.SecurityGroups)
+        mvc.perform(get(_groupsEntryPointEn)
                 .header("Authorization", loginResponse.tokenType + " " + loginResponse.accessToken)
             )
             .andExpect(status().isOk)
-
-        // check using token with none-granted permission
-        mvc.perform(get(ApplicationControllerEntryPoints.SecurityUsers)
-                .header("Authorization", loginResponse.tokenType + " " + loginResponse.accessToken)
-            )
-            .andExpect(status().isForbidden)
-
 
         // login to get the JWT token & check the user is OK
         contents = mvc.perform(
@@ -168,16 +159,22 @@ class AuthenticationTests {
             .andReturn().response.contentAsString
         loginResponse = objectMapper.readValue(contents, JwtAuthenticationResponse::class.java)
 
-        mvc.perform(get(ApplicationControllerEntryPoints.SecurityRoles)
+        // check using token with granted permission
+        mvc.perform(get(_rolesEntryPointEn)
                 .header("Authorization", loginResponse.tokenType + " " + loginResponse.accessToken)
             )
             .andExpect(status().isOk)
+
+        // check using token with none-granted permission
+        mvc.perform(get(_usersEntryPointEn)
+            .header("Authorization", loginResponse.tokenType + " " + loginResponse.accessToken)
+        )
+            .andExpect(status().isForbidden)
 
         normalUser.accountEnabled = false
         normalUser.accountLocked = false
         normalUser.accountExpired = false
         normalUser = securityUserService.update(normalUser)
-
 
         // check to login with disabled user
         mvc.perform(
@@ -188,7 +185,7 @@ class AuthenticationTests {
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.SecurityAccountDisabled)))
 
-        mvc.perform(get(ApplicationControllerEntryPoints.SecurityRoles)
+        mvc.perform(get(_rolesEntryPointEn)
                 .header("Authorization", loginResponse.tokenType + " " + loginResponse.accessToken)
             )
             .andExpect(status().isUnauthorized)
@@ -207,7 +204,7 @@ class AuthenticationTests {
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.SecurityAccountLocked)))
 
-        mvc.perform(get(ApplicationControllerEntryPoints.SecurityRoles)
+        mvc.perform(get(_rolesEntryPointEn)
                 .header("Authorization", loginResponse.tokenType + " " + loginResponse.accessToken)
             )
             .andExpect(status().isUnauthorized)
@@ -226,7 +223,7 @@ class AuthenticationTests {
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.errorCode", equalTo(ApplicationErrorCodes.SecurityAccountExpired)))
 
-        mvc.perform(get(ApplicationControllerEntryPoints.SecurityRoles)
+        mvc.perform(get(_rolesEntryPointEn)
                 .header("Authorization", loginResponse.tokenType + " " + loginResponse.accessToken)
             )
             .andExpect(status().isUnauthorized)
@@ -246,7 +243,7 @@ class AuthenticationTests {
             )
             .andExpect(status().isOk)
 
-        mvc.perform(get(ApplicationControllerEntryPoints.SecurityRoles)
+        mvc.perform(get(_rolesEntryPointEn)
                 .header("Authorization", loginResponse.tokenType + " " + loginResponse.accessToken)
             )
             .andExpect(status().isOk)

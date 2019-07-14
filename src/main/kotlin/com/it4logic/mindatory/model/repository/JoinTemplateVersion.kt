@@ -25,6 +25,7 @@ import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.ApplicationRepository
 import com.it4logic.mindatory.model.Solution
 import com.it4logic.mindatory.model.common.*
+import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.jpa.repository.Query
@@ -37,11 +38,11 @@ import javax.validation.constraints.NotNull
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_join_template_versions")
+@Table(name = "t_join_templ_vers")
 data class JoinTemplateVersion (
+    @get: MultipleLanguageContent
     @ManyToOne
     @JoinColumn(name = "join_template_id", nullable = false)
-    @JsonIgnore
     var joinTemplate: JoinTemplate,
 
     @get: NotNull
@@ -50,8 +51,9 @@ data class JoinTemplateVersion (
     @JoinColumn(name = "source_stereotype_id", nullable = false)
     var sourceStereotype: Stereotype,
 
+    @get: MultipleLanguageContent
     @ManyToMany
-    @JoinTable(name = "t_source_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
+    @JoinTable(name = "t_source_artf_join_templs", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
     var sourceArtifacts: MutableList<ArtifactTemplateVersion> = mutableListOf(),
 
     @get: NotNull
@@ -60,8 +62,9 @@ data class JoinTemplateVersion (
     @JoinColumn(name = "target_stereotype_id", nullable = false)
     var targetStereotype: Stereotype,
 
+    @get: MultipleLanguageContent
     @ManyToMany
-    @JoinTable(name = "t_target_artifact_join_templates", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
+    @JoinTable(name = "t_target_artf_join_templs", joinColumns = [JoinColumn(name = "join_id")], inverseJoinColumns = [JoinColumn(name = "artifact_id")])
     var targetArtifacts: MutableList<ArtifactTemplateVersion> = mutableListOf(),
 
     var designStatus: DesignStatus = DesignStatus.InDesign,
@@ -78,7 +81,9 @@ data class JoinTemplateVersion (
     @JsonIgnore
     var solution: Solution? = null
 
-) : ApplicationEntityBase()
+) : ApplicationMLCEntityBase() {
+    override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+}
 
 /**
  * Repository

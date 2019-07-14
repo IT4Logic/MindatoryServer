@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017, IT4Logic.
+    Copyright (c) 2019, IT4Logic.
 
     This file is part of Mindatory solution by IT4Logic.
 
@@ -20,7 +20,6 @@
 
 package com.it4logic.mindatory.config
 
-//import com.it4logic.svs.security.SecurityFactory
 import com.it4logic.mindatory.model.common.ExtendedJpaRepositoryImpl
 import com.it4logic.mindatory.security.SecurityFactory
 import org.springframework.context.annotation.Bean
@@ -29,13 +28,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.data.domain.AuditorAware
 import org.springframework.data.envers.repository.support.EnversRevisionRepositoryFactoryBean
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
-//import org.springframework.security.core.context.SecurityContextHolder
-//import org.springframework.security.core.userdetails.UserDetails
 import java.util.*
 
-
 /**
- * JPA Configuration Class that activates auditing feature
+ * Utility class to configure JPA to enable auditing feature
  */
 @Configuration
 @EnableJpaAuditing
