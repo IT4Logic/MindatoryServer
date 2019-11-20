@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,11 +22,15 @@ package com.it4logic.mindatory.exceptions
 
 import org.springframework.validation.Errors
 
+
+class ApplicationAuthenticationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
+
+
+
+
 class ApplicationGeneralException (val error: ApiError, override var cause: Throwable? = null) : RuntimeException()
 
 class ApplicationObjectNotFoundException (var id: Any, var errorCode: String) : RuntimeException()
-
-class ApplicationAuthenticationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
 
 class ApplicationAuthorizationException (var errorCode: String, override var cause: Throwable? = null) : RuntimeException()
 

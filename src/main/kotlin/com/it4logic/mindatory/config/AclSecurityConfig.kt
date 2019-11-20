@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 
 /**
- * Utility class to configure ACL Spring Security
+ * Utility class to configure ACL Spring Security beans producers
  */
 @Configuration
 class MethodSecurityConfig {

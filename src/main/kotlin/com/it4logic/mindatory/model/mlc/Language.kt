@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic. All rights reserved.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ package com.it4logic.mindatory.model.mlc
 
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
@@ -32,37 +31,42 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import java.util.*
 import javax.persistence.*
 
+/**
+ * Language Entity
+ */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_languages", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.LanguageLocaleUniqueIndex, columnNames = ["locale"])),
-        (UniqueConstraint(name = ApplicationConstraintCodes.LanguageNameUniqueIndex, columnNames = ["name"]))
-])
-data class Language (
-        @get: NotBlank
-        @get: Size(min = 2, max = 10)
-        @Column(nullable = false, length = 10)
-        var locale: String,
+@Table(
+	name = "t_languages", uniqueConstraints = [
+		(UniqueConstraint(name = ApplicationConstraintCodes.LanguageLocaleUniqueIndex, columnNames = ["f_locale"])),
+		(UniqueConstraint(name = ApplicationConstraintCodes.LanguageNameUniqueIndex, columnNames = ["f_name"]))
+	]
+)
+data class Language(
+	@get: NotBlank
+	@get: Size(min = 2, max = 10)
+	@Column(name = "f_locale", nullable = false, length = 10)
+	var locale: String,
 
-        @get: NotBlank
-        @get: Size(min = 2, max = 100)
-        @Column(nullable = false, length = 100)
-        var name: String,
+	@get: NotBlank
+	@get: Size(min = 2, max = 100)
+	@Column(name = "f_name", nullable = false, length = 100)
+	var name: String,
 
-        @Column(name = "is_default")
-        var default: Boolean = false
+	@Column(name = "f_is_default")
+	var default: Boolean = false
 
 ) : ApplicationMLCEntityBase() {
-        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
+	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 
 /**
- * Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface LanguageRepository : ApplicationBaseRepository<Language> {
-        fun findOneByDefault(value: Boolean) : Optional<Language>
-        fun findOneByLocale(locale: String) : Optional<Language>
-        fun findAllByDefault(value: Boolean): List<Language>
+	fun findOneByDefault(value: Boolean): Optional<Language>
+	fun findOneByLocale(locale: String): Optional<Language>
+	fun findAllByDefault(value: Boolean): List<Language>
 }

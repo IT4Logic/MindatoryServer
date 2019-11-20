@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,19 +32,19 @@ import javax.transaction.Transactional
 @Service
 @Transactional
 class AppPreferencesService : ApplicationBaseService<AppPreferences>() {
-  @Autowired
-  private lateinit var companyRepository: AppPreferencesRepository
+	@Autowired
+	private lateinit var companyRepository: AppPreferencesRepository
 
-  @Autowired
-  protected lateinit var languageManager: LanguageManager
+	@Autowired
+	protected lateinit var languageManager: LanguageManager
 
-  override fun repository(): ApplicationBaseRepository<AppPreferences> = companyRepository
+	override fun repository(): ApplicationBaseRepository<AppPreferences> = companyRepository
 
-  override fun type(): Class<AppPreferences> = AppPreferences::class.java
+	override fun type(): Class<AppPreferences> = AppPreferences::class.java
 
-  fun findFirst(): AppPreferences {
-    val obj = repository().findAll()[0]
-    mlcService()?.load(obj)
-    return obj
-  }
+	fun findFirst(): AppPreferences {
+		val obj = repository().findAll()[0]
+		mlcService().load(obj)
+		return obj
+	}
 }

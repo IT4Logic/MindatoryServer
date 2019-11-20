@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@
 
 package com.it4logic.mindatory.tests
 
-import com.it4logic.mindatory.model.common.DesignStatus
-import com.it4logic.mindatory.model.common.StoreObjectStatus
+import com.it4logic.mindatory.model.model.ModelVersionStatus
+import com.it4logic.mindatory.model.project.StoreObjectStatus
 import java.util.*
 
-open class ApplicationEntityBaseTest (
+open class ApplicationEntityBaseTest(
 	var createdBy: String? = null,
 	var createdAt: Date? = null,
 	var updatedBy: String? = null,
@@ -33,15 +33,15 @@ open class ApplicationEntityBaseTest (
 	var id: Long = -1
 )
 
-open class ApplicationMLCEntityBaseTest (
+open class ApplicationMLCEntityBaseTest(
 //	var companyId: Long = 1
 ) : ApplicationEntityBaseTest()
 
-open class ApplicationSolutionEntityBaseTest (
-	var solution: SolutionTest? = null
+open class ApplicationProjectEntityBaseTest(
+	var project: ProjectTest? = null
 ) : ApplicationMLCEntityBaseTest()
 
-data class CompanyTest (
+data class CompanyTest(
 	var name: String,
 	var street: String = "",
 	var city: String = "",
@@ -53,48 +53,49 @@ data class CompanyTest (
 	var fax: String = ""
 ) : ApplicationEntityBaseTest()
 
-data class LanguageTest (
+data class LanguageTest(
 	var locale: String,
 	var name: String,
 	var default: Boolean = false
 ) : ApplicationEntityBaseTest()
 
-data class SolutionTest (
+data class ProjectTest(
 	var name: String = "",
 	var description: String = ""
 ) : ApplicationMLCEntityBaseTest()
 
-data class ApplicationRepositoryTest (
+data class ApplicationRepositoryTest(
 	var name: String,
 	var description: String = "",
 	var shared: Boolean = true,
-	var solution: SolutionTest? = null
+	var project: ProjectTest? = null
 ) : ApplicationMLCEntityBaseTest()
 
-data class SecurityGroupTest (
+data class SecurityGroupTest(
 	var name: String = "",
 	var description: String = ""
 ) : ApplicationMLCEntityBaseTest()
 
-data class SecurityRoleTest (
+data class SecurityRoleTest(
 	var name: String = "",
 	var description: String = "",
 	var permissions: ArrayList<String> = ArrayList()
 ) : ApplicationMLCEntityBaseTest() {
-	private fun isPermissionExists(perm: String) : Boolean = permissions.contains(perm)
+	private fun isPermissionExists(perm: String): Boolean = permissions.contains(perm)
 	fun addPermission(perm: String) {
-		if(isPermissionExists(perm))
+		if (isPermissionExists(perm))
 			return
 		permissions.add(perm)
 	}
+
 	fun removePermission(perm: String) {
-		if(!isPermissionExists(perm))
+		if (!isPermissionExists(perm))
 			return
 		permissions.remove(perm)
 	}
 }
 
-data class SecurityUserTest (
+data class SecurityUserTest(
 	var username: String = "",
 	var password: String = "",
 	var accountEnabled: Boolean = true,
@@ -110,20 +111,22 @@ data class SecurityUserTest (
 	var group: SecurityGroupTest? = null,
 	var roles: MutableList<SecurityRoleTest> = mutableListOf()
 ) : ApplicationMLCEntityBaseTest() {
-	private fun isRoleExists(role: SecurityRoleTest) : Boolean {
+	private fun isRoleExists(role: SecurityRoleTest): Boolean {
 		val result = roles.filter { it.id == role.id }
-		if(result.isEmpty())
+		if (result.isEmpty())
 			return false
 		return true
 	}
+
 	fun addRole(role: SecurityRoleTest) {
-		if(isRoleExists(role))
+		if (isRoleExists(role))
 			return
 		roles.add(role)
 	}
+
 	fun removeRole(role: SecurityRoleTest) {
-		for(r in roles) {
-			if(r.id == role.id) {
+		for (r in roles) {
+			if (r.id == role.id) {
 				roles.remove(r)
 				break
 			}
@@ -131,84 +134,84 @@ data class SecurityUserTest (
 	}
 }
 
-data class AttributeTemplateTest (
+data class AttributeTemplateTest(
 	var identifier: String,
 	var name: String,
 	var description: String = "",
 	var repository: ApplicationRepositoryTest,
-	var solution: SolutionTest? = null
+	var project: ProjectTest? = null
 ) : ApplicationMLCEntityBaseTest()
 
-data class AttributeTemplateVersionTest (
+data class AttributeTemplateVersionTest(
 	var attributeTemplate: AttributeTemplateTest,
 	var typeUUID: String,
 	var properties: HashMap<String, Any> = hashMapOf(),
-	var designStatus: DesignStatus = DesignStatus.InDesign,
+	var modelVersionStatus: ModelVersionStatus = ModelVersionStatus.InDesign,
 	var designVersion: Int = 1
 ) : ApplicationMLCEntityBaseTest()
 
-data class ArtifactTemplateTest (
+data class ArtifactTemplateTest(
 	var identifier: String,
 	var name: String,
 	var description: String = "",
 	var repository: ApplicationRepositoryTest,
-	var solution: SolutionTest? = null
+	var project: ProjectTest? = null
 ) : ApplicationMLCEntityBaseTest()
 
-data class ArtifactTemplateVersionTest (
+data class ArtifactTemplateVersionTest(
 	var artifactTemplate: ArtifactTemplateTest,
 	var attributes: MutableList<AttributeTemplateVersionTest> = mutableListOf(),
-	var designStatus: DesignStatus = DesignStatus.InDesign,
+	var modelVersionStatus: ModelVersionStatus = ModelVersionStatus.InDesign,
 	var designVersion: Int = 1
 ) : ApplicationMLCEntityBaseTest()
 
-data class StereotypeTest (
+data class StereotypeTest(
 	var name: String,
 	var description: String = "",
 	var repository: ApplicationRepositoryTest? = null,
-	var solution: SolutionTest? = null
+	var project: ProjectTest? = null
 ) : ApplicationMLCEntityBaseTest()
 
-data class JoinTemplateTest (
+data class RelationTemplateTest(
 	var identifier: String,
 	var description: String = "",
 	var repository: ApplicationRepositoryTest,
-	var solution: SolutionTest? = null
+	var project: ProjectTest? = null
 ) : ApplicationMLCEntityBaseTest()
 
-data class JoinTemplateVersionTest (
-	var joinTemplate: JoinTemplateTest,
+data class RelationTemplateVersionTest(
+	var relationTemplate: RelationTemplateTest,
 	var sourceStereotype: StereotypeTest,
 	var sourceArtifacts: MutableList<ArtifactTemplateVersionTest> = mutableListOf(),
 	var targetStereotype: StereotypeTest,
 	var targetArtifacts: MutableList<ArtifactTemplateVersionTest> = mutableListOf(),
-	var designStatus: DesignStatus = DesignStatus.InDesign,
+	var modelVersionStatus: ModelVersionStatus = ModelVersionStatus.InDesign,
 	var designVersion: Int = 1
 ) : ApplicationMLCEntityBaseTest()
 
-data class AttributeStoreTest (
+data class AttributeStoreTest(
 	var contents: String,
 //	var attributeTemplate: AttributeTemplateTest,
 	var attributeTemplateVersion: AttributeTemplateVersionTest,
 	var storeStatus: StoreObjectStatus = StoreObjectStatus.Active//,
-//	var solution: SolutionTest
+//	var project: ProjectTest
 
 ) : ApplicationMLCEntityBaseTest()
 
-data class ArtifactStoreTest (
-//	var artifactTemplate: ArtifactTemplateTest,
+data class ArtifactStoreTest(
+//	var artifact: ArtifactTemplateTest,
 	var artifactTemplateVersion: ArtifactTemplateVersionTest,
 	var attributeStores: MutableList<AttributeStoreTest> = mutableListOf(),
 	var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
-	var solution: SolutionTest
+	var project: ProjectTest
 
 ) : ApplicationMLCEntityBaseTest()
 
-data class JoinStoreTest (
+data class RelationStoreTest(
 	var sourceArtifacts: MutableList<ArtifactStoreTest> = mutableListOf(),
 	var targetArtifacts: MutableList<ArtifactStoreTest> = mutableListOf(),
-	var joinTemplateVersion: JoinTemplateVersionTest,
+	var relationTemplateVersion: RelationTemplateVersionTest,
 	var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
-	var solution: SolutionTest
+	var project: ProjectTest
 
 ) : ApplicationMLCEntityBaseTest()

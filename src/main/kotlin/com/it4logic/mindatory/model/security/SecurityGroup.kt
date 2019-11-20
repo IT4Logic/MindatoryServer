@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,10 +25,9 @@ import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
-import com.it4logic.mindatory.model.repository.ArtifactTemplate
+import io.leangen.graphql.annotations.GraphQLIgnore
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -40,31 +39,33 @@ import javax.validation.constraints.Size
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_sec_groups", uniqueConstraints = [])
-data class SecurityGroup (
-        @get: NotNull
-        @get: Size(min = 2, max = 100)
-        @get: MultipleLanguageContent
-        @Transient
-        var name: String = "",
+@Table(name = "t_security_groups", uniqueConstraints = [])
+data class SecurityGroup(
+	@get: NotNull
+	@get: Size(min = 2, max = 100)
+	@get: MultipleLanguageContent
+	@Transient
+	var name: String = "",
 
-        @get: Size(max = 255)
-        @get: MultipleLanguageContent
-        @Transient
-        var description: String = "",
+	@get: Size(max = 255)
+	@get: MultipleLanguageContent
+	@Transient
+	var description: String = "",
 
-        @NotAudited
-        @OneToMany(fetch = FetchType.EAGER)
-        @JoinColumn(name="parent", referencedColumnName="id")
-        @JsonIgnore
-        var mlcs: MutableList<SecurityGroupMultipleLanguageContent> = mutableListOf()
+	@NotAudited
+	@OneToMany(fetch = FetchType.EAGER)
+	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
+	@JsonIgnore
+	@get: GraphQLIgnore
+	var mlcs: MutableList<SecurityGroupMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {
-        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
-                if(mlcs == null)
-                        mlcs = mutableListOf()
-                return mlcs as MutableList<MultipleLanguageContentBaseEntity>
-        }
+	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
+	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+		if (mlcs == null)
+			mlcs = mutableListOf()
+		return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+	}
 }
 
 
@@ -81,9 +82,14 @@ interface SecurityGroupRepository : ApplicationBaseRepository<SecurityGroup>
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_sec_group_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityGroupMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
-])
+@Table(
+	name = "t_security_group_mlcs", uniqueConstraints = [
+		(UniqueConstraint(
+			name = ApplicationConstraintCodes.SecurityGroupMCLUniqueIndex,
+			columnNames = ["f_parent", "f_language_id", "f_field_name"]
+		))
+	]
+)
 class SecurityGroupMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**

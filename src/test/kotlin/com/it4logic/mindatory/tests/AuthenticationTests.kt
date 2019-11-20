@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 package com.it4logic.mindatory.tests
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
+import com.it4logic.mindatory.controllers.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.ApplicationMetadataRepository
 import com.it4logic.mindatory.model.security.SecurityGroup

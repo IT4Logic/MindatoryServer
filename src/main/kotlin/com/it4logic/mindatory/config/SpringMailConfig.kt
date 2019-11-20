@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@ import org.thymeleaf.templateresolver.ITemplateResolver
 @Configuration
 class SpringMailConfig {
 
+	/**
+	 * ITemplateEngine producer that will be used in Thymeleaf template engine initialization
+	 */
 	@Bean
 	fun appTemplateEngine(): ITemplateEngine {
 		val templateEngine = SpringTemplateEngine()
@@ -41,6 +44,10 @@ class SpringMailConfig {
 		return templateEngine
 	}
 
+	/**
+	 * Creates HTML String Template resolver
+	 * @return ITemplateResolver instance
+	 */
 	private fun stringTemplateResolver(): ITemplateResolver {
 		val templateResolver = StringTemplateResolver()
 		templateResolver.order = Integer.valueOf(1)

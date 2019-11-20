@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,32 +35,33 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_app_md", uniqueConstraints = [
-    (UniqueConstraint(name = ApplicationConstraintCodes.ApplicationRepositorySolutionUniqueIndex, columnNames = ["majorVersion", "minorVersion", "buildVersion"]))
-])
-data class ApplicationMetadata (
-    @get: NotBlank
-    @get: Size(min = 1, max = 20)
-    @Column(length = 20)
-    var majorVersion: String,
+@Table(
+	name = "t_app_metadata", uniqueConstraints = []
+)
+data class ApplicationMetadata(
+	@get: NotBlank
+	@get: Size(min = 1, max = 20)
+	@Column(name = "f_major_version", length = 20)
+	var majorVersion: String,
 
-    @get: NotBlank
-    @get: Size(min = 1, max = 20)
-    @Column(length = 20)
-    var minorVersion: String,
+	@get: NotBlank
+	@get: Size(min = 1, max = 20)
+	@Column(name = "f_minor_version", length = 20)
+	var minorVersion: String,
 
-    @get: NotBlank
-    @get: Size(min = 1, max = 20)
-    @Column(length = 20)
-    var buildVersion: String,
+	@get: NotBlank
+	@get: Size(min = 1, max = 20)
+	@Column(name = "f_build_version", length = 20)
+	var buildVersion: String,
 
-    @get: Size(max = 255)
-    var notes: String = ""
+	@get: Size(max = 255)
+	@Column(name = "f_notes", length = 255)
+	var notes: String = ""
 
 ) : ApplicationEntityBase()
 
 /**
- * ApplicationRepository Entity Rest Repository
+ * Model Entity Rest Repository
  */
 @RepositoryRestResource(exported = false)
 interface ApplicationMetadataRepository : ApplicationBaseRepository<ApplicationMetadata>

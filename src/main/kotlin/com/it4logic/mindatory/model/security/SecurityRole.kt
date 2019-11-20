@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import io.leangen.graphql.annotations.GraphQLIgnore
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -38,7 +39,7 @@ import kotlin.collections.ArrayList
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_sec_roles", uniqueConstraints = [])
+@Table(name = "t_security_roles", uniqueConstraints = [])
 data class SecurityRole(
 
 	@get: NotNull
@@ -52,21 +53,24 @@ data class SecurityRole(
 	@Transient
 	var description: String = "",
 
-	@Column(insertable = false, updatable = false, length = 1)
+	@Column(name = "f_permissions", insertable = false, updatable = false, length = 1)
 	var permissions: ArrayList<String> = ArrayList(),
 
 	@Lob
 	@JsonIgnore
+	@Column(name = "f_authorities")
+	@get: GraphQLIgnore
 	var authorities: ByteArray? = null,
 
 	@NotAudited
 	@OneToMany(fetch = FetchType.EAGER)
-	@JoinColumn(name = "parent", referencedColumnName = "id")
+	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
+	@get: GraphQLIgnore
 	var mlcs: MutableList<SecurityRoleMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {
-
+	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
 		if (mlcs == null)
 			mlcs = mutableListOf()
@@ -100,7 +104,7 @@ data class SecurityRole(
 
 	// implementing equals method to avoid the byte array variable
 	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
+		if (this == other) return true
 		if (javaClass != other?.javaClass) return false
 
 		other as SecurityRole
@@ -148,10 +152,10 @@ interface SecurityRoleRepository : ApplicationBaseRepository<SecurityRole>
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(
-	name = "t_sec_role_mlcs", uniqueConstraints = [
+	name = "t_security_role_mlcs", uniqueConstraints = [
 		(UniqueConstraint(
 			name = ApplicationConstraintCodes.SecurityRoleMCLUniqueIndex,
-			columnNames = ["parent", "languageId", "fieldName"]
+			columnNames = ["f_parent", "f_language_id", "f_field_name"]
 		))
 	]
 )

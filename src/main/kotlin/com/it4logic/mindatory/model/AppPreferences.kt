@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,32 +36,38 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_preferences", uniqueConstraints = [])
+@Table(name = "t_app_preferences", uniqueConstraints = [])
 data class AppPreferences(
 	@get: Size(max = 255)
-	@Column(length = 255)
+	@Column(name = "f_default_mail_from", length = 255)
 	var defaultMailFrom: String = "",
 
 	@get: Size(max = 512)
-	@Column(length = 512)
+	@Column(name = "f_smtp_server_url", length = 512)
 	var smtpServerUrl: String = "",
 
+	@Column(name = "f_smtp_server_port")
 	var smtpServerPort: Int = 0,
 
 	@get: Size(max = 100)
-	@Column(length = 100)
+	@Column(name = "f_smtp_server_username", length = 100)
 	var smtpServerUsername: String = "",
 
 	@get: Size(max = 100)
-	@Column(length = 100)
+	@Column(name = "f_smtp_server_password", length = 100)
 	var smtpServerPassword: String = "",
 
 	@Lob
+	@Column(name = "f_smtp_server_properties")
 	var smtpServerProperties: String = ""
 
 ) : ApplicationMLCEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 
+	/**
+	 * Convert SMTP Server properties from string form to [Properties] instance
+	 * @return [Properties] instance for SMTP Server properties string form
+	 */
 	fun obtainSMTPServerProperties(): Properties {
 		val out = Properties()
 		if (smtpServerProperties.isBlank())

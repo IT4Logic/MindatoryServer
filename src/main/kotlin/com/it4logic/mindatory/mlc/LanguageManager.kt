@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,23 +25,22 @@ import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.mlc.LanguageRepository
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Scope
-import org.springframework.context.annotation.ScopedProxyMode
 import org.springframework.stereotype.Component
-import org.springframework.web.context.WebApplicationContext
 
 
 /**
  * Language Manager
  */
 @Component
-//@Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
 class LanguageManager {
     @Autowired
     private lateinit var languageRepository: LanguageRepository
 
     private var _currentLanguage: Language? = null
 
+    /**
+     * Current active application wide language
+     */
     var currentLanguage: Language
         get() {
             if(_currentLanguage != null)
@@ -52,6 +51,9 @@ class LanguageManager {
             _currentLanguage = value
         }
 
+    /**
+     * Default application wide language
+     */
     val defaultLanguage: Language
         get() {
             val result = languageRepository.findOneByDefault(true)

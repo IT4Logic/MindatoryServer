@@ -40,7 +40,7 @@ private constructor(
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jpa.repository.support.QueryHints#withFetchGraphs()
+	 * @see org.springframework.data.jpa.model.support.QueryHints#withFetchGraphs()
 	 */
 	override fun withFetchGraphs(em: EntityManager): QueryHints {
 		return DefaultQueryHints(this.information, this.metadata, Optional.of(em))
@@ -56,7 +56,7 @@ private constructor(
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jpa.repository.support.QueryHints#asMap()
+	 * @see org.springframework.data.jpa.model.support.QueryHints#asMap()
 	 */
 	override fun asMap(): Map<String, Any> {
 

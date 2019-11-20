@@ -24,7 +24,7 @@ import kotlin.reflect.full.memberProperties
 interface ExtendedJpaRepository<T, ID : Serializable> : JpaRepository<T, ID>
 
 
-class ExtendedJpaRepositoryImpl<T, ID : Serializable> (
+class ExtendedJpaRepositoryImpl<T, ID : Serializable>(
 	val entityInformation: JpaEntityInformation<T, *>,
 	val entityManager: EntityManager
 ) : SimpleJpaRepository<T, ID>(entityInformation, entityManager), ExtendedJpaRepository<T, ID> {
@@ -39,16 +39,20 @@ class ExtendedJpaRepositoryImpl<T, ID : Serializable> (
 		val orders = ArrayList<Sort.Order>()
 
 		for (order in sort) {
-			val memberProperty = from.javaType.kotlin.memberProperties.filter { it.name ==  order.property}
-			if(!memberProperty.isEmpty()) {
+			val memberProperty = from.javaType.kotlin.memberProperties.filter { it.name == order.property }
+			if (memberProperty.isNotEmpty()) {
 				val result = memberProperty[0].getter.findAnnotation<MultipleLanguageContent>()
-				if(result != null) {
+				if (result != null) {
 					// This feature is not supported in PostgresSQL
 					val sortOrder = Sort.Order(order.direction, "mlcs.contents", order.nullHandling)
 					orders.add(sortOrder)
 					query.distinct(true)
 					continue
 				}
+			} else if (order.property.indexOf(".") > -1) {
+				val sortOrder = Sort.Order(order.direction, order.property, order.nullHandling)
+				orders.add(sortOrder)
+				query.distinct(true)
 			}
 
 			orders.add(order)
@@ -80,7 +84,10 @@ class ExtendedJpaRepositoryImpl<T, ID : Serializable> (
 	 * @param query must not be null.
 	 * @return
 	 */
-	private fun <S, U : T> applySpecificationToCriteria( @Nullable spec: Specification<U>?, domainClass: Class<U>, query: CriteriaQuery<S>): Root<U> {
+	private fun <S, U : T> applySpecificationToCriteria(
+		@Nullable spec: Specification<U>?, domainClass: Class<U>,
+		query: CriteriaQuery<S>
+	): Root<U> {
 		Assert.notNull(domainClass, "Domain class must not be null!")
 		Assert.notNull(query, "CriteriaQuery must not be null!")
 
@@ -121,6 +128,9 @@ class ExtendedJpaRepositoryImpl<T, ID : Serializable> (
 	}
 
 	private fun queryHints(): QueryHints {
-		return if (repositoryMethodMetadata == null) QueryHints.NoHints.INSTANCE else DefaultQueryHints.of(entityInformation, repositoryMethodMetadata!!)
+		return if (repositoryMethodMetadata == null) QueryHints.NoHints.INSTANCE else DefaultQueryHints.of(
+			entityInformation,
+			repositoryMethodMetadata!!
+		)
 	}
 }

@@ -1,6 +1,5 @@
 package com.it4logic.mindatory.services.mail
 
-import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApiError
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationGeneralException
@@ -10,7 +9,6 @@ import com.it4logic.mindatory.model.AppPreferences
 import com.it4logic.mindatory.model.mail.MailTemplateTypeUUID
 import com.it4logic.mindatory.model.security.SecurityUserToken
 import com.it4logic.mindatory.services.AppPreferencesService
-import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
@@ -20,9 +18,6 @@ import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.web.context.WebApplicationContext
 import org.thymeleaf.ITemplateEngine
-import org.thymeleaf.context.Context
-import java.util.*
-import java.net.InetAddress
 import javax.servlet.http.HttpServletRequest
 
 
@@ -35,8 +30,8 @@ class MailService {
 	private lateinit var appPreferencesService: AppPreferencesService
 	@Autowired
 	private lateinit var mailTemplateService: MailTemplateService
-	@Autowired
-	private lateinit var languageManager: LanguageManager
+	//	@Autowired
+//	private lateinit var languageManager: LanguageManager
 	@Autowired
 	@Qualifier("appTemplateEngine")
 	private lateinit var templateEngine: ITemplateEngine
@@ -60,7 +55,7 @@ class MailService {
 //		val resetPasswordLink = getServerBaseUrl() + ApplicationControllerEntryPoints.Security + languageManager.currentLanguage.locale + "/process-reset-password"
 		val resetPasswordLink = requesterRestPasswordUrl + securityUserToken.token
 
-		val ctx = Context(Locale(languageManager.currentLanguage.locale))
+//		val ctx = Context(Locale(languageManager.currentLanguage.locale))
 		val htmlTemplate = template.template.replace(MailTemplateVariables.ResetPasswordLink, resetPasswordLink)
 			.replace(MailTemplateVariables.Username, securityUserToken.user.username)
 			.replace(MailTemplateVariables.UserFullName, securityUserToken.user.fullName)

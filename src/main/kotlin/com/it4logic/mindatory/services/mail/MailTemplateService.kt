@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,14 +23,11 @@ package com.it4logic.mindatory.services.mail
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
-import com.it4logic.mindatory.mlc.LanguageManager
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.mail.*
-import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
@@ -38,42 +35,39 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 class MailTemplateService : ApplicationBaseService<MailTemplate>() {
-    @Autowired
-    private lateinit var mailTemplateRepository: MailTemplateRepository
+	@Autowired
+	private lateinit var mailTemplateRepository: MailTemplateRepository
 
-    @Autowired
-    private lateinit var mlcRepository: MailTemplateMLCRepository
+	@Autowired
+	private lateinit var mlcRepository: MailTemplateMLCRepository
 
-    @Autowired
-    protected lateinit var languageManager: LanguageManager
+	override fun repository(): ApplicationBaseRepository<MailTemplate> = mailTemplateRepository
 
-    override fun repository(): ApplicationBaseRepository<MailTemplate> = mailTemplateRepository
+	override fun type(): Class<MailTemplate> = MailTemplate::class.java
 
-    override fun type(): Class<MailTemplate> = MailTemplate::class.java
+	override fun multipleLanguageContentRepository(): MailTemplateMLCRepository = mlcRepository
 
-    override fun multipleLanguageContentRepository() : MailTemplateMLCRepository = mlcRepository
+	override fun multipleLanguageContentType(): KClass<*> = MailTemplateMultipleLanguageContent::class
 
-    override fun multipleLanguageContentType() : KClass<*> = MailTemplateMultipleLanguageContent::class
+	override fun beforeCreate(target: MailTemplate) {
+		if (!isTemplateUUIDValid(target))
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationMailTemplateUUIDNotFound)
+	}
 
-    override fun beforeCreate(target: MailTemplate) {
-        if(!isTemplateUUIDValid(target))
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationMailTemplateUUIDNotFound)
-    }
+	override fun beforeUpdate(target: MailTemplate) {
+		if (!isTemplateUUIDValid(target))
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationMailTemplateUUIDNotFound)
+	}
 
-    override fun beforeUpdate(target: MailTemplate) {
-        if(!isTemplateUUIDValid(target))
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationMailTemplateUUIDNotFound)
-    }
+	private fun isTemplateUUIDValid(target: MailTemplate): Boolean {
+		return MailTemplateTypeUUID.fromValueString(target.uuid) != null
+	}
 
-    private fun isTemplateUUIDValid(target: MailTemplate) : Boolean {
-        return MailTemplateTypeUUID.fromValueString(target.uuid) != null
-    }
-
-    fun getMailTemplate(mailTemplateTypeUUID: MailTemplateTypeUUID): MailTemplate {
-        val uuid = mailTemplateTypeUUID.toUUID().toString()
-        val template = mailTemplateRepository.findOneByUuid(uuid)
-                        .orElseThrow { ApplicationObjectNotFoundException(uuid, type().simpleName.toLowerCase()) }
-        loadMLC(template)
-        return template
-    }
+	fun getMailTemplate(mailTemplateTypeUUID: MailTemplateTypeUUID): MailTemplate {
+		val uuid = mailTemplateTypeUUID.toUUID().toString()
+		val template = mailTemplateRepository.findOneByUuid(uuid)
+			.orElseThrow { ApplicationObjectNotFoundException(uuid, type().simpleName.toLowerCase()) }
+		loadMLC(template)
+		return template
+	}
 }

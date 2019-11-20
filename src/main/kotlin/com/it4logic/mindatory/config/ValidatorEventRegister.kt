@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,28 +34,30 @@ import org.springframework.validation.Validator
 @Configuration
 class ValidatorEventRegister : InitializingBean {
 
-    @Autowired
-    private lateinit var validatingRepositoryEventListener: ValidatingRepositoryEventListener
+	@Autowired
+	private lateinit var validatingRepositoryEventListener: ValidatingRepositoryEventListener
 
-    @Autowired
-    private lateinit var validators: Map<String, Validator>
+	@Autowired
+	private lateinit var validators: Map<String, Validator>
 
-    /**
-     * Searches the system for any existing component that has registered for entity repository event listener
-     */
-    @Throws(Exception::class)
-    override fun afterPropertiesSet() {
-        val events = Arrays.asList( "beforeCreate", "afterCreate",
-                                    "beforeSave", "afterSave",
-                                    "beforeLinkSave", "afterLinkSave",
-                                    "beforeDelete", "afterDelete")
+	/**
+	 * Searches the system for any existing component that has registered for entity model event listener
+	 */
+	@Throws(Exception::class)
+	override fun afterPropertiesSet() {
+		val events = listOf(
+			"beforeCreate", "afterCreate",
+			"beforeSave", "afterSave",
+			"beforeLinkSave", "afterLinkSave",
+			"beforeDelete", "afterDelete"
+		)
 
-        for ( (key, value) in validators) {
-            events
-                .stream()
-                .filter { p -> key.startsWith(p) }
-                .findFirst()
-                .ifPresent { p -> validatingRepositoryEventListener.addValidator(p, value) }
-        }
-    }
+		for ((key, value) in validators) {
+			events
+				.stream()
+				.filter { p -> key.startsWith(p) }
+				.findFirst()
+				.ifPresent { p -> validatingRepositoryEventListener.addValidator(p, value) }
+		}
+	}
 }

@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic. All rights reserved.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,44 +30,44 @@ import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
 /**
- * Multiple language content root entity
+ * Multiple Language Content entity
  */
 @MappedSuperclass
 @DynamicUpdate
-open class MultipleLanguageContentBaseEntity (
-    @get: NotNull
-    @Column(nullable = false)
-    open var languageId: Long? = 0,
+open class MultipleLanguageContentBaseEntity(
+	@get: NotNull
+	@Column(name = "f_language_id", nullable = false)
+	open var languageId: Long? = 0,
 
-    @get: NotBlank
-    @Column(nullable = false, length = 100)
-    open var fieldName: String = "",
+	@get: NotBlank
+	@Column(name = "f_field_name", nullable = false, length = 100)
+	open var fieldName: String = "",
 
-    @get: NotNull
-    @Lob
-    open var contents: String = "",
+	@get: NotNull
+	@Lob
+	@Column(name = "f_contents")
+	open var contents: String = "",
 
-    @get: NotNull
-    @Column(nullable = false)
-    open var parent: Long = 0
+	@get: NotNull
+	@Column(name = "f_parent", nullable = false)
+	open var parent: Long = 0
 
 ) : ApplicationEntityBase()
 
 /**
- * Repository
+ * JPA Repository
  */
 @NoRepositoryBean
-interface MultipleLanguageContentBaseEntityRepository<T : MultipleLanguageContentBaseEntity> : ApplicationBaseRepository<T> {
-    fun findOneByLanguageIdAndFieldNameAndParent(langId: Long, fieldName: String, parentId: Long): Optional<T>
-//    fun findAllByLanguageIdAndFieldNameAndContents(langId: Long, fieldName: String, contents: String): List<T>
-//    fun findAllByLanguageIdAndFieldNameAndContentsAndParentNot(langId: Long, fieldName: String, contents: String, parentId: Long): List<T>
+interface MultipleLanguageContentBaseEntityRepository<T : MultipleLanguageContentBaseEntity> :
+	ApplicationBaseRepository<T> {
+	fun findOneByLanguageIdAndFieldNameAndParent(langId: Long, fieldName: String, parentId: Long): Optional<T>
 
-    fun findAllByLanguageIdAndFieldName(langId: Long, fieldName: String): List<T>
-    fun findAllByLanguageIdAndFieldNameAndParentNot(langId: Long, fieldName: String, parentId: Long): List<T>
+	fun findAllByLanguageIdAndFieldName(langId: Long, fieldName: String): List<T>
+	fun findAllByLanguageIdAndFieldNameAndParentNot(langId: Long, fieldName: String, parentId: Long): List<T>
 
-    fun findAllByParent(parentId: Long): List<T>
-    fun countByLanguageId(langId: Long): Long
-    fun deleteAllByLanguageId(langId: Long)
+	fun findAllByParent(parentId: Long): List<T>
+	fun countByLanguageId(langId: Long): Long
+	fun deleteAllByLanguageId(langId: Long)
 }
 
 

@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2018, IT4Logic. All rights reserved.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.model.mail
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -16,23 +35,9 @@ import javax.persistence.*
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.Size
 
-
-/*
-class MailTemplateTypeUUID {
-	companion object {
-		const val ResetPassword: UUID = UUID.fromString("0b0994ce-aca6-40d2-aecd-67b536e3ba09")
-
-		fun fromString(uuid: String): MailTemplateTypeUUID? {
-			when(uuid) {
-				ResetPassword.toString() -> return ResetPassword
-			}
-			return null
-		}
-
-
-	}
-}
-*/
+/**
+ * Enumerator for Mail Template Types
+ */
 enum class MailTemplateTypeUUID(private val uuid: UUID) {
 	Welcome(UUID.fromString("efad9493-df35-4ba1-8169-ce19590acb73")),
 	ResetPassword(UUID.fromString("0b0994ce-aca6-40d2-aecd-67b536e3ba09"));
@@ -50,23 +55,25 @@ enum class MailTemplateTypeUUID(private val uuid: UUID) {
 	fun toUUID(): UUID = this.uuid
 }
 
+/**
+ * Mail Template Entity
+ */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(
 	name = "t_mail_templates", uniqueConstraints = [
-		(UniqueConstraint(name = ApplicationConstraintCodes.MailTemplateUUIDUniqueIndex, columnNames = ["uuid"]))
+		(UniqueConstraint(name = ApplicationConstraintCodes.MailTemplateUUIDUniqueIndex, columnNames = ["f_uuid"]))
 	]
 )
 data class MailTemplate(
 	@get: NotBlank
 	@get: Size(min = 2, max = 50)
-	@Column(length = 50)
+	@Column(name = "f_uuid", length = 50)
 	var uuid: String,
 
 	@get: NotBlank
 	@get: Size(max = 1024)
-	@Column(length = 1024)
 	@get: MultipleLanguageContent
 	@Transient
 	var subject: String,
@@ -79,11 +86,12 @@ data class MailTemplate(
 
 	@NotAudited
 	@OneToMany
-	@JoinColumn(name = "parent", referencedColumnName = "id")
+	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
 	var mlcs: MutableList<MailTemplateMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {
+	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
 		if (mlcs == null)
 			mlcs = mutableListOf()
@@ -92,7 +100,7 @@ data class MailTemplate(
 }
 
 /**
- * Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface MailTemplateRepository : ApplicationBaseRepository<MailTemplate> {
@@ -101,24 +109,24 @@ interface MailTemplateRepository : ApplicationBaseRepository<MailTemplate> {
 
 
 /**
- * Multiple Language Content support entity
+ * Multiple Language Content entity
  */
 
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(
-	name = "t_mail_tmpl_mlcs", uniqueConstraints = [
+	name = "t_mail_template_mlcs", uniqueConstraints = [
 		(UniqueConstraint(
 			name = ApplicationConstraintCodes.MailTemplateMCLUniqueIndex,
-			columnNames = ["parent", "languageId", "fieldName"]
+			columnNames = ["f_parent", "f_language_id", "f_field_name"]
 		))
 	]
 )
 class MailTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**
- * Multiple Language Content support Repository
+ * Multiple Language Content JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface MailTemplateMLCRepository : MultipleLanguageContentBaseEntityRepository<MailTemplateMultipleLanguageContent>

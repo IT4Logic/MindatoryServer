@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 package com.it4logic.mindatory.config
 
-import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
+import com.it4logic.mindatory.controllers.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.security.JwtAuthenticationEntryPoint
 import com.it4logic.mindatory.security.JwtAuthenticationFilter
@@ -72,14 +72,16 @@ class WebSecurityConfig : WebSecurityConfigurerAdapter () {
     @Autowired
     private lateinit var dataSource: DataSource
 
-
+    /**
+     * TextEncryptor producer that will be used in security user token creation
+     */
     @Bean
     fun textEncryptorBean(): TextEncryptor {
         return Encryptors.text(appProperties.key, appProperties.keySalt)
     }
 
     /**
-     * This is a bean producer that will be used in security initialization
+     * AuthenticationManager producer that will be used in security initialization
      */
     @Bean
     override fun authenticationManagerBean(): AuthenticationManager {
@@ -87,7 +89,7 @@ class WebSecurityConfig : WebSecurityConfigurerAdapter () {
     }
 
     /**
-     * This is a bean producer that will be used in security initialization for CORS
+     * CorsConfigurationSource producer that will be used in security initialization for CORS
      */
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {

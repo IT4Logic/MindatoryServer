@@ -42,7 +42,7 @@ internal interface QueryHints : Iterable<Entry<String, Any>> {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.jpa.repository.support.QueryHints#asMap()
+		 * @see org.springframework.data.jpa.model.support.QueryHints#asMap()
 		 */
 		override fun asMap(): Map<String, Any> {
 			return emptyMap()
@@ -58,7 +58,7 @@ internal interface QueryHints : Iterable<Entry<String, Any>> {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.jpa.repository.support.QueryHints#withFetchGraphs(javax.persistence.EntityManager)
+		 * @see org.springframework.data.jpa.model.support.QueryHints#withFetchGraphs(javax.persistence.EntityManager)
 		 */
 		override fun withFetchGraphs(em: EntityManager): QueryHints {
 			return this

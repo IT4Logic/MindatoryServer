@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ class JpaRSQLSpecBuilder<T> {
      * @param logicalNode RSQL LogicalNode
      * @return JPA Specification
      */
-    private fun createSpecificationFromLogicalNode(logicalNode: LogicalNode, param: Any?): Specification<T> {
+    private fun createSpecificationFromLogicalNode(logicalNode: LogicalNode, param: Any?): Specification<T>? {
         val specs = ArrayList<Specification<T>>()
         for (node in logicalNode.children) {
             val temp = createSpecification(node, param)
@@ -60,14 +60,14 @@ class JpaRSQLSpecBuilder<T> {
                 specs.add(temp)
         }
 
-        var result = specs[0]
+        var result: Specification<T>? = specs[0]
         if (logicalNode.operator == LogicalOperator.AND) {
             for (i in 1 until specs.size) {
-                result = Specification.where(result).and(specs[i])
+                result = Specification.where(result)?.and(specs[i])
             }
         } else if (logicalNode.operator == LogicalOperator.OR) {
             for (i in 1 until specs.size) {
-                result = Specification.where(result).or(specs[i])
+                result = Specification.where(result)?.or(specs[i])
             }
         }
 
@@ -80,7 +80,7 @@ class JpaRSQLSpecBuilder<T> {
      * @param comparisonNode RSQL ComparisonNode
      * @return JPA Specification
      */
-    private fun createSpecificationFromComparisonNode(comparisonNode: ComparisonNode): Specification<T> {
+    private fun createSpecificationFromComparisonNode(comparisonNode: ComparisonNode): Specification<T>? {
         return Specification.where(
                 JpaRSQLSpecification<T>(comparisonNode.selector, comparisonNode.operator, comparisonNode.arguments)
         )

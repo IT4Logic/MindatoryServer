@@ -1,2 +1,2 @@
 # Mindatory
-Mindatory API server
+Mindatory Server

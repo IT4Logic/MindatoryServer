@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,82 +36,118 @@ import javax.validation.ConstraintViolationException
  * Class responsible for handling specific exception raised within controllers
  */
 @ControllerAdvice
-class ApplicationResponseEntityExceptionHandler : ResponseEntityExceptionHandler() {
+class ApplicationAuthenticationExceptionApplicationResponseEntityExceptionHandler : ResponseEntityExceptionHandler() {
 
-    @ExceptionHandler(ApplicationObjectNotFoundException::class)
-    fun handleObjectNotFoundException(exception: ApplicationObjectNotFoundException, request: WebRequest): ResponseEntity<Any> {
-        return ResponseEntity (
-                ApiError(HttpStatus.NOT_FOUND, exception.errorCode, exception.id.toString()),
-                HttpStatus.NOT_FOUND)
-    }
+	@ExceptionHandler(DataIntegrityViolationException::class)
+	fun handleDataIntegrityViolationException(
+		exception: DataIntegrityViolationException,
+		request: WebRequest
+	): ResponseEntity<Any> {
+		val rootMsg = ExceptionHelper.getRootCause(exception)?.message?.toLowerCase()
+		if (rootMsg != null) {
+			val entry: Optional<MutableMap.MutableEntry<String, String>>? =
+				ApplicationConstraintCodes.map.entries.stream()
+					.filter { rootMsg.contains(it.key) }.findAny()
 
-    @ExceptionHandler(ConstraintViolationException::class)
-    fun handleConstraintViolationException(exception: ConstraintViolationException, request: WebRequest): ResponseEntity<Any> {
-        val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.ValidationError, "")
+			if (entry?.isPresent!!) {
+				val error =
+					ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.DataIntegrityError, entry.get().value)
+				return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
+			}
+		}
 
-        exception.constraintViolations?.forEach {
-            error.subErrors.add(ApiValidationError(it.rootBeanClass.simpleName, it.propertyPath.toString(), it.invalidValue, it.message))
-        }
+		val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.DataIntegrityError, exception.message!!)
+		return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
+	}
+	
+	@ExceptionHandler(ApplicationObjectNotFoundException::class)
+	fun handleObjectNotFoundException(
+		exception: ApplicationObjectNotFoundException,
+		request: WebRequest
+	): ResponseEntity<Any> {
+		return ResponseEntity(
+			ApiError(HttpStatus.NOT_FOUND, exception.errorCode, exception.id.toString()),
+			HttpStatus.NOT_FOUND
+		)
+	}
 
-        return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
-    }
+	@ExceptionHandler(ConstraintViolationException::class)
+	fun handleConstraintViolationException(
+		exception: ConstraintViolationException,
+		request: WebRequest
+	): ResponseEntity<Any> {
+		val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.ValidationError, "")
 
-    @ExceptionHandler(DataIntegrityViolationException::class)
-    fun handleDataIntegrityViolationException(exception: DataIntegrityViolationException, request: WebRequest): ResponseEntity<Any> {
-        val rootMsg = ExceptionHelper.getRootCause(exception)?.message?.toLowerCase()
-        if (rootMsg != null) {
-            val entry : Optional<MutableMap.MutableEntry<String, String>>? = ApplicationConstraintCodes.map.entries.stream()
-                    .filter{ rootMsg.contains(it.key) }.findAny()
+		exception.constraintViolations?.forEach {
+			error.subErrors.add(
+				ApiValidationError(
+					it.rootBeanClass.simpleName,
+					it.propertyPath.toString(),
+					it.invalidValue,
+					it.message
+				)
+			)
+		}
 
-            if (entry?.isPresent!!) {
-                val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.DataIntegrityError, entry.get().value)
-                return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
-            }
-        }
+		return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
+	}
 
-        val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.DataIntegrityError, exception.message!!)
-        return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
-    }
 
-    @ExceptionHandler(ApplicationAuthenticationException::class)
-    fun handleAuthenticationException(exception: ApplicationAuthenticationException, request: WebRequest): ResponseEntity<Any> {
-        val message = if(exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
-        val error = ApiError(HttpStatus.UNAUTHORIZED, exception.errorCode, message?:"")
-        return ResponseEntity(error, HttpStatus.UNAUTHORIZED)
-    }
+	@ExceptionHandler(ApplicationAuthenticationException::class)
+	fun handleAuthenticationException(
+		exception: ApplicationAuthenticationException,
+		request: WebRequest
+	): ResponseEntity<Any> {
+		val message = if (exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
+		val error = ApiError(HttpStatus.UNAUTHORIZED, exception.errorCode, message ?: "")
+		return ResponseEntity(error, HttpStatus.UNAUTHORIZED)
+	}
 
-    @ExceptionHandler(ApplicationAuthorizationException::class)
-    fun handleAuthorizationException(exception: ApplicationAuthorizationException, request: WebRequest): ResponseEntity<Any> {
-        val message = if(exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
-        val error = ApiError(HttpStatus.FORBIDDEN, exception.errorCode, message?:"")
-        return ResponseEntity(error, HttpStatus.FORBIDDEN)
-    }
+	@ExceptionHandler(ApplicationAuthorizationException::class)
+	fun handleAuthorizationException(
+		exception: ApplicationAuthorizationException,
+		request: WebRequest
+	): ResponseEntity<Any> {
+		val message = if (exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
+		val error = ApiError(HttpStatus.FORBIDDEN, exception.errorCode, message ?: "")
+		return ResponseEntity(error, HttpStatus.FORBIDDEN)
+	}
 
-    @ExceptionHandler(ApplicationValidationException::class)
-    fun handleValidationException(exception: ApplicationValidationException, request: WebRequest): ResponseEntity<Any> {
-        val message = if(exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
-        val error = ApiError(HttpStatus.NOT_ACCEPTABLE,  exception.errorCode, message?:"")
-        exception.errors?.fieldErrors?.forEach {
-            error.subErrors.add(ApiValidationError(it.objectName, it.field, it.rejectedValue, it.defaultMessage?:""))
-        }
-        return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
-    }
+	@ExceptionHandler(ApplicationValidationException::class)
+	fun handleValidationException(exception: ApplicationValidationException, request: WebRequest): ResponseEntity<Any> {
+		val message = if (exception.cause == null) "" else ExceptionHelper.getRootCause(exception.cause!!)?.message
+		val error = ApiError(HttpStatus.NOT_ACCEPTABLE, exception.errorCode, message ?: "")
+		exception.errors?.fieldErrors?.forEach {
+			error.subErrors.add(ApiValidationError(it.objectName, it.field, it.rejectedValue, it.defaultMessage ?: ""))
+		}
+		return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
+	}
 
-    @ExceptionHandler(ApplicationDataIntegrityViolationException::class)
-    fun handleApplicationDataIntegrityViolationException(exception: ApplicationDataIntegrityViolationException, request: WebRequest): ResponseEntity<Any> {
-        val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.DataIntegrityError, exception.errorCode)
-        return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
-    }
+	@ExceptionHandler(ApplicationDataIntegrityViolationException::class)
+	fun handleApplicationDataIntegrityViolationException(
+		exception: ApplicationDataIntegrityViolationException,
+		request: WebRequest
+	): ResponseEntity<Any> {
+		val error = ApiError(HttpStatus.NOT_ACCEPTABLE, ApplicationErrorCodes.DataIntegrityError, exception.errorCode)
+		return ResponseEntity(error, HttpStatus.NOT_ACCEPTABLE)
+	}
 
-    @ExceptionHandler(ApplicationGeneralException::class)
-    fun handleApplicationGeneralException(exception: ApplicationGeneralException, request: WebRequest): ResponseEntity<Any> {
-        return ResponseEntity(exception.error, exception.error.status)
-    }
+	@ExceptionHandler(ApplicationGeneralException::class)
+	fun handleApplicationGeneralException(
+		exception: ApplicationGeneralException,
+		request: WebRequest
+	): ResponseEntity<Any> {
+		return ResponseEntity(exception.error, exception.error.status)
+	}
 
-    @ExceptionHandler(ObjectOptimisticLockingFailureException::class)
-    fun handleObjectOptimisticLockingFailureException(exception: ObjectOptimisticLockingFailureException, request: WebRequest): ResponseEntity<Any> {
-        val error = ApiError(HttpStatus.CONFLICT, exception.identifier?.toString()?:"", exception.persistentClassName?:"")
-        return ResponseEntity(error, HttpStatus.CONFLICT)
-    }
+	@ExceptionHandler(ObjectOptimisticLockingFailureException::class)
+	fun handleObjectOptimisticLockingFailureException(
+		exception: ObjectOptimisticLockingFailureException,
+		request: WebRequest
+	): ResponseEntity<Any> {
+		val error =
+			ApiError(HttpStatus.CONFLICT, exception.identifier?.toString() ?: "", exception.persistentClassName ?: "")
+		return ResponseEntity(error, HttpStatus.CONFLICT)
+	}
 
 }

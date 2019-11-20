@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,11 +26,9 @@ import com.it4logic.mindatory.exceptions.ApplicationAuthenticationException
 import io.jsonwebtoken.*
 import org.springframework.stereotype.Component
 import io.jsonwebtoken.impl.DefaultClock
-import org.springframework.beans.factory.annotation.Value
 import java.util.*
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.Claims
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.User
@@ -40,9 +38,6 @@ import org.springframework.security.core.userdetails.User
  */
 @Component
 class JwtTokenHelper {
-
-    private val logger = LoggerFactory.getLogger(JwtTokenHelper::class.java)
-
     @Autowired
     private lateinit var appProperties: AppProperties
 

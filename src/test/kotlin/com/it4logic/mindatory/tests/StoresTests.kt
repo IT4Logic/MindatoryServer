@@ -1,7 +1,7 @@
 package com.it4logic.mindatory.tests
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.it4logic.mindatory.controllers.common.ApplicationControllerEntryPoints
+import com.it4logic.mindatory.controllers.ApplicationControllerEntryPoints
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.security.SecurityGroup
@@ -11,9 +11,9 @@ import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.security.JwtAuthenticationResponse
 import com.it4logic.mindatory.security.LoginRequest
 import com.it4logic.mindatory.services.LanguageService
-import com.it4logic.mindatory.services.repository.ArtifactTemplateService
-import com.it4logic.mindatory.services.repository.AttributeTemplateService
-import com.it4logic.mindatory.services.repository.StereotypeService
+import com.it4logic.mindatory.services.model.ArtifactTemplateService
+import com.it4logic.mindatory.services.model.AttributeTemplateService
+import com.it4logic.mindatory.services.model.StereotypeService
 import com.it4logic.mindatory.services.security.SecurityGroupService
 import com.it4logic.mindatory.services.security.SecurityRoleService
 import com.it4logic.mindatory.services.security.SecurityUserService
@@ -43,17 +43,23 @@ import org.springframework.web.context.WebApplicationContext
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class StoresTests {
 	// Test Environment
-	@Autowired private lateinit var context: WebApplicationContext
-	@Autowired private lateinit var objectMapper: ObjectMapper
+	@Autowired
+	private lateinit var context: WebApplicationContext
+	@Autowired
+	private lateinit var objectMapper: ObjectMapper
 	private lateinit var mvc: MockMvc
 
 	// Language
-	@Autowired private lateinit var languageService: LanguageService
+	@Autowired
+	private lateinit var languageService: LanguageService
 
 	// Security
-	@Autowired private lateinit var securityRoleService: SecurityRoleService
-	@Autowired private lateinit var securityGroupService: SecurityGroupService
-	@Autowired private lateinit var securityUserService: SecurityUserService
+	@Autowired
+	private lateinit var securityRoleService: SecurityRoleService
+	@Autowired
+	private lateinit var securityGroupService: SecurityGroupService
+	@Autowired
+	private lateinit var securityUserService: SecurityUserService
 	private lateinit var roleAdmin: SecurityRole
 	private lateinit var roleUser: SecurityRole
 	private lateinit var adminGroup: SecurityGroup
@@ -64,11 +70,14 @@ class StoresTests {
 	private lateinit var userLogin: JwtAuthenticationResponse
 
 	// Basic data
-	@Autowired private lateinit var attributeTemplateService: AttributeTemplateService
-	@Autowired private lateinit var artifactTemplateService: ArtifactTemplateService
-	@Autowired private lateinit var stereotypeService: StereotypeService
+	@Autowired
+	private lateinit var attributeTemplateService: AttributeTemplateService
+	@Autowired
+	private lateinit var artifactTemplateService: ArtifactTemplateService
+	@Autowired
+	private lateinit var stereotypeService: StereotypeService
 	private lateinit var applicationRepository: ApplicationRepositoryTest
-	private lateinit var solution: SolutionTest
+	private lateinit var project: ProjectTest
 	private lateinit var attributeCodeTemplate: AttributeTemplateTest
 	private lateinit var attributeCodeTemplateVersion: AttributeTemplateVersionTest
 	private lateinit var attributeNameTemplate: AttributeTemplateTest
@@ -76,26 +85,26 @@ class StoresTests {
 	private lateinit var attributeVersions: MutableList<AttributeTemplateVersionTest>
 	private lateinit var firstSideArtifactTemplate: ArtifactTemplateTest
 	private lateinit var firstSideArtifactTemplateVersion: ArtifactTemplateVersionTest
-//	private lateinit var firstSideArtifactTemplateVersionAttributes: MutableList<AttributeTemplateVersionTest>
+	//	private lateinit var firstSideArtifactTemplateVersionAttributes: MutableList<AttributeTemplateVersionTest>
 	private lateinit var secondSideArtifactTemplate: ArtifactTemplateTest
 	private lateinit var secondSideArtifactTemplateVersion: ArtifactTemplateVersionTest
-//	private lateinit var secondSideArtifactTemplateVersionAttributes: MutableList<AttributeTemplateVersionTest>
+	//	private lateinit var secondSideArtifactTemplateVersionAttributes: MutableList<AttributeTemplateVersionTest>
 	private lateinit var firstSideStereotype: StereotypeTest
 	private lateinit var secondSideStereotype: StereotypeTest
-	private lateinit var joinTemplate: JoinTemplateTest
-	private lateinit var joinTemplateVersion: JoinTemplateVersionTest
+	private lateinit var relationTemplate: RelationTemplateTest
+	private lateinit var relationTemplateVersion: RelationTemplateVersionTest
 
 	// Testing Datatype UUID
 	private val testDataTypeUUID = "19bf955e-00c7-43d6-9b47-d286c20bd0da"
 
 	// Entry points
-	private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Repositories + "en/"
-	private val _solutionsEntryPointEn: String = ApplicationControllerEntryPoints.Solutions + "en/"
+	private val _repositoriesEntryPoint: String = ApplicationControllerEntryPoints.Models + "en/"
+	private val _projectsEntryPointEn: String = ApplicationControllerEntryPoints.Projects + "en/"
 	private val _attributeTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.AttributeTemplates + "en/"
 	private val _artifactTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.ArtifactTemplates + "en/"
-	private val _joinTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.JoinTemplates + "en/"
+	private val _relationTemplatesEntryPointEn: String = ApplicationControllerEntryPoints.RelationTemplates + "en/"
 	private val _artifactStoresEntryPointEn: String = ApplicationControllerEntryPoints.ArtifactStores + "en/"
-	private val _joinStoresEntryPointEn: String = ApplicationControllerEntryPoints.JoinStores + "en/"
+	private val _relationStoresEntryPointEn: String = ApplicationControllerEntryPoints.RelationStores + "en/"
 	private val _stereotypesEntryPointEn: String = ApplicationControllerEntryPoints.Stereotypes + "en/"
 
 	@Before
@@ -120,23 +129,25 @@ class StoresTests {
 
 	fun setupSecurityData() {
 		roleAdmin = securityRoleService.create(
-			SecurityRole("ROLE_ADMIN", "Admins Role",
+			SecurityRole(
+				"ROLE_ADMIN", "Admins Role",
 				permissions = arrayListOf(
-					ApplicationSecurityPermissions.ApplicationRepositoryAdminCreate,
-					ApplicationSecurityPermissions.SolutionAdminCreate,
+					ApplicationSecurityPermissions.ModelAdminCreate,
+					ApplicationSecurityPermissions.ProjectAdminCreate,
 					ApplicationSecurityPermissions.AttributeTemplateAdminCreate,
 					ApplicationSecurityPermissions.ArtifactTemplateAdminCreate,
 					ApplicationSecurityPermissions.StereotypeAdminCreate,
-					ApplicationSecurityPermissions.JoinTemplateAdminCreate,
+					ApplicationSecurityPermissions.RelationTemplateAdminCreate,
 					ApplicationSecurityPermissions.ArtifactStoreAdminView,
 					ApplicationSecurityPermissions.ArtifactStoreAdminCreate,
 					ApplicationSecurityPermissions.ArtifactStoreAdminModify,
 					ApplicationSecurityPermissions.ArtifactStoreAdminDelete,
-					ApplicationSecurityPermissions.JoinStoreAdminView,
-					ApplicationSecurityPermissions.JoinStoreAdminCreate,
-					ApplicationSecurityPermissions.JoinStoreAdminModify,
-					ApplicationSecurityPermissions.JoinStoreAdminDelete
-				))
+					ApplicationSecurityPermissions.RelationStoreAdminView,
+					ApplicationSecurityPermissions.RelationStoreAdminCreate,
+					ApplicationSecurityPermissions.RelationStoreAdminModify,
+					ApplicationSecurityPermissions.RelationStoreAdminDelete
+				)
+			)
 		)
 		roleUser = securityRoleService.create(SecurityRole("ROLE_USER", "Users Role"))
 
@@ -144,13 +155,17 @@ class StoresTests {
 		userGroup = securityGroupService.create(SecurityGroup("Users Group", "Group for Users"))
 
 		adminUser = securityUserService.create(
-			SecurityUser("admin", "password", fullName = "Admin User", email = "admin@it4logic.com",
-				roles = mutableListOf(roleAdmin), group = adminGroup)
+			SecurityUser(
+				"admin", "password", fullName = "Admin User", email = "admin@it4logic.com",
+				roles = mutableListOf(roleAdmin), group = adminGroup
+			)
 		)
 
 		normalUser = securityUserService.create(
-			SecurityUser("user", "password", fullName = "Manager User", email = "manager@it4logic.com",
-				roles = mutableListOf(roleUser), group = userGroup)
+			SecurityUser(
+				"user", "password", fullName = "Manager User", email = "manager@it4logic.com",
+				roles = mutableListOf(roleUser), group = userGroup
+			)
 		)
 
 		var contents = mvc.perform(
@@ -185,21 +200,30 @@ class StoresTests {
 		applicationRepository = objectMapper.readValue(contents, ApplicationRepositoryTest::class.java)
 
 		contents = mvc.perform(
-			MockMvcRequestBuilders.post(_solutionsEntryPointEn)
+			MockMvcRequestBuilders.post(_projectsEntryPointEn)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(SolutionTest("Application Solution")))
+				.content(objectMapper.writeValueAsString(ProjectTest("Application Project")))
 		)
 			.andExpect(MockMvcResultMatchers.status().isCreated)
-			.andExpect(MockMvcResultMatchers.jsonPath("$.name", Matchers.equalTo("Application Solution")))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.name", Matchers.equalTo("Application Project")))
 			.andReturn().response.contentAsString
-		solution = objectMapper.readValue(contents, SolutionTest::class.java)
+		project = objectMapper.readValue(contents, ProjectTest::class.java)
 	}
 
 	fun setupAttributesData() {
 		// create attributes
-		attributeCodeTemplate = AttributeTemplateTest(identifier = "mindatory.code", name = "Mindatory Code", repository = applicationRepository)
-		attributeNameTemplate = AttributeTemplateTest(identifier = "mindatory.name", name = "Mindatory Name", repository = applicationRepository, solution = solution)
+		attributeCodeTemplate = AttributeTemplateTest(
+			identifier = "mindatory.code",
+			name = "Mindatory Code",
+			repository = applicationRepository
+		)
+		attributeNameTemplate = AttributeTemplateTest(
+			identifier = "mindatory.name",
+			name = "Mindatory Name",
+			repository = applicationRepository,
+			project = project
+		)
 
 		var contents = mvc.perform(
 			MockMvcRequestBuilders.post(_attributeTemplatesEntryPointEn)
@@ -212,7 +236,11 @@ class StoresTests {
 			.andReturn().response.contentAsString
 		attributeCodeTemplate = objectMapper.readValue(contents, AttributeTemplateTest::class.java)
 
-		attributeCodeTemplateVersion = AttributeTemplateVersionTest(attributeCodeTemplate, testDataTypeUUID, hashMapOf(Pair("length", 50), Pair("nullable",false)))
+		attributeCodeTemplateVersion = AttributeTemplateVersionTest(
+			attributeCodeTemplate,
+			testDataTypeUUID,
+			hashMapOf(Pair("length", 50), Pair("nullable", false))
+		)
 		contents = mvc.perform(
 			MockMvcRequestBuilders.post("$_attributeTemplatesEntryPointEn/${attributeCodeTemplate.id}/design-versions")
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -244,7 +272,11 @@ class StoresTests {
 			.andReturn().response.contentAsString
 		attributeNameTemplate = objectMapper.readValue(contents, AttributeTemplateTest::class.java)
 
-		attributeNameTemplateVersion = AttributeTemplateVersionTest(attributeNameTemplate, testDataTypeUUID, hashMapOf(Pair("length", 55), Pair("nullable",true)))
+		attributeNameTemplateVersion = AttributeTemplateVersionTest(
+			attributeNameTemplate,
+			testDataTypeUUID,
+			hashMapOf(Pair("length", 55), Pair("nullable", true))
+		)
 		contents = mvc.perform(
 			MockMvcRequestBuilders.post("$_attributeTemplatesEntryPointEn/${attributeNameTemplate.id}/design-versions")
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -270,7 +302,11 @@ class StoresTests {
 	fun setupArtifactsData() {
 		// first side artifact
 		// create artifact
-		firstSideArtifactTemplate = ArtifactTemplateTest(identifier = "mindatory.first-side", name = "Mindatory First Side", repository = applicationRepository)
+		firstSideArtifactTemplate = ArtifactTemplateTest(
+			identifier = "mindatory.first-side",
+			name = "Mindatory First Side",
+			repository = applicationRepository
+		)
 		var contents = mvc.perform(
 			MockMvcRequestBuilders.post(_artifactTemplatesEntryPointEn)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -281,7 +317,10 @@ class StoresTests {
 			.andReturn().response.contentAsString
 		firstSideArtifactTemplate = objectMapper.readValue(contents, ArtifactTemplateTest::class.java)
 
-		firstSideArtifactTemplateVersion = ArtifactTemplateVersionTest(firstSideArtifactTemplate, mutableListOf(attributeCodeTemplateVersion, attributeNameTemplateVersion))
+		firstSideArtifactTemplateVersion = ArtifactTemplateVersionTest(
+			firstSideArtifactTemplate,
+			mutableListOf(attributeCodeTemplateVersion, attributeNameTemplateVersion)
+		)
 		contents = mvc.perform(
 			MockMvcRequestBuilders.post("$_artifactTemplatesEntryPointEn/${firstSideArtifactTemplate.id}/design-versions")
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -303,7 +342,11 @@ class StoresTests {
 
 		// second side artifact
 		// create artifact
-		secondSideArtifactTemplate = ArtifactTemplateTest(identifier = "mindatory.second-side", name = "Mindatory Second Side", repository = applicationRepository)
+		secondSideArtifactTemplate = ArtifactTemplateTest(
+			identifier = "mindatory.second-side",
+			name = "Mindatory Second Side",
+			repository = applicationRepository
+		)
 		contents = mvc.perform(
 			MockMvcRequestBuilders.post(_artifactTemplatesEntryPointEn)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -314,7 +357,10 @@ class StoresTests {
 			.andReturn().response.contentAsString
 		secondSideArtifactTemplate = objectMapper.readValue(contents, ArtifactTemplateTest::class.java)
 
-		secondSideArtifactTemplateVersion = ArtifactTemplateVersionTest(secondSideArtifactTemplate, mutableListOf(attributeCodeTemplateVersion, attributeNameTemplateVersion))
+		secondSideArtifactTemplateVersion = ArtifactTemplateVersionTest(
+			secondSideArtifactTemplate,
+			mutableListOf(attributeCodeTemplateVersion, attributeNameTemplateVersion)
+		)
 		contents = mvc.perform(
 			MockMvcRequestBuilders.post("$_artifactTemplatesEntryPointEn/${secondSideArtifactTemplate.id}/design-versions")
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
@@ -350,7 +396,14 @@ class StoresTests {
 			MockMvcRequestBuilders.post(_stereotypesEntryPointEn)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(StereotypeTest(name = "Bridge", repository = applicationRepository)))
+				.content(
+					objectMapper.writeValueAsString(
+						StereotypeTest(
+							name = "Bridge",
+							repository = applicationRepository
+						)
+					)
+				)
 		)
 			.andExpect(MockMvcResultMatchers.status().isCreated)
 			.andReturn().response.contentAsString
@@ -360,46 +413,62 @@ class StoresTests {
 			MockMvcRequestBuilders.post(_stereotypesEntryPointEn)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(StereotypeTest(name = "Link", repository = applicationRepository)))
+				.content(
+					objectMapper.writeValueAsString(
+						StereotypeTest(
+							name = "Link",
+							repository = applicationRepository
+						)
+					)
+				)
 		)
 			.andExpect(MockMvcResultMatchers.status().isCreated)
 			.andReturn().response.contentAsString
 		secondSideStereotype = objectMapper.readValue(contents, StereotypeTest::class.java)
 
 		contents = mvc.perform(
-			MockMvcRequestBuilders.post(_joinTemplatesEntryPointEn)
+			MockMvcRequestBuilders.post(_relationTemplatesEntryPointEn)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(JoinTemplateTest(identifier = "mindatory.first-second", repository = applicationRepository)))
+				.content(
+					objectMapper.writeValueAsString(
+						RelationTemplateTest(
+							identifier = "mindatory.first-second",
+							repository = applicationRepository
+						)
+					)
+				)
 		)
 			.andExpect(MockMvcResultMatchers.status().isCreated)
 			.andExpect(MockMvcResultMatchers.jsonPath("$.identifier", Matchers.equalTo("mindatory.first-second")))
 			.andReturn().response.contentAsString
-		joinTemplate = objectMapper.readValue(contents, JoinTemplateTest::class.java)
+		relationTemplate = objectMapper.readValue(contents, RelationTemplateTest::class.java)
 
-		val joinTemplateDesignVersions = "$_joinTemplatesEntryPointEn/${joinTemplate.id}/design-versions"
-		joinTemplateVersion = JoinTemplateVersionTest(joinTemplate, firstSideStereotype, mutableListOf(firstSideArtifactTemplateVersion),
-			secondSideStereotype, mutableListOf(secondSideArtifactTemplateVersion))
+		val relationTemplateDesignVersions = "$_relationTemplatesEntryPointEn/${relationTemplate.id}/design-versions"
+		relationTemplateVersion = RelationTemplateVersionTest(
+			relationTemplate, firstSideStereotype, mutableListOf(firstSideArtifactTemplateVersion),
+			secondSideStereotype, mutableListOf(secondSideArtifactTemplateVersion)
+		)
 
 		contents = mvc.perform(
-			MockMvcRequestBuilders.post(joinTemplateDesignVersions)
+			MockMvcRequestBuilders.post(relationTemplateDesignVersions)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(joinTemplateVersion))
+				.content(objectMapper.writeValueAsString(relationTemplateVersion))
 		)
 			.andExpect(MockMvcResultMatchers.status().isCreated)
 			.andExpect(MockMvcResultMatchers.jsonPath("$.designVersion", Matchers.equalTo(1)))
 			.andReturn().response.contentAsString
-		joinTemplateVersion = objectMapper.readValue(contents, JoinTemplateVersionTest::class.java)
+		relationTemplateVersion = objectMapper.readValue(contents, RelationTemplateVersionTest::class.java)
 
 		// release the design version
 		contents = mvc.perform(
-			MockMvcRequestBuilders.post("$joinTemplateDesignVersions/${joinTemplateVersion.id}/release")
+			MockMvcRequestBuilders.post("$relationTemplateDesignVersions/${relationTemplateVersion.id}/release")
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
 		)
 			.andExpect(MockMvcResultMatchers.status().isOk)
 			.andReturn().response.contentAsString
-		joinTemplateVersion = objectMapper.readValue(contents, JoinTemplateVersionTest::class.java)
+		relationTemplateVersion = objectMapper.readValue(contents, RelationTemplateVersionTest::class.java)
 	}
 
 	@Test
@@ -409,14 +478,17 @@ class StoresTests {
 
 	fun testArtifactStores() {
 
-		mvc.perform(MockMvcRequestBuilders.post(_artifactStoresEntryPointEn)
-			.with(SecurityMockMvcRequestPostProcessors.anonymous()))
+		mvc.perform(
+			MockMvcRequestBuilders.post(_artifactStoresEntryPointEn)
+				.with(SecurityMockMvcRequestPostProcessors.anonymous())
+		)
 			.andExpect(MockMvcResultMatchers.status().isUnauthorized)
 
 		// First Artifact Store
-		var firstArtifactStore = ArtifactStoreTest(artifactTemplateVersion = firstSideArtifactTemplateVersion, solution = solution)
-		firstArtifactStore.solution = solution
-		for(attribute in firstSideArtifactTemplateVersion.attributes) {
+		var firstArtifactStore =
+			ArtifactStoreTest(artifactTemplateVersion = firstSideArtifactTemplateVersion, project = project)
+		firstArtifactStore.project = project
+		for (attribute in firstSideArtifactTemplateVersion.attributes) {
 			val content = "{\"content\":\"${attribute.attributeTemplate.name} value\"}"
 			val aStore = AttributeStoreTest(contents = content, attributeTemplateVersion = attribute)
 			firstArtifactStore.attributeStores.add(aStore)
@@ -434,10 +506,12 @@ class StoresTests {
 
 		// First Artifact Store update
 		firstArtifactStore.attributeStores.clear()
-		for(attribute in firstSideArtifactTemplateVersion.attributes) {
+		for (attribute in firstSideArtifactTemplateVersion.attributes) {
 			val content = "{\"content\":\"${attribute.attributeTemplate.name} value\", \"x\": \"y\"}"
-			val aStore = AttributeStoreTest(contents = content,
-				attributeTemplateVersion = attribute)
+			val aStore = AttributeStoreTest(
+				contents = content,
+				attributeTemplateVersion = attribute
+			)
 			firstArtifactStore.attributeStores.add(aStore)
 		}
 
@@ -452,8 +526,9 @@ class StoresTests {
 		firstArtifactStore = objectMapper.readValue(contents, ArtifactStoreTest::class.java)
 
 		// Second Artifact Store
-		var secondArtifactStore = ArtifactStoreTest(artifactTemplateVersion = firstSideArtifactTemplateVersion, solution = solution)
-		for(attribute in secondSideArtifactTemplateVersion.attributes) {
+		var secondArtifactStore =
+			ArtifactStoreTest(artifactTemplateVersion = firstSideArtifactTemplateVersion, project = project)
+		for (attribute in secondSideArtifactTemplateVersion.attributes) {
 			val content = "{\"content\":\"${attribute.attributeTemplate.name} value\"}"
 			val aStore = AttributeStoreTest(contents = content, attributeTemplateVersion = attribute)
 			secondArtifactStore.attributeStores.add(aStore)
@@ -470,16 +545,21 @@ class StoresTests {
 		secondArtifactStore = objectMapper.readValue(contents, ArtifactStoreTest::class.java)
 
 		// Create Join
-		var joinStore = JoinStoreTest(mutableListOf(firstArtifactStore), mutableListOf(secondArtifactStore), joinTemplateVersion, solution = solution)
+		var relationStore = RelationStoreTest(
+			mutableListOf(firstArtifactStore),
+			mutableListOf(secondArtifactStore),
+			relationTemplateVersion,
+			project = project
+		)
 		contents = mvc.perform(
-			MockMvcRequestBuilders.post(_joinStoresEntryPointEn)
+			MockMvcRequestBuilders.post(_relationStoresEntryPointEn)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(joinStore))
+				.content(objectMapper.writeValueAsString(relationStore))
 		)
 			.andExpect(MockMvcResultMatchers.status().isCreated)
 			.andReturn().response.contentAsString
-		joinStore = objectMapper.readValue(contents, JoinStoreTest::class.java)
+		relationStore = objectMapper.readValue(contents, RelationStoreTest::class.java)
 
 		mvc.perform(
 			MockMvcRequestBuilders.delete(_artifactStoresEntryPointEn + secondArtifactStore.id)
@@ -487,10 +567,15 @@ class StoresTests {
 				.contentType(MediaType.APPLICATION_JSON)
 		)
 			.andExpect(MockMvcResultMatchers.status().isNotAcceptable)
-			.andExpect(MockMvcResultMatchers.jsonPath("$.errorCode", Matchers.equalTo(ApplicationErrorCodes.ValidationCannotDeleteArtifactStoreObjectThatUsedInJoinStoreObjects)))
+			.andExpect(
+				MockMvcResultMatchers.jsonPath(
+					"$.errorCode",
+					Matchers.equalTo(ApplicationErrorCodes.ValidationCannotDeleteArtifactStoreObjectThatUsedInRelationStoreObjects)
+				)
+			)
 
 		mvc.perform(
-			MockMvcRequestBuilders.delete(_joinStoresEntryPointEn + joinStore.id)
+			MockMvcRequestBuilders.delete(_relationStoresEntryPointEn + relationStore.id)
 				.header("Authorization", adminLogin.tokenType + " " + adminLogin.accessToken)
 		)
 			.andExpect(MockMvcResultMatchers.status().isOk)

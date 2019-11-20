@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import io.leangen.graphql.annotations.GraphQLIgnore
 import org.hibernate.annotations.LazyCollection
 import org.hibernate.annotations.LazyCollectionOption
 import org.hibernate.envers.Audited
@@ -38,106 +39,122 @@ import javax.persistence.*
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_sec_users", uniqueConstraints = [
-            UniqueConstraint(name = ApplicationConstraintCodes.SecurityUserUsernameUniqueIndex, columnNames = ["username"])
-        ]
+@Table(
+	name = "t_security_users", uniqueConstraints = [
+		UniqueConstraint(
+			name = ApplicationConstraintCodes.SecurityUserUsernameUniqueIndex,
+			columnNames = ["f_username"]
+		)
+	]
 )
-data class SecurityUser (
-        @get: NotBlank
-        @get: Size(min = 4, max = 50)
-        @Column(nullable = false, length = 50)
-        var username: String = "",
+data class SecurityUser(
+	@get: NotBlank
+	@get: Size(min = 4, max = 50)
+	@Column(name = "f_username", nullable = false, length = 50)
+	var username: String = "",
 
-        @Column(nullable = false)
-        @get: NotBlank
-        @get: Size(min = 6)
-        var password: String = "",
+	@get: NotBlank
+	@get: Size(min = 6)
+	@Column(name = "f_password", nullable = false)
+	var password: String = "",
 
-        var accountEnabled: Boolean = true,
+	@Column(name = "f_account_enabled")
+	var accountEnabled: Boolean = true,
 
-        var accountLocked: Boolean = false,
+	@Column(name = "f_account_locked")
+	var accountLocked: Boolean = false,
 
-        var accountExpired: Boolean = false,
+	@Column(name = "f_account_expired")
+	var accountExpired: Boolean = false,
 
-        var passwordExpired: Boolean = false,
+	@Column(name = "f_password_expired")
+	var passwordExpired: Boolean = false,
 
-        var passwordNeverExpires: Boolean = true,
+	@Column(name = "f_password_never_expires")
+	var passwordNeverExpires: Boolean = true,
 
-        var passwordChangeAtNextLogin: Boolean = false,
+	@Column(name = "f_change_pwd_next_login")
+	var passwordChangeAtNextLogin: Boolean = false,
 
-        @get: NotBlank
-        @get: Size(min = 4, max = 100)
-        @get: MultipleLanguageContent
-        @Transient
-        var fullName: String = "",
+	@get: NotBlank
+	@get: Size(min = 4, max = 100)
+	@get: MultipleLanguageContent
+	@Transient
+	var fullName: String = "",
 
-        @get: NotBlank
-        @get: Email
-        @get: Size(max = 100)
-        @Column(nullable = false, length = 100)
-        var email: String = "",
+	@get: NotBlank
+	@get: Email
+	@get: Size(max = 100)
+	@Column(name = "f_email", nullable = false, length = 100)
+	var email: String = "",
 
-        @get: Size(max = 20)
-        @Column(length = 20)
-        var mobile: String = "",
+	@get: Size(max = 20)
+	@Column(name = "f_mobile", length = 20)
+	var mobile: String = "",
 
-        @get: Size(max = 255)
-        @get: MultipleLanguageContent
-        @Transient
-        var notes: String = "",
+	@get: Size(max = 255)
+	@get: MultipleLanguageContent
+	@Transient
+	var notes: String = "",
 
-        @get: NotNull
-        @get: MultipleLanguageContent
-        @ManyToOne(fetch = FetchType.EAGER, optional = false)
-        @JoinColumn(name = "group_id", nullable = false)
-        var group: SecurityGroup? = null,
+	@get: NotNull
+	@get: MultipleLanguageContent
+	@ManyToOne(fetch = FetchType.EAGER, optional = false)
+	@JoinColumn(name = "f_group_id", nullable = false)
+	var group: SecurityGroup? = null,
 
-        @OneToOne(cascade = [CascadeType.ALL])
-        @JoinColumn(name = "pref_id", referencedColumnName = "id")
-        var preferences: SecurityUserPreferences? = null,
+	@OneToOne(cascade = [CascadeType.ALL])
+	@JoinColumn(name = "f_preference_id", referencedColumnName = "f_id")
+	var preferences: SecurityUserPreferences? = null,
 
 
-        @get: MultipleLanguageContent
-        @ManyToMany
-        @JoinTable(name = "t_sec_users_roles", joinColumns = [JoinColumn(name = "user_id")], inverseJoinColumns = [JoinColumn(name = "role_id")])
-        @LazyCollection(LazyCollectionOption.FALSE)
-        var roles: MutableList<SecurityRole> = mutableListOf(),
+	@get: MultipleLanguageContent
+	@ManyToMany
+	@JoinTable(
+		name = "t_m2m_security_users_roles",
+		joinColumns = [JoinColumn(name = "f_user_id")],
+		inverseJoinColumns = [JoinColumn(name = "f_role_id")]
+	)
+	@LazyCollection(LazyCollectionOption.FALSE)
+	var roles: MutableList<SecurityRole> = mutableListOf(),
 
-        @NotAudited
-        @OneToMany
-        @JoinColumn(name="parent", referencedColumnName="id")
-        @LazyCollection(LazyCollectionOption.FALSE)
-        @JsonIgnore
-        var mlcs: MutableList<SecurityUserMultipleLanguageContent> = mutableListOf()
+	@NotAudited
+	@OneToMany
+	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
+	@LazyCollection(LazyCollectionOption.FALSE)
+	@JsonIgnore
+	@get: GraphQLIgnore
+	var mlcs: MutableList<SecurityUserMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {
-        override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
-                if(mlcs == null)
-                        mlcs = mutableListOf()
-                return mlcs as MutableList<MultipleLanguageContentBaseEntity>
-        }
+	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
+	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+		if (mlcs == null)
+			mlcs = mutableListOf()
+		return mlcs as MutableList<MultipleLanguageContentBaseEntity>
+	}
 
-        private fun isRoleExists(role: SecurityRole) : Boolean {
-                val result = roles.filter { it.id == role.id }
-                if(result.isEmpty())
-                        return false
-                return true
-        }
+	private fun isRoleExists(role: SecurityRole): Boolean {
+		val result = roles.filter { it.id == role.id }
+		if (result.isEmpty())
+			return false
+		return true
+	}
 
-        fun addRole(role: SecurityRole) {
-                if(isRoleExists(role))
-                        return
-                roles.add(role)
-        }
+	fun addRole(role: SecurityRole) {
+		if (isRoleExists(role))
+			return
+		roles.add(role)
+	}
 
-        fun removeRole(role: SecurityRole) {
-                for(r in roles) {
-                        if(r.id == role.id) {
-                                roles.remove(r)
-                                break
-                        }
-                }
-        }
+	fun removeRole(role: SecurityRole) {
+		for (r in roles) {
+			if (r.id == role.id) {
+				roles.remove(r)
+				break
+			}
+		}
+	}
 }
 
 /**
@@ -145,12 +162,13 @@ data class SecurityUser (
  */
 @RepositoryRestResource(exported = false)
 interface SecurityUserRepository : ApplicationBaseRepository<SecurityUser> {
-//        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>) : MutableList<SecurityUser>
+	//        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>) : MutableList<SecurityUser>
 //        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>, pageable: Pageable) : Page<SecurityUser>
 //        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>, sort: Sort) : MutableList<SecurityUser>
-        fun findAllByGroupId(id: Long) : MutableList<SecurityUser>
-        fun findAllByRolesId(id: Long) : MutableList<SecurityUser>
-        fun findByUsername(username: String): Optional<SecurityUser>
+	fun findAllByGroupId(id: Long): MutableList<SecurityUser>
+
+	fun findAllByRolesId(id: Long): MutableList<SecurityUser>
+	fun findByUsername(username: String): Optional<SecurityUser>
 }
 
 /**
@@ -159,9 +177,14 @@ interface SecurityUserRepository : ApplicationBaseRepository<SecurityUser> {
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_sec_user_mlcs", uniqueConstraints = [
-        (UniqueConstraint(name = ApplicationConstraintCodes.SecurityUserMCLUniqueIndex, columnNames = ["parent", "languageId", "fieldName"]))
-])
+@Table(
+	name = "t_security_user_mlcs", uniqueConstraints = [
+		(UniqueConstraint(
+			name = ApplicationConstraintCodes.SecurityUserMCLUniqueIndex,
+			columnNames = ["f_parent", "f_language_id", "f_field_name"]
+		))
+	]
+)
 class SecurityUserMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**

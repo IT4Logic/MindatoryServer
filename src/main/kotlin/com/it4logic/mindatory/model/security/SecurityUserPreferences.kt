@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,14 +37,14 @@ import javax.validation.constraints.NotNull
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
-@Table(name = "t_sec_user_preferences", uniqueConstraints = [])
-data class SecurityUserPreferences (
+@Table(name = "t_security_user_preferences", uniqueConstraints = [])
+data class SecurityUserPreferences(
 	@get: Size(max = 10)
-	@Column(length=10)
+	@Column(name = "f_ui_language", length = 10)
 	var uiLanguage: String? = null,
 
 	@ManyToOne
-	@JoinColumn(name = "cnt_lang_id")
+	@JoinColumn(name = "f_content_language")
 	var contentLanguage: Language? = null
 //	,
 //

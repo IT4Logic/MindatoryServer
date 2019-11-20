@@ -1,5 +1,27 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.security
 
+/**
+ * Helper class for applying the view permission when a higher permission is already granted
+ */
 class SecurityPermissionsHelper {
 	companion object {
 		fun verifyViewPermission(permissions: ArrayList<String>) {
@@ -60,70 +82,77 @@ class SecurityPermissionsHelper {
 					permissions.add(ApplicationSecurityPermissions.SecurityUserAdminView)
 			}
 
-			if (permissions.contains(ApplicationSecurityPermissions.SecurityUserAdminCreate) ||
-				permissions.contains(ApplicationSecurityPermissions.SecurityUserAdminModify) ||
-				permissions.contains(ApplicationSecurityPermissions.SecurityUserAdminDelete)
+			if (permissions.contains(ApplicationSecurityPermissions.SecurityAclAdminAdd) ||
+				permissions.contains(ApplicationSecurityPermissions.SecurityAclAdminRemove) ||
+				permissions.contains(ApplicationSecurityPermissions.SecurityAclAdminChangeOwner)
 			) {
-				if (!permissions.contains(ApplicationSecurityPermissions.SecurityUserAdminView))
-					permissions.add(ApplicationSecurityPermissions.SecurityUserAdminView)
+				if (!permissions.contains(ApplicationSecurityPermissions.SecurityAclAdminView))
+					permissions.add(ApplicationSecurityPermissions.SecurityAclAdminView)
 			}
-/*
-		// Security ACL
-		const val SecurityAclAdminView = "PERM_SECURITY_ACL_ADMIN_VIEW"
-		const val SecurityAclAdminAdd = "PERM_SECURITY_ACL_ADMIN_CREATE"
-		const val SecurityAclAdminRemove = "PERM_SECURITY_ACL_ADMIN_MODIFY"
-		const val SecurityAclAdminChangeOwner = "PERM_SECURITY_ACL_ADMIN_DELETE"
 
-		// Application Repositories
-		const val ApplicationRepositoryAdminView = "PERM_APPLICATION_REPOSITORIES_ADMIN_VIEW"
-		const val ApplicationRepositoryAdminCreate = "PERM_APPLICATION_REPOSITORIES_ADMIN_CREATE"
-		const val ApplicationRepositoryAdminModify = "PERM_APPLICATION_REPOSITORIES_ADMIN_MODIFY"
-		const val ApplicationRepositoryAdminDelete = "PERM_APPLICATION_REPOSITORIES_ADMIN_DELETE"
+			if (permissions.contains(ApplicationSecurityPermissions.ModelAdminCreate) ||
+				permissions.contains(ApplicationSecurityPermissions.ModelAdminModify) ||
+				permissions.contains(ApplicationSecurityPermissions.ModelAdminDelete)
+			) {
+				if (!permissions.contains(ApplicationSecurityPermissions.ModelAdminView))
+					permissions.add(ApplicationSecurityPermissions.ModelAdminView)
+			}
 
-		// Solutions
-		const val SolutionAdminView = "PERM_SOLUTIONS_ADMIN_VIEW"
-		const val SolutionAdminCreate = "PERM_SOLUTIONS_ADMIN_CREATE"
-		const val SolutionAdminModify = "PERM_SOLUTIONS_ADMIN_MODIFY"
-		const val SolutionAdminDelete = "PERM_SOLUTIONS_ADMIN_DELETE"
+			if (permissions.contains(ApplicationSecurityPermissions.ProjectAdminCreate) ||
+				permissions.contains(ApplicationSecurityPermissions.ProjectAdminModify) ||
+				permissions.contains(ApplicationSecurityPermissions.ProjectAdminDelete)
+			) {
+				if (!permissions.contains(ApplicationSecurityPermissions.ProjectAdminView))
+					permissions.add(ApplicationSecurityPermissions.ProjectAdminView)
+			}
 
-		// Stereotypes
-		const val StereotypeAdminView = "PERM_STEREOTYPES_ADMIN_VIEW"
-		const val StereotypeAdminCreate = "PERM_STEREOTYPES_ADMIN_CREATE"
-		const val StereotypeAdminModify = "PERM_STEREOTYPES_ADMIN_MODIFY"
-		const val StereotypeAdminDelete = "PERM_STEREOTYPES_ADMIN_DELETE"
+			if (permissions.contains(ApplicationSecurityPermissions.StereotypeAdminCreate) ||
+				permissions.contains(ApplicationSecurityPermissions.StereotypeAdminModify) ||
+				permissions.contains(ApplicationSecurityPermissions.StereotypeAdminDelete)
+			) {
+				if (!permissions.contains(ApplicationSecurityPermissions.StereotypeAdminView))
+					permissions.add(ApplicationSecurityPermissions.StereotypeAdminView)
+			}
 
-		// Join Templates
-		const val JoinTemplateAdminView = "PERM_JOIN_TEMPLATES_ADMIN_VIEW"
-		const val JoinTemplateAdminCreate = "PERM_JOIN_TEMPLATES_ADMIN_CREATE"
-		const val JoinTemplateAdminModify = "PERM_JOIN_TEMPLATES_ADMIN_MODIFY"
-		const val JoinTemplateAdminDelete = "PERM_JOIN_TEMPLATES_ADMIN_DELETE"
+			if (permissions.contains(ApplicationSecurityPermissions.RelationTemplateAdminCreate) ||
+				permissions.contains(ApplicationSecurityPermissions.RelationTemplateAdminModify) ||
+				permissions.contains(ApplicationSecurityPermissions.RelationTemplateAdminDelete)
+			) {
+				if (!permissions.contains(ApplicationSecurityPermissions.RelationTemplateAdminView))
+					permissions.add(ApplicationSecurityPermissions.RelationTemplateAdminView)
+			}
 
-		const val JoinTemplateStoreAdminModify = "PERM_JOIN_TEMPLATE_STORES_ADMIN_MODIFY"
+			if (permissions.contains(ApplicationSecurityPermissions.AttributeTemplateAdminCreate) ||
+				permissions.contains(ApplicationSecurityPermissions.AttributeTemplateAdminModify) ||
+				permissions.contains(ApplicationSecurityPermissions.AttributeTemplateAdminDelete)
+			) {
+				if (!permissions.contains(ApplicationSecurityPermissions.AttributeTemplateAdminView))
+					permissions.add(ApplicationSecurityPermissions.AttributeTemplateAdminView)
+			}
 
-		// Attribute Templates
-		const val AttributeTemplateAdminView = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_VIEW"
-		const val AttributeTemplateAdminCreate = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_CREATE"
-		const val AttributeTemplateAdminModify = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_MODIFY"
-		const val AttributeTemplateAdminDelete = "PERM_ATTRIBUTE_TEMPLATES_ADMIN_DELETE"
+			if (permissions.contains(ApplicationSecurityPermissions.ArtifactTemplateAdminCreate) ||
+				permissions.contains(ApplicationSecurityPermissions.ArtifactTemplateAdminModify) ||
+				permissions.contains(ApplicationSecurityPermissions.ArtifactTemplateAdminDelete)
+			) {
+				if (!permissions.contains(ApplicationSecurityPermissions.ArtifactTemplateAdminView))
+					permissions.add(ApplicationSecurityPermissions.ArtifactTemplateAdminView)
+			}
 
-		// Artifact Templates
-		const val ArtifactTemplateAdminView = "PERM_ARTIFACT_TEMPLATES_ADMIN_VIEW"
-		const val ArtifactTemplateAdminCreate = "PERM_ARTIFACT_TEMPLATES_ADMIN_CREATE"
-		const val ArtifactTemplateAdminModify = "PERM_ARTIFACT_TEMPLATES_ADMIN_MODIFY"
-		const val ArtifactTemplateAdminDelete = "PERM_ARTIFACT_TEMPLATES_ADMIN_DELETE"
+			if (permissions.contains(ApplicationSecurityPermissions.ArtifactStoreAdminCreate) ||
+				permissions.contains(ApplicationSecurityPermissions.ArtifactStoreAdminModify) ||
+				permissions.contains(ApplicationSecurityPermissions.ArtifactStoreAdminDelete)
+			) {
+				if (!permissions.contains(ApplicationSecurityPermissions.ArtifactStoreAdminView))
+					permissions.add(ApplicationSecurityPermissions.ArtifactStoreAdminView)
+			}
 
-		// Artifact Stores
-		const val ArtifactStoreAdminView = "PERM_ARTIFACT_STORES_ADMIN_VIEW"
-		const val ArtifactStoreAdminCreate = "PERM_ARTIFACT_STORES_ADMIN_CREATE"
-		const val ArtifactStoreAdminModify = "PERM_ARTIFACT_STORES_ADMIN_MODIFY"
-		const val ArtifactStoreAdminDelete = "PERM_ARTIFACT_STORES_ADMIN_DELETE"
-
-		// Join Stores
-		const val JoinStoreAdminView = "PERM_JOIN_STORES_ADMIN_VIEW"
-		const val JoinStoreAdminCreate = "PERM_JOIN_STORES_ADMIN_CREATE"
-		const val JoinStoreAdminModify = "PERM_JOIN_STORES_ADMIN_MODIFY"
-		const val JoinStoreAdminDelete = "PERM_JOIN_STORES_ADMIN_DELETE"
-		*/
+			if (permissions.contains(ApplicationSecurityPermissions.RelationStoreAdminCreate) ||
+				permissions.contains(ApplicationSecurityPermissions.RelationStoreAdminModify) ||
+				permissions.contains(ApplicationSecurityPermissions.RelationStoreAdminDelete)
+			) {
+				if (!permissions.contains(ApplicationSecurityPermissions.RelationStoreAdminView))
+					permissions.add(ApplicationSecurityPermissions.RelationStoreAdminView)
+			}
 		}
 	}
 }

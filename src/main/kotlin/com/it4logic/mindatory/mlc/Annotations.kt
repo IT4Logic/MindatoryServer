@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,13 +20,6 @@
 
 package com.it4logic.mindatory.mlc
 
-
-/**
- * Marks the entity to enable Multiple Language Content
- */
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.CLASS)
-annotation class MultipleLanguageContentEntity
 
 /**
  * Marks the property to enable Multiple Language Content

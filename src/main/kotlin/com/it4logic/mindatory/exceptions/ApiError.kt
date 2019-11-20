@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2019, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,21 +24,48 @@ import org.springframework.http.HttpStatus
 import java.util.*
 
 
-
 /**
  * Class that is used for sending details about errors that occur while executing APIs
  */
-data class ApiError (
+data class ApiError(
 	/**
 	 * Http status that results because of the error
 	 */
-    val status: HttpStatus,
+	val status: HttpStatus,
 
-	override val errorCode: String,
+	val errorCode: String,
 
-	override val errorData: String
+	val errorData: String,
 
-) : MindatoryApiError(errorCode = errorCode, errorData = errorData)
+	val debugMessage: String = "",
+
+	val timestamp: Date = Date(),
+
+	val subErrors: ArrayList<ApiSubError> = ArrayList()
+
+)
+//{
+//	companion object {
+//		fun fromMindatoryApiError(error: ApiSubError, status: HttpStatus): ApiError {
+//			return ApiError(
+//				status, error.errorCode, error.errorData,
+//				error.debugMessage, error.timestamp, error.subErrors
+//			)
+//		}
+//	}
+//}
+
+/**
+ * Base interface for any API Sub-Error
+ */
+open class ApiSubError(
+	/**
+	 * Any related message to the validation
+	 */
+	open val message: String = ""
+)
+
+
 //
 ///**
 // * Class that is used for sending details about errors that occur while executing APIs
@@ -78,23 +105,23 @@ data class ApiError (
 /**
  * Validation Violation Sub Error
  */
-data class ApiValidationError (
-        /**
-         * Object name that has validation errors
-         */
-        val objectName: String,
-        /**
-         * Field Name that has the validation errors
-         */
-        val fieldId: String,
-        /**
-         * The value that has been rejected
-         */
-        val rejectedValue: Any?,
+data class ApiValidationError(
+	/**
+	 * Object name that has validation errors
+	 */
+	val objectName: String,
+	/**
+	 * Field Name that has the validation errors
+	 */
+	val fieldId: String,
+	/**
+	 * The value that has been rejected
+	 */
+	val rejectedValue: Any?,
 
-        override val message: String = ""
+	override val message: String = ""
 
-) : MindatoryApiSubError()
+) : ApiSubError()
 
 ///**
 // * Validation Violation Sub Error

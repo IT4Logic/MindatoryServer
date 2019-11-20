@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2018, IT4Logic.
 
-    This file is part of Mindatory solution by IT4Logic.
+    This file is part of Mindatory project by IT4Logic.
 
     Mindatory is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,42 +31,41 @@ import org.springframework.data.repository.history.RevisionRepository
 import org.springframework.lang.Nullable
 
 /**
- * Base interface for common functionality for entity repositories
+ * Base interface for error functionality for entity repositories
  */
 @NoRepositoryBean
-interface ApplicationBaseRepository<T> : ExtendedJpaRepository<T, Long>, JpaRepository<T, Long>, RevisionRepository<T, Long, Long>, JpaSpecificationExecutor<T>
+interface ApplicationBaseRepository<T> : ExtendedJpaRepository<T, Long>, JpaRepository<T, Long>,
+	RevisionRepository<T, Long, Long>, JpaSpecificationExecutor<T>
 
 /**
- * Base interface for company common functionality for entity repositories
+ * Base interface for company error functionality for entity repositories
  */
 //@NoRepositoryBean
 //interface ApplicationCompanyRepository<T> : ApplicationBaseRepository<T>
 
 /**
- * Base interface for solution common functionality for entity repositories
+ * Base interface for project error functionality for entity repositories
  */
-@NoRepositoryBean
-interface ApplicationSolutionBaseRepository<T> : ApplicationBaseRepository<T> {
-    fun findAllBySolutionId(id: Long, @Nullable spec: Specification<T>?, pageable: Pageable): Page<T>
-    fun findAllBySolutionId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): List<T>
-    fun findAllBySolutionId(id: Long, sort: Sort): List<T>
-    fun findAllBySolutionId(id: Long): List<T>
-    fun countBySolutionId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): Long
-    fun countBySolutionId(id: Long): Long
-}
+//interface ApplicationProjectBaseRepository<T> {
+//	fun findAllByProjectId(id: Long, @Nullable spec: Specification<T>?, pageable: Pageable): Page<T>
+//	fun findAllByProjectId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): List<T>
+//	fun findAllByProjectId(id: Long, sort: Sort): List<T>
+//	fun findAllByProjectId(id: Long): List<T>
+//	fun countByProjectId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): Long
+//	fun countByProjectId(id: Long): Long
+//}
 
 /**
- * Base interface for repository common functionality for entity repositories
+ * Base interface for model error functionality for entity repositories
  */
-@NoRepositoryBean
-interface ApplicationRepositoryBaseRepository<T> : ApplicationSolutionBaseRepository<T> {
-    fun findAllByRepositoryId(id: Long, @Nullable spec: Specification<T>?, pageable: Pageable): Page<T>
-    fun findAllByRepositoryId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): List<T>
-    fun findAllByRepositoryId(id: Long, sort: Sort): List<T>
-    fun findAllByRepositoryId(id: Long): List<T>
-    fun countByRepositoryId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): Long
-    fun countByRepositoryId(id: Long): Long
-}
+//interface ApplicationRepositoryBaseRepository<T> {
+//	fun findAllByModelVersionId(id: Long, @Nullable spec: Specification<T>?, pageable: Pageable): Page<T>
+//	fun findAllByModelVersionId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): List<T>
+//	fun findAllByModelVersionId(id: Long, sort: Sort): List<T>
+//	fun findAllByModelVersionId(id: Long): List<T>
+//	fun countByRepositoryVersionId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): Long
+//	fun countByRepositoryVersionId(id: Long): Long
+//}
 
 
 @NoRepositoryBean
