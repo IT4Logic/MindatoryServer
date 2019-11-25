@@ -25,6 +25,7 @@ import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import io.leangen.graphql.annotations.GraphQLIgnore
 import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
@@ -86,6 +87,7 @@ data class AttributeTemplate(
 	@OneToMany
 	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
+	@get: GraphQLIgnore
 	var mlcs: MutableList<AttributeTemplateMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {

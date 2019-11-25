@@ -28,6 +28,7 @@ import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import com.it4logic.mindatory.model.model.AttributeTemplate
+import io.leangen.graphql.annotations.GraphQLIgnore
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -35,7 +36,9 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
 import javax.validation.constraints.NotNull
 
-
+/**
+ * Attribute Store entity
+ */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
@@ -52,12 +55,10 @@ data class AttributeStore(
 	@get: MultipleLanguageContent
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_attribute_template_id", nullable = false)
-//	@JsonIgnore
 	var attributeTemplate: AttributeTemplate,
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_artifact_id", nullable = false)
-	@JsonIgnore
 	var artifact: ArtifactStore,
 
 	@get: NotNull
@@ -70,20 +71,10 @@ data class AttributeStore(
 	@OneToMany
 	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
+	@get: GraphQLIgnore
 	var mlcs: MutableList<AttributeStoreMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {
-	@PrePersist
-	@PreUpdate
-	fun preSave() {
-//        contentsRaw = ObjectMapper().writeValueAsString(contents)
-	}
-
-	@PostLoad
-	fun postLoad() {
-//        contents = ObjectMapper().readTree(contentsRaw)
-	}
-
 	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
 		if (mlcs == null)
@@ -93,19 +84,15 @@ data class AttributeStore(
 }
 
 /**
- * Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface AttributeStoreRepository : //ApplicationProjectBaseRepository<AttributeStore>,
 	ApplicationBaseRepository<AttributeStore> {
-	//	fun countByAttributeTemplateId(id: Long): Long
-//	fun countByAttributeTemplateRepositoryVersionId(id: Long): Long
-//	fun countByAttributeTemplateRepositoryVersionId(id: Long): Long
-//	fun countByAttributeTemplateVersionId(id: Long): Long
 }
 
 /**
- * Multiple Language Content support entity
+ * Multiple Language Content entity
  */
 @Audited
 @Entity
@@ -121,7 +108,7 @@ interface AttributeStoreRepository : //ApplicationProjectBaseRepository<Attribut
 class AttributeStoreMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**
- * Multiple Language Content support Repository
+ * Multiple Language Content Repository
  */
 @RepositoryRestResource(exported = false)
 interface AttributeStoreMLCRepository :

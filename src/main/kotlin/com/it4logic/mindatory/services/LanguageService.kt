@@ -33,9 +33,13 @@ import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
-
+/**
+ * Language Data Service
+ */
 @Service
+@Transactional
 class LanguageService : ApplicationBaseService<Language>() {
 	@Autowired
 	private lateinit var languageRepository: LanguageRepository
@@ -95,12 +99,10 @@ class LanguageService : ApplicationBaseService<Language>() {
 				}
 			}
 		}
-//    return languageRepository.findOneByLocale(locale).orElseThrow { ApplicationObjectNotFoundException(locale, type().simpleName.toLowerCase()) }
 	}
 
 	/**
 	 * Deletes language and its all related translations from all objects
-	 *
 	 * @param target Object instance
 	 */
 	fun forceDelete(target: Language) {
@@ -151,6 +153,10 @@ class LanguageService : ApplicationBaseService<Language>() {
 		companyMLCRepository.deleteAllByLanguageId(id)
 	}
 
+	/**
+	 * Makes the langage for the input Id the default language and clear the current default language mark
+	 * @param id Input Language Id
+	 */
 	fun makeLanguageDefault(id: Long): Boolean {
 		val lang = findById(id)
 		if (lang.default)

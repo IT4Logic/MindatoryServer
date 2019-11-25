@@ -20,7 +20,6 @@
 
 package com.it4logic.mindatory.model.project
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
@@ -33,7 +32,9 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
 import javax.validation.constraints.NotNull
 
-
+/**
+ * Relation Store entity
+ */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
@@ -64,7 +65,6 @@ data class RelationStore(
 	@get: MultipleLanguageContent
 	@ManyToOne
 	@JoinColumn(name = "f_project_id", nullable = false)
-//	@JsonIgnore
 	var project: Project
 
 ) : ApplicationMLCEntityBase() {
@@ -72,18 +72,10 @@ data class RelationStore(
 }
 
 /**
- * Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
-interface RelationStoreRepository : //ApplicationProjectBaseRepository<RelationStore>,
-	ApplicationBaseRepository<RelationStore> {
-	//	fun countByRelationTemplateRepositoryId(id: Long): Long
-//	fun countByRelationTemplateId(id: Long): Long
-
-//	fun findAllByRelationTemplateId(id: Long): List<RelationStore>
-//
-//	fun countByRelationTemplateIdAndSourceArtifactId(id1: Long, id2: Long): Long
-//	fun countByRelationTemplateIdAndTargetArtifactId(id1: Long, id2: Long): Long
+interface RelationStoreRepository : ApplicationBaseRepository<RelationStore> {
 
 	fun countAllByRelationTemplateId(id: Long): Long
 
@@ -94,9 +86,4 @@ interface RelationStoreRepository : //ApplicationProjectBaseRepository<RelationS
 	fun findAllBySourceArtifactId(id: Long): List<RelationStore>
 	fun findAllByTargetArtifactId(id: Long): List<RelationStore>
 	fun findAllByProjectId(id: Long): List<RelationStore>
-
-//	fun countBySourceArtifactId(id1: Long): Long
-//	fun countByTargetArtifactId(id1: Long): Long
-//	fun countByRelationTemplateRepositoryVersionId(id: Long): Long
-
 }

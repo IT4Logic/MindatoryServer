@@ -17,7 +17,6 @@
     along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-
 package com.it4logic.mindatory.services.common
 
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
@@ -43,12 +42,16 @@ import javax.validation.Validator
 import kotlin.reflect.KClass
 
 /**
- * Base class for application services
+ * Base class for entity data services
  */
 @Service
 @Transactional
 abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
-	enum class PersistantFunctionType {
+
+	/**
+	 * Enumeration for Persistent Function Type
+	 */
+	enum class PersistentFunctionType {
 		CREATE,
 		UPDATE,
 		DELETE
@@ -63,28 +66,59 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	@Autowired
 	protected lateinit var multipleLanguageContentService: MultipleLanguageContentService
 
+	/**
+	 * Retrieves Entity repository. This method has to be implemented by the derived class
+	 * @return Entity JPA Repository
+	 */
 	protected abstract fun repository(): ApplicationBaseRepository<T>
 
+	/**
+	 * Retrieves Entity class instance. This method has to be implemented by the derived class
+	 * @return Entity Class instance
+	 */
 	protected abstract fun type(): Class<T>
 
+	/**
+	 * Retrieves if the service will use ACL Security or not. ACL Security is disabled by default
+	 * @return True, if ACL security will be used, False otherwise
+	 */
 	protected fun useAcl(): Boolean = false
 
+	/**
+	 * Retrieves ACL Service instance in case of using ACL Security
+	 * @return ACL Service instance
+	 */
 	protected fun securityAclService(): SecurityAclService? = null
 
+	/**
+	 * Retrieves MLC JPA Repository instance in case of using MCL functionality
+	 * @return MLC JPA Repository instance
+	 */
 	protected fun multipleLanguageContentRepository(): MultipleLanguageContentBaseEntityRepository<*>? = null
 
+	/**
+	 * Retrieves Entity MLC class instance in case of using MCL functionality
+	 * @return Entity MLC Class instance
+	 */
 	protected fun multipleLanguageContentType(): KClass<*>? = null
 
+	/**
+	 * Retrieves MLC Service instance in case of using MCL functionality
+	 * @return MLC Service Instance
+	 */
 	@Suppress("UNCHECKED_CAST")
 	protected fun mlcService(): MultipleLanguageContentService {
-//    if(multipleLanguageContentRepository() == null || multipleLanguageContentType() == null)
-//      return null
 		multipleLanguageContentService.repository =
 			multipleLanguageContentRepository() as MultipleLanguageContentBaseEntityRepository<MultipleLanguageContentBaseEntity>?
 		multipleLanguageContentService.type = multipleLanguageContentType()
 		return multipleLanguageContentService
 	}
 
+	/**
+	 * Validate entity instance properties, and raises [ConstraintViolationException] exception
+	 * in case of there are validation errors
+	 * @param target Input entity instance
+	 */
 	fun validate(target: T) {
 		val result = validator.validate(target)
 		if (result.isNotEmpty()) {
@@ -95,8 +129,7 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	}
 
 	/**
-	 * Searches and loads all objects
-	 *
+	 * Searches and loads all objects according to input filter and soring
 	 * @param pageable Paging information
 	 * @param sort Sort information
 	 * @param filter Search criteria
@@ -117,11 +150,6 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 		else
 			repository().findAll()
 
-//    val filtered = result.distinctBy { it.id }
-//    if( (pageable?.sort != null && pageable.sort.isSorted) || (sort != null && sort.isSorted) ) {
-//      filtered.sortedBy { "${it.id}" }
-//    }
-
 		result.forEach {
 			loadMLC(it)
 		}
@@ -133,7 +161,8 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	 * Searches and loads object for the input Id
 	 *
 	 * @param id Objects Id
-	 * @return Objectobject, or ApplicationObjectNotFoundException in case if the object Id doesn't exist
+	 * @param loadMLC Whether to load MLC content related to object or not
+	 * @return Object instance, or ApplicationObjectNotFoundException in case if the object Id doesn't exist
 	 */
 	fun findById(id: Long, loadMLC: Boolean = true): T {
 		val target = repository().findById(id)
@@ -143,15 +172,18 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 		return target
 	}
 
+	/**
+	 * Reloads the objects from the database and updates the cache
+	 * @param target Input object
+	 */
 	fun refresh(target: T) {
 		entityManager.refresh(target)
 	}
 
 	/**
-	 * Creates Objects object
-	 *
-	 * @param target Objects user
-	 * @return Created Objects object
+	 * Creates a new object
+	 * @param target Input object to be created
+	 * @return Created object
 	 */
 	fun create(target: T): T {
 		val result = repository().findById(target.id)
@@ -161,9 +193,9 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 		validate(target)
 		beforeCreate(target)
 		val obj = repository().save(target)
-		beforeFlush(obj, target, PersistantFunctionType.CREATE)
+		beforeFlush(obj, target, PersistentFunctionType.CREATE)
 		repository().flush()
-		afterFlush(obj, PersistantFunctionType.CREATE)
+		afterFlush(obj, PersistentFunctionType.CREATE)
 		saveMLC(obj, target)
 		refresh(obj)
 		loadMLC(obj)
@@ -175,10 +207,10 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	}
 
 	/**
-	 * Updates Objects object
+	 * Updates an existing object
 	 *
-	 * @param target Objects object
-	 * @return Updated Objects object
+	 * @param target Input object to be updated
+	 * @return Updated  object
 	 */
 	fun update(target: T): T {
 		validate(target)
@@ -187,9 +219,9 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 		target.copyMLCs(obj)
 		beforeUpdate(target)
 		obj = repository().save(target)
-		beforeFlush(obj, target, PersistantFunctionType.UPDATE)
+		beforeFlush(obj, target, PersistentFunctionType.UPDATE)
 		repository().flush()
-		afterFlush(obj, PersistantFunctionType.UPDATE)
+		afterFlush(obj, PersistentFunctionType.UPDATE)
 		saveMLC(obj, target)
 		refresh(obj)
 		loadMLC(obj)
@@ -198,8 +230,7 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	}
 
 	/**
-	 * Deletes object for the input Id
-	 *
+	 * Deletes object by its Id
 	 * @param id Object Id
 	 */
 	fun deleteById(id: Long) {
@@ -208,8 +239,7 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	}
 
 	/**
-	 * Deletes object for the input Id
-	 *
+	 * Deletes object by its instnace
 	 * @param target Object instance
 	 */
 	fun delete(target: T) {
@@ -218,36 +248,84 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 		}
 		val obj = findById(target.id, false)
 		beforeDelete(obj)
-		beforeFlush(obj, target, PersistantFunctionType.DELETE)
+		beforeFlush(obj, target, PersistentFunctionType.DELETE)
 		repository().flush()
-		afterFlush(obj, PersistantFunctionType.DELETE)
+		afterFlush(obj, PersistentFunctionType.DELETE)
 		deleteMLC(obj)
 		repository().flush()
 		repository().delete(obj)
 		afterDelete(obj)
 	}
 
+	/**
+	 * Loads MLC content for the input object
+	 * @param target Input object
+	 */
 	fun loadMLC(target: ApplicationMLCEntityBase) {
 		mlcService().load(target)
 	}
 
+	/**
+	 * LoadSaves MLC content for the input object
+	 * This method uses two isntance for the same object Id, because after saving the object all MLC enabled
+	 * properties will be cleared, hence, the updated content as well, this why we need the object instance
+	 * before saving to have reference to properties content to be saved or updated.
+	 * @param savedObj Saved object instance
+	 * @param target Reference object
+	 */
 	fun saveMLC(savedObj: ApplicationMLCEntityBase, target: ApplicationMLCEntityBase) {
 		mlcService().save(savedObj, target)
 	}
 
+	/**
+	 * Deleted MLC content for the input object
+	 * @param target Input object
+	 */
 	fun deleteMLC(target: ApplicationMLCEntityBase) {
 		mlcService().delete(target)
 	}
 
+	/**
+	 * Method to be called before saving to database
+	 * @param target Input object
+	 */
 	fun beforeCreate(target: T) {}
+	/**
+	 * Method to be called after saving to database
+	 * @param target Input object
+	 */
 	fun afterCreate(target: T) {}
 
+	/**
+	 * Method to be called before updating to database
+	 * @param target Input object
+	 */
 	fun beforeUpdate(target: T) {}
+	/**
+	 * Method to be called after updating to database
+	 * @param target Input object
+	 */
 	fun afterUpdate(target: T) {}
 
+	/**
+	 * Method to be called before deleting from database
+	 * @param target Input object
+	 */
 	fun beforeDelete(target: T) {}
+	/**
+	 * Method to be called after deleting from database
+	 * @param target Input object
+	 */
 	fun afterDelete(target: T) {}
 
-	fun beforeFlush(savedTarget: T, refTarget: T, persistantFunctionType: PersistantFunctionType) {}
-	fun afterFlush(target: T, persistantFunctionType: PersistantFunctionType) {}
+	/**
+	 * Method to be called before flushing the changes to database
+	 * @param target Input object
+	 */
+	fun beforeFlush(savedTarget: T, refTarget: T, persistentFunctionType: PersistentFunctionType) {}
+	/**
+	 * Method to be called after flushing the changes to database
+	 * @param target Input object
+	 */
+	fun afterFlush(target: T, persistentFunctionType: PersistentFunctionType) {}
 }

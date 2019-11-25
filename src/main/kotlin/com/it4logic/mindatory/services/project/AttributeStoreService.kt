@@ -33,7 +33,9 @@ import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
-
+/**
+ * Attribute Store Data Service
+ */
 @Service
 @Transactional
 class AttributeStoreService : ApplicationBaseService<AttributeStore>() {
@@ -57,6 +59,11 @@ class AttributeStoreService : ApplicationBaseService<AttributeStore>() {
 
 	override fun multipleLanguageContentType(): KClass<*> = AttributeStoreMultipleLanguageContent::class
 
+	/**
+	 * Validates Attribute Store properties again their data types
+	 * If there are any validation errors, an [ApplicationGeneralException] exception will be thrown
+	 * @param target Attribute Store object
+	 */
 	fun validateStore(target: AttributeStore) {
 		val error =
 			attributeTemplateDataTypeManagerService.getAttributeTemplateDataType(target.attributeTemplate.typeUUID).validateDataTypeContents(
@@ -65,8 +72,4 @@ class AttributeStoreService : ApplicationBaseService<AttributeStore>() {
 			) ?: return
 		throw ApplicationGeneralException(error)
 	}
-
-//	fun countByAttributeTemplateRepositoryVersionId(id: Long): Long {
-//		return attributeStoreRepository.countByAttributeTemplateRepositoryVersionId(id)
-//	}
 }

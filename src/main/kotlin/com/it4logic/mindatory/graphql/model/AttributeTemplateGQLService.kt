@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.model
 
 import com.it4logic.mindatory.attribute_template.datatypes.AttributeTemplateDataType
@@ -17,7 +36,9 @@ import org.springframework.data.domain.Page
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
-
+/**
+ * GraphQL service for Attribute Template
+ */
 @Service
 @GraphQLApi
 class AttributeTemplateGQLService : GQLBaseService<AttributeTemplate>() {
@@ -60,6 +81,15 @@ class AttributeTemplateGQLService : GQLBaseService<AttributeTemplate>() {
 		return super.find(locale, id, filter)
 	}
 
+	/**
+	 * Custom implementation to provide the Model Version and Artifact Template information
+	 * while creating Attribute Template object
+	 * @param locale Input locale
+	 * @param verId Model Version Id
+	 * @param artifactId Artifact Template Id
+	 * @param target Input object instance
+	 * @return Created Attribute Template instance
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.AttributeTemplateAdminCreate}')")
 	@GraphQLMutation(name = "createAttributeTemplate")
 	fun create(locale: String?, verId: Long, artifactId: Long, target: AttributeTemplate): AttributeTemplate {
@@ -89,6 +119,11 @@ class AttributeTemplateGQLService : GQLBaseService<AttributeTemplate>() {
 		return super.delete(locale, target)
 	}
 
+	/**
+	 * Retrieves Pre-defined Attributes data types list
+	 * @param locale Input locale
+	 * @return Attributes data types list
+	 */
 	@PreAuthorize("isFullyAuthenticated()")
 	@GraphQLQuery(name = "dataTypes")
 	fun doGetDataTypes(locale: String?): List<AttributeTemplateDataType> {
@@ -96,7 +131,12 @@ class AttributeTemplateGQLService : GQLBaseService<AttributeTemplate>() {
 		return attributeTemplateDataTypeManagerService.getAttributeTemplateDataTypes()
 	}
 
-
+	/**
+	 * Retrieves Pre-defined Attributes data type
+	 * @param locale Input locale
+	 * @param uuid Data type UUID
+	 * @return Attributes data type object
+	 */
 	@PreAuthorize("isFullyAuthenticated()")
 	@GraphQLQuery(name = "dataType")
 	fun doGetDataType(locale: String?, uuid: String): AttributeTemplateDataType {

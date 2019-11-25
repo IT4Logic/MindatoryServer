@@ -36,6 +36,9 @@ import javax.validation.constraints.NotNull
 import javax.validation.constraints.Size
 import kotlin.collections.ArrayList
 
+/**
+ * Security Role entity
+ */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
@@ -126,12 +129,20 @@ data class SecurityRole(
 
 	private fun isPermissionExists(perm: String): Boolean = permissions.contains(perm)
 
+	/**
+	 * Adds permission to user object
+	 * @param perm Permission to be added
+	 */
 	fun addPermission(perm: String) {
 		if (isPermissionExists(perm))
 			return
 		permissions.add(perm)
 	}
 
+	/**
+	 * Removes permission to user object
+	 * @param perm Permission to be removed
+	 */
 	fun removePermission(perm: String) {
 		if (isPermissionExists(perm))
 			return
@@ -140,13 +151,13 @@ data class SecurityRole(
 }
 
 /**
- * SecurityRoles Entity Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface SecurityRoleRepository : ApplicationBaseRepository<SecurityRole>
 
 /**
- * Multiple Language Content support entity
+ * Multiple Language Content entity
  */
 @Audited
 @Entity
@@ -162,7 +173,7 @@ interface SecurityRoleRepository : ApplicationBaseRepository<SecurityRole>
 class SecurityRoleMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**
- * Multiple Language Content support Repository
+ * Multiple Language Content Repository
  */
 @RepositoryRestResource(exported = false)
 interface SecurityRoleMLCRepository : MultipleLanguageContentBaseEntityRepository<SecurityRoleMultipleLanguageContent>

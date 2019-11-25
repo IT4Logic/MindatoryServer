@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.security
 
 import com.it4logic.mindatory.graphql.GQLBaseService
@@ -14,7 +33,9 @@ import org.springframework.data.domain.Page
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
-
+/**
+ * GraphQL service for Security User
+ */
 @Service
 @GraphQLApi
 class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
@@ -65,6 +86,13 @@ class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
 		return super.delete(locale, target)
 	}
 
+	/**
+	 * Changes user password
+	 * @param locale Input locale
+	 * @param id Input User Id
+	 * @param request Change Password Request object
+	 * @return True if the password successfully changed, otherwise an excption will be thrown
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.SecurityUserAdminModify}')")
 	@GraphQLMutation
 	fun changeUserPassword(
@@ -75,6 +103,11 @@ class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
 		return true
 	}
 
+	/**
+	 * Retrieve current user object (profile)
+	 * @param locale Input Locale
+	 * @return Current user object (profile)
+	 */
 	@PreAuthorize("isFullyAuthenticated()")
 	@GraphQLQuery(name = "currentUserProfile")
 	fun getCurrentUserProfile(locale: String): SecurityUser {
@@ -82,6 +115,12 @@ class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
 		return securityUserService.getCurrentSecurityUser()
 	}
 
+	/**
+	 * Updates current user object (profile)
+	 * @param locale Input Locale
+	 * @param target Input user object
+	 * @return Current user object (profile)
+	 */
 	@PreAuthorize("isFullyAuthenticated()")
 	@GraphQLMutation
 	fun updateCurrentUserProfile(
@@ -91,6 +130,12 @@ class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
 		return securityUserService.updateCurrentSecurityUser(target)
 	}
 
+	/**
+	 * Changes current logged-in user password
+	 * @param locale Input locale
+	 * @param request Change Password Request object
+	 * @return True if the password successfully changed, otherwise an excption will be thrown
+	 */
 	@PreAuthorize("isFullyAuthenticated()")
 	@GraphQLMutation
 	fun changeCurrentUserPassword(

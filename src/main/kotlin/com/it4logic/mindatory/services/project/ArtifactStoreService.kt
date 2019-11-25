@@ -35,7 +35,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
-
+/**
+ * Artifact Store Data Service
+ */
 @Service
 @Transactional
 class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
@@ -62,68 +64,34 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 	override fun type(): Class<ArtifactStore> = ArtifactStore::class.java
 
 	override fun beforeCreate(target: ArtifactStore) {
-		if (target.artifactTemplate.modelVersion.status != ModelVersionStatus.Released)
+		// Make sure that the model version is not in design mode
+		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
-
-//		updateStores(target)
-
-//    if(target.artifact.id != target.artifactTemplateVersion.artifact.id)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
-
-//    if(target.artifact.status != ModelVersionStatus.Released)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
-
-//		for (attribute in target.attributes) {
-//			attributeStoreService.validate(attribute)
-//		}
 	}
 
 	override fun beforeUpdate(target: ArtifactStore) {
-		if (target.artifactTemplate.modelVersion.status != ModelVersionStatus.Released)
+		// Make sure that the model version is not in design mode
+		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
-
-//    if(target.artifact.id != target.artifactTemplateVersion.artifact.id)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
-
-//    if(target.artifact.status != ModelVersionStatus.Released)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
-
-//		for (attribute in target.attributes) {
-//			attributeStoreService.validateStore(attribute)
-//		}
 	}
 
 	override fun beforeDelete(target: ArtifactStore) {
-		if (target.artifactTemplate.modelVersion.status != ModelVersionStatus.Released)
+		// Make sure that the model version is not in design mode
+		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
 
-		relationStoreService.deleteAnyRelatedJoinsUsedWithArtifact(target.id)
-//
-//		var result = relationStoreService.findAllBySourceArtifactId(target.id)
-//		for (obj in result) {
-//			relationStoreService.delete(obj)
-//		}
-//
-//		result = relationStoreService.findAllByTargetArtifactId(target.id)
-//		for (obj in result) {
-//			relationStoreService.delete(obj)
-//		}
-
-//		if (relationStoreRepository.countBySourceArtifactId(target.id) > 0)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotDeleteArtifactStoreObjectThatUsedInRelationStoreObjects)
-//
-//		if (relationStoreRepository.countByTargetArtifactId(target.id) > 0)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotDeleteArtifactStoreObjectThatUsedInRelationStoreObjects)
+		relationStoreService.deleteAnyRelationsUsedWithArtifact(target.id)
 	}
 
 	override fun beforeFlush(
 		savedTarget: ArtifactStore,
 		refTarget: ArtifactStore,
-		persistantFunctionType: PersistantFunctionType
+		persistentFunctionType: PersistentFunctionType
 	) {
-		if (persistantFunctionType == PersistantFunctionType.DELETE)
+		if (persistentFunctionType == PersistentFunctionType.DELETE)
 			return
-		
+
+		// Updating and validating attribute stores
 		for (aStore in refTarget.attributes) {
 			aStore.attributeTemplate = attributeTemplateService.findById(aStore.attributeTemplate.id)
 			aStore.artifact = savedTarget
@@ -136,6 +104,11 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 		}
 	}
 
+	/**
+	 * Retrieves all the Model Versions that have been used inside a project
+	 * @param project Project object
+	 * @return Used Model Versions list
+	 */
 	fun getRepositoryVersionDependencies(project: Project): List<ModelVersion> {
 		val dependencies = mutableListOf<ModelVersion>()
 
@@ -155,6 +128,11 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 		return dependencies
 	}
 
+	/**
+	 * Retrieves Artifact Templates that have been used inside a project
+	 * @param projectId Project Id
+	 * @return Used Artifact Template list
+	 */
 	fun getUsedArtifactTemplatesForProject(projectId: Long): List<ArtifactTemplate> {
 		val result = artifactStoreRepository.findAllUsedArtifactTemplates(projectId)
 		for (artifact in result) {
@@ -163,11 +141,12 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 		return result
 	}
 
-//	fun countByArtifactTemplateRepositoryVersionId(id: Long): Long {
-//		return artifactStoreRepository.countByArtifactTemplateRepositoryVersionId(id)
-//	}
-
-	fun generateStoreTraceability(store: ArtifactStore): List<Any> {
+	/**
+	 * Generate Artifact Store Traceability Matrix
+	 * @param store Artifact Store object
+	 * @return Traceability Matrix
+	 */
+	fun generateStoreTraceabilityMatrix(store: ArtifactStore): List<Any> {
 		val artifactTemplateId : Long = store.artifactTemplate.id
 		val output = mutableMapOf<RelationTemplate, Long>()
 		val relationTemplates = relationTemplateService.findAllRelationsRelatedToArtifact(artifactTemplateId)

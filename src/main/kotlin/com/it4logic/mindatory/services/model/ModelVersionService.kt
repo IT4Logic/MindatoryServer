@@ -22,29 +22,24 @@ package com.it4logic.mindatory.services.model
 
 import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.model.ModelVersionStatus
 import com.it4logic.mindatory.model.model.*
-import com.it4logic.mindatory.query.QueryService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.project.ProjectService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.util.*
 import javax.transaction.Transactional
-import kotlin.reflect.KClass
 
 
+/**
+ * Model Version Data Service
+ */
 @Service
 @Transactional
 class ModelVersionService : ApplicationBaseService<ModelVersion>() {
-//	@Autowired
-//	private lateinit var modelRepository: ModelRepository
-
 	@Autowired
 	private lateinit var modelVerRepository: ModelVersionRepository
 
@@ -56,10 +51,7 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 
 	@Autowired
 	private lateinit var artifactTemplateService: ArtifactTemplateService
-	//
-//	@Autowired
-//	private lateinit var attributeTemplateService: AttributeTemplateService
-//
+
 	@Autowired
 	private lateinit var relationTemplateService: RelationTemplateService
 
@@ -67,14 +59,11 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 
 	override fun type(): Class<ModelVersion> = ModelVersion::class.java
 
-	fun findAllVersions(modelId: Long, pageable: Pageable?, sort: Sort?, filter: String?): Any {
-		var newFilter = "model.id==$modelId"
-		if (filter != null && !filter.isBlank())
-			newFilter = "$filter;$newFilter"
-
-		return super.findAll(pageable, sort, newFilter)
-	}
-
+	/**
+	 * Creates a new version for the input Model Id
+	 * @param modelId Input Model Id
+	 * @return Created Model Version object
+	 */
 	@Suppress("SENSELESS_COMPARISON")
 	fun createVersion(
 		modelId: Long
@@ -96,23 +85,20 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 		modelVersion.designVersion = max + 1
 		modelVersion.status = ModelVersionStatus.InDesign
 
-//		model.versions.add(modelVersion)
-
-//		val ver = modelVerRepository.save(modelVersion)
-//		model().flush()
-//		entityManager.refresh(ver)
-
 		if (model.versions == null)
 			model.versions = mutableListOf()
 
 		model.versions.add(modelVersion)
 		modelService.update(model)
 
-//		mlcService().load(ver)
-
 		return modelVersion
 	}
 
+	/**
+	 * Updates an existing model version
+	 * @param modelVersion Model Version object
+	 * @return Updated Model Version object
+	 */
 	fun updateVersion(
 		modelVersion: ModelVersion
 	): ModelVersion {
@@ -129,6 +115,11 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 		return update(result)
 	}
 
+	/**
+	 * Release the Model Version and make it read only and ready to be used inside projects
+	 * @param modelVersionId Input Model Version Id
+	 * @return Released Model Version object
+	 */
 	fun releaseVersion(modelVersionId: Long): ModelVersion {
 		val modelVersion = findById(modelVersionId)
 
@@ -147,214 +138,44 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 		return update(modelVersion)
 	}
 
+	/**
+	 * Deletes an existing model version Id
+	 * @param modelVersionId Input Model Version Id
+	 */
 	fun delete(modelVersionId: Long) {
 		val modelVersion = findById(modelVersionId)
 
 		if (modelVersion.status != ModelVersionStatus.InDesign) {
-			if (checkIfVersionHasRelatedStoreObjects(modelVersion))
+			if (projectService.checkIfProjectsUseRepositoryVersion(modelVersion))
 				throw ApplicationValidationException(ApplicationErrorCodes.ValidationModelHasVersionThatHasRelatedStoreData)
 		}
 
-		if (checkIfVersionHasRelatedOutsideTemplateObjects(modelVersion))
+		if (modelVerRepository.countAllByModelDependencies_Id(modelVersion.id) > 0)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationModelHasVersionThatHasRelatedStoreData)
 
 		super.delete(modelVersion)
 	}
 
-	fun checkIfVersionHasRelatedStoreObjects(target: ModelVersion): Boolean {
-		return projectService.checkIfProjectsUseRepositoryVersion(target)
-
-//		// check if there are artifacts stores based on artifact templates from this model
-//		var count = artifactStoreService.countByArtifactTemplateRepositoryVersionId(target.id)
-//		if (count > 0)
-//			return true
-//
-//		// check if there are attribute stores based on attribute templates from this model
-//		count = attributeStoreService.countByAttributeTemplateRepositoryVersionId(target.id)
-//		if (count > 0)
-//			return true
-//
-//		// check if there are join stores based on join templates from this model
-//		count = relationStoreService.countByRelationTemplateRepositoryVersionId(target.id)
-//		if (count > 0)
-//			return true
-
-//		return false
-	}
-
-	fun checkIfVersionHasRelatedOutsideTemplateObjects(target: ModelVersion): Boolean {
-		return modelVerRepository.countAllByModelDependencies_Id(target.id) > 0
-		/*
-		* 1- i need to know all the templates in this version
-		* 2- i need to know which of them used in another version
-		* 3- i need to know the version that are not related to version model
-		* */
-/*
-
-		// check if there are attribute templates from this model used in artifact templates from other repositories
-		var count = artifactTemplateService.countByRepositoryVersionIdNotAndAttributesRepositoryVersionId(
-			target.id
-		)
-		if (count > 0)
-			return true
-
-		// check if there are artifact templates from this model used in joins templates from other repositories
-		count =
-			relationTemplateService.countByRepositoryVersionIdNotAndSourceArtifactRepositoryVersionId(
-				target.id
-			)
-		if (count > 0)
-			return true
-
-		count =
-			relationTemplateService.countByRepositoryVersionIdNotAndTargetArtifactRepositoryVersionId(
-				target.id
-			)
-		if (count > 0)
-			return true
-
-
-		// check if there are stereotypes from this model used in join templates from other repositories
-		count =
-			relationTemplateService.countByRepositoryVersionIdNotAndSourceStereotypeRepositoryVersionId(
-				target.id
-			)
-		if (count > 0)
-			return true
-
-		count =
-			relationTemplateService.countByRepositoryVersionIdNotAndTargetStereotypeRepositoryVersionId(
-				target.id
-			)
-		if (count > 0)
-			return true
-*/
-//		return false
-	}
-
-//	fun addToRepositoryDependenciesList(
-//		modelVersion: ModelVersion,
-//		dependencyRepoVer: ModelVersion
-//	) {
-//
-//		if (modelVersion.identifier == dependencyRepoVer.identifier)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotLinkModelVersionToItself)
-//
-//		if (modelVersion.model.id == dependencyRepoVer.model.id)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotLinkBetweenTwoVersionsInSameModel)
-//
-//		if (modelVersion.status == ModelVersionStatus.Released)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeNotInDesignApplicationModelVersion)
-//
-//		val result = modelVersion.modelDependencies.find { it.identifier == dependencyRepoVer.identifier }
-//		if (result != null)
-//			return
-//
-//		modelVersion.modelDependencies.add(dependencyRepoVer)
-//		updateVersion(modelVersion)
-//	}
-//
-//	fun removeFromRepositoryDependenciesList(
-//		modelVersion: ModelVersion,
-//		dependencyRepoVer: ModelVersion
-//	) {
-//		if (modelVersion.status == ModelVersionStatus.Released)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeNotInDesignApplicationModelVersion)
-//
-//		for ((index, repo) in modelVersion.modelDependencies.withIndex()) {
-//			if (repo.identifier == dependencyRepoVer.identifier) {
-//				modelVersion.modelDependencies.removeAt(index)
-//				break
-//			}
-//		}
-//
-//		updateVersion(modelVersion)
-//	}
-
+	/**
+	 * Updates Model Version Dependencies from other Model Versions
+	 * @param modelVersion Input Model Version object
+	 */
 	fun updateModelVersionDependencies(modelVersion: ModelVersion) {
-		val dependencies = calculateModelVersionDependencies(modelVersion)
-		modelVersion.modelDependencies = dependencies
-		updateVersion(modelVersion)
-	}
-
-	fun calculateModelVersionDependencies(modelVersion: ModelVersion): MutableList<ModelVersion> {
 		val dependencies = mutableListOf<ModelVersion>()
-
-		val listFromArtifacts = artifactTemplateService.getRepositoryVersionDependencies(modelVersion)
-		dependencies.addAll(listFromArtifacts)
-
 		val listFromJoins = relationTemplateService.getRepositoryVersionDependencies(modelVersion)
 		for (item in listFromJoins) {
 			if (dependencies.find { it.id == item.id } == null)
 				dependencies.add(item)
 		}
-
-		return dependencies
+		modelVersion.modelDependencies = dependencies
+		updateVersion(modelVersion)
 	}
 
-//	fun updateDataTypePluginDependencies(target: AttributeTemplate) {
-//		val dependencies =
-//			attributeTemplateService.getAttributeTemplateDataTypePluginDependencies(target.modelVersion)
-//		target.modelVersion.dataTypePluginDependencies = dependencies
-//		updateVersion(target.modelVersion)
-//	}
-
-	fun upgradeVersionModelDependency(versionId: Long, depVersionId: Long) {
-		val version = findById(versionId)
-		val depVersion =
-			version.modelDependencies.find { it.id == depVersionId } ?: throw ApplicationValidationException(
-				ApplicationErrorCodes.ValidationModelDependencyDoesNotExistInModelVersion
-			)
-
-		if (depVersion.status == ModelVersionStatus.Released)
-			throw ApplicationValidationException(
-				ApplicationErrorCodes.ValidationModelDependencyIsAlreadyLatestRelease
-			)
-
-		val releasedVersion = modelVerRepository.findOneByStatusAndModelId(
-			ModelVersionStatus.Released,
-			depVersion.model.id
-		).orElseThrow {
-			ApplicationValidationException(
-				ApplicationErrorCodes.ValidationModelHasNoReleasedVersion
-			)
-		}
-
-		version.modelDependencies.removeIf { it.identifier == depVersion.identifier }
-		version.modelDependencies.add(releasedVersion)
-
-		super.update(version)
-	}
-
-	fun upgradeVersionModelDependencies(versionId: Long): List<ModelVersion> {
-		var version = findById(versionId)
-		val upgradedDependencies = mutableListOf<ModelVersion>()
-
-		for (depVersion in version.modelDependencies) {
-			if (depVersion.status == ModelVersionStatus.Released) {
-				upgradedDependencies.add(depVersion)
-				continue
-			}
-
-			val releasedVersion = modelVerRepository.findOneByStatusAndModelId(
-				ModelVersionStatus.Released,
-				depVersion.model.id
-			).orElseThrow {
-				ApplicationValidationException(
-					ApplicationErrorCodes.ValidationModelHasNoReleasedVersion
-				)
-			}
-
-			upgradedDependencies.add(releasedVersion)
-
-		}
-
-		version.modelDependencies = upgradedDependencies
-		version = updateVersion(version)
-
-		return version.modelDependencies
-	}
-
+	/**
+	 * Get the released Model Version for a given Model Id, as there is only one released version per model
+	 * @param modelId Model Id
+	 * @return [Optional] isntance of Model Version object
+	 */
 	fun getReleasedVersion(modelId: Long): Optional<ModelVersion> {
 		val result = modelVerRepository.findOneByStatusAndModelId(ModelVersionStatus.Released, modelId)
 		if (result.isPresent) {
@@ -363,12 +184,12 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 		return result
 	}
 
-	fun findAllReleasedVersions(): List<ModelVersion> {
-		val result = modelVerRepository.findAllByStatus(ModelVersionStatus.Released)
-		result.forEach { loadMLC(it) }
-		return result
-	}
-
+	/**
+	 * Updates Model Version Metadata
+	 * @param id Model Version Id
+	 * @param metadata Metadata in string representation
+	 * @return Updated Model Version object
+	 */
 	fun updateMetadata(id: Long, metadata: String): ModelVersion {
 		val modelVersion = findById(id)
 

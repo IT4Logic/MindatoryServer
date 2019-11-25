@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.services.security
 
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
@@ -17,7 +36,9 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.acls.model.MutableAcl
 import javax.transaction.Transactional
 
-
+/**
+ * ACL Security Service
+ */
 @Service
 @Transactional
 class SecurityAclService {
@@ -35,52 +56,6 @@ class SecurityAclService {
 
     @Autowired
     private lateinit var userRepository: SecurityUserRepository
-
-
-//    /**
-//     * Grant a permission. Used when you don't have the instance available.
-//     *
-//     * @param domainClass  the domain class
-//     * @param id  the instance id
-//     * @param recipient  the grantee; can be a username, role name, Sid, or Authentication
-//     * @param permission  the permission to grant
-//     */
-//    fun addPermission(domainClass: Class<*>, id: Long, recipient: Any, permission: Permission) {
-//        val oid = ObjectIdentityImpl(domainClass, id)
-//        addPermission(oid, recipient, permission)
-//    }
-
-//    /**
-//     * Grant a permission. Used when you have the instance available.
-//     *
-//     * @param domainObject  the domain class instance
-//     * @param recipient  the grantee; can be a username, role name, Sid, or Authentication
-//     * @param permission  the permission to grant
-//     */
-//    fun addPermission(domainObject: ApplicationEntityBase, recipient: Any, permission: Permission) {
-//        val oid = objectIdentityRetrievalStrategy.getObjectIdentity(domainObject)
-//        addPermission(oid, recipient, permission)
-//    }
-
-//    /**
-//     * Grant a permission. Used when you don't have the instance available.
-//     *
-//     * @param oid  [ObjectIdentity] object
-//     * @param recipient  the grantee; can be a username, role name, Sid, or Authentication
-//     * @param permission  the permission to grant
-//     */
-//    fun addPermission(oid: ObjectIdentity, recipient: Any, permission: Permission) {
-//        val sid = createSid(recipient)
-//        // Create or update the relevant ACL
-//        val acl: MutableAcl = try {
-//            aclService.readAclById(oid) as MutableAcl
-//        } catch (nfe: NotFoundException) {
-//            aclService.createAcl(oid)
-//        }
-//        // Now grant some permissions via an access control entry (ACE)
-//        acl.insertAce(acl.entries.size, permission, sid, true)
-//        aclService.updateAcl(acl)
-//    }
 
     /**
      * Grant a permission. Used when you don't have the instance available.
@@ -134,19 +109,6 @@ class SecurityAclService {
         aclService.updateAcl(acl)
     }
 
-//    /**
-//     * Update the owner of the domain class instance.
-//     *
-//     * @param domainObject  the domain class instance
-//     * @param newUsername  the new username
-//     */
-//    fun changeOwner(domainObject: ApplicationEntityBase, newUsername: String) {
-//        val acl = readAcl(domainObject) as MutableAcl
-//        acl.owner = PrincipalSid(newUsername)
-//        aclService.updateAcl(acl)
-//    }
-
-
     /**
      * Removes a granted permission. Used when you don't have the instance available.
      *
@@ -167,20 +129,6 @@ class SecurityAclService {
         aclService.updateAcl(acl)
     }
 
-
-
-//    /**
-//     * Check if the authentication has grants for the specified permission(s) on the domain class instance.
-//     *
-//     * @param authentication  an authentication representing a user and roles
-//     * @param domainObject  the domain class instance
-//     * @param permissions  one or more permissions to check
-//     * @return  <code>true</code> if granted
-//     */
-//    fun hasPermission(authentication: Authentication, domainObject: Any, permission: Permission): Boolean {
-//        return permissionEvaluator.hasPermission(authentication, domainObject, permission)
-//    }
-
     /**
      * Check if the authentication has grants for the specified permission(s) on the domain class instance.
      *
@@ -194,11 +142,6 @@ class SecurityAclService {
     fun hasPermission(authentication: Authentication, id: Long, domainClass: String, permission: Permission): Boolean {
         return permissionEvaluator.hasPermission(authentication, id, domainClass, permission)
     }
-
-//    fun hasPermission(domainObject: ApplicationEntityBase, authentication: Authentication, permission: Permission): Boolean {
-//        return permissionEvaluator.hasPermission(authentication, domainObject, permission)
-//    }
-
 
     /**
      * Create Acl object and save it, or load it if exists
@@ -218,18 +161,6 @@ class SecurityAclService {
         }
     }
 
-
-
-//    /**
-//     * Helper method to retrieve the ACL for a domain class instance.
-//     *
-//     * @param domainObject  the domain class instance
-//     * @return the {@link Acl} (never <code>null</code>)
-//     */
-//    fun readAcl(domainObject: ApplicationEntityBase): Acl {
-//        return aclService.readAclById(objectIdentityRetrievalStrategy.getObjectIdentity(domainObject))
-//    }
-
     /**
      * Helper method to retrieve the ACL for a domain class instance.
      *
@@ -240,15 +171,6 @@ class SecurityAclService {
     fun readAcl(domainClass: Class<*>, id: Long): Acl {
         return aclService.readAclById(objectIdentityGenerator.createObjectIdentity(id, domainClass.name))
     }
-
-//    /**
-//     * Helper method to delete an ACL for a domain class.
-//     *
-//     * @param domainObject  the domain class instance
-//     */
-//    fun deleteAcl(domainObject: Any) {
-//        aclService.deleteAcl(objectIdentityRetrievalStrategy.getObjectIdentity(domainObject), false)
-//    }
 
     /**
      * Create [Sid] object from recipient username or role name
@@ -271,22 +193,6 @@ class SecurityAclService {
 
         throw IllegalArgumentException("recipient must be a String, Sid, or Authentication")
     }
-
-//    /**
-//     * Convert [ApplicationPermission] object to [Permission] object
-//     *
-//     * @param permission [ApplicationPermission] object
-//     * @return [Permission] object
-//     */
-//    private fun getPermission(permission: ApplicationPermission): Permission {
-//        return when (permission) {
-//            ApplicationPermission.View -> BasePermission.READ
-//            ApplicationPermission.Modify -> BasePermission.WRITE
-//            ApplicationPermission.Create -> BasePermission.CREATE
-//            ApplicationPermission.Delete -> BasePermission.DELETE
-//            ApplicationPermission.Administration -> BasePermission.ADMINISTRATION
-//        }
-//    }
 
     /**
      * Delete Acl Object

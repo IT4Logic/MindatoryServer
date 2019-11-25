@@ -28,6 +28,7 @@ import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import io.leangen.graphql.annotations.GraphQLIgnore
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -96,6 +97,7 @@ data class Company(
 	@OneToMany
 	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
+	@get: GraphQLIgnore
 	var mlcs: MutableList<CompanyMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {

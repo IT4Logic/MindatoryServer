@@ -33,7 +33,9 @@ import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
-
+/**
+ * Security Role Data Service
+ */
 @Service
 @Transactional
 class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
@@ -58,26 +60,23 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
 	override fun multipleLanguageContentType(): KClass<*> = SecurityRoleMultipleLanguageContent::class
 
 	override fun beforeCreate(target: SecurityRole) {
-		//    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
 		val obj = result.find { it.contents == target.name }
-		//if(result.isNotEmpty()) {
 		if (obj != null) {
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
 		}
-
 		validatePermissions(target)
 	}
 
 	override fun beforeUpdate(target: SecurityRole) {
-//        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
 			languageManager.currentLanguage.id,
 			"name",
 			target.id
 		)
 		val obj = result.find { it.contents == target.name }
-		//if(result.isNotEmpty()) {
 		if (obj != null) {
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
 		}
@@ -86,6 +85,7 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
 	}
 
 	override fun beforeDelete(target: SecurityRole) {
+		// Find all users that have this role and remove role from them
 		val users = securityUserService.findAllByRoleId(target.id)
 		for (user in users) {
 			user.removeRole(target)
@@ -93,8 +93,18 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
 		}
 	}
 
+	/**
+	 * Retrieves users associated with input role Id
+	 * @param id Input role Id
+	 * @return Users list
+	 */
 	fun getRoleUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByRoleId(id)
 
+	/**
+	 * Associates the input user Ids list with the input role
+	 * @param id Input role Id
+	 * @param userIdsList User Ids list
+	 */
 	fun addUsersToRole(id: Long, userIdsList: List<Long>) {
 		val role = findById(id)
 		for (uid in userIdsList) {
@@ -104,6 +114,11 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
 		}
 	}
 
+	/**
+	 * Remove the input role from the input user Ids list
+	 * @param id Input role Id
+	 * @param userIdsList User Ids list
+	 */
 	fun removeUsersFromRole(id: Long, userIdsList: List<Long>) {
 		val role = findById(id)
 		for (uid in userIdsList) {
@@ -113,6 +128,10 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
 		}
 	}
 
+	/**
+	 * Validates that the input role contains only the predefined permissions
+	 * @param target Input role object
+	 */
 	fun validatePermissions(target: SecurityRole) {
 		for (perm in target.permissions) {
 			if (ApplicationSecurityPermissions.Permissions.indexOf(perm) < 0)

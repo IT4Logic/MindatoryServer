@@ -36,6 +36,9 @@ import javax.persistence.*
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Size
 
+/**
+ * Security Group entity
+ */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
@@ -70,14 +73,14 @@ data class SecurityGroup(
 
 
 /**
- * SecurityGroup Entity Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface SecurityGroupRepository : ApplicationBaseRepository<SecurityGroup>
 
 
 /**
- * Multiple Language Content support entity
+ * Multiple Language Content entity
  */
 @Audited
 @Entity
@@ -93,7 +96,7 @@ interface SecurityGroupRepository : ApplicationBaseRepository<SecurityGroup>
 class SecurityGroupMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**
- * Multiple Language Content support Repository
+ * Multiple Language Content Repository
  */
 @RepositoryRestResource(exported = false)
 interface SecurityGroupMLCRepository : MultipleLanguageContentBaseEntityRepository<SecurityGroupMultipleLanguageContent>

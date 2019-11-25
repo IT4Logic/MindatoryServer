@@ -27,6 +27,7 @@ import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import io.leangen.graphql.annotations.GraphQLIgnore
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -68,6 +69,7 @@ data class Model(
 	@OneToMany
 	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
+	@get: GraphQLIgnore
 	var mlcs: MutableList<ModelMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {

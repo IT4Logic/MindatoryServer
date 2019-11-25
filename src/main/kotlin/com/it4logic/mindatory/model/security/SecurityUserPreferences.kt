@@ -28,7 +28,6 @@ import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
-import javax.validation.constraints.NotNull
 
 
 /**
@@ -46,18 +45,12 @@ data class SecurityUserPreferences(
 	@ManyToOne
 	@JoinColumn(name = "f_content_language")
 	var contentLanguage: Language? = null
-//	,
-//
-//	@get: NotNull
-//	@OneToOne(mappedBy = "preferences")
-//	var user: SecurityUser
-
 ) : ApplicationMLCEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 
 /**
- * Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface SecurityUserPreferencesRepository : ApplicationBaseRepository<SecurityUserPreferences>

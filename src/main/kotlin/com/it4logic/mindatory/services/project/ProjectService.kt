@@ -22,9 +22,7 @@ package com.it4logic.mindatory.services.project
 
 import com.it4logic.mindatory.exceptions.ApplicationDataIntegrityViolationException
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
-import com.it4logic.mindatory.exceptions.ApplicationValidationException
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.model.ModelVersionStatus
 import com.it4logic.mindatory.model.project.Project
 import com.it4logic.mindatory.model.project.ProjectMLCRepository
 import com.it4logic.mindatory.model.project.ProjectMultipleLanguageContent
@@ -42,7 +40,9 @@ import java.util.*
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
-
+/**
+ * Project Data Service
+ */
 @Service
 @Transactional
 class ProjectService : ApplicationBaseService<Project>() {
@@ -93,18 +93,11 @@ class ProjectService : ApplicationBaseService<Project>() {
 	override fun beforeCreate(target: Project) {
 		target.identifier = UUID.randomUUID().toString()
 
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result = findAll(null, null, null) as List<Project>
 		val obj = result.find { it.name == target.name }
 		if (obj != null)
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateProjectName)
-
-//		//    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
-//		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
-//		val obj = result.find { it.contents == target.name }
-//		//if(result.isNotEmpty()) {
-//		if (obj != null) {
-//			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateProjectName)
-//		}
 	}
 
 	@Suppress("UNCHECKED_CAST")
@@ -113,76 +106,32 @@ class ProjectService : ApplicationBaseService<Project>() {
 		if (objTmp.identifier != target.identifier)
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.ValidationIdentifierNotMatched)
 
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result = findAll(null, null, null) as List<Project>
 		val obj = result.find { it.name == target.name }
 		if (obj != null && obj.id != target.id)
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateProjectName)
-
-//		//        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
-//		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
-//			languageManager.currentLanguage.id,
-//			"name",
-//			target.id
-//		)
-//		val obj = result.find { it.contents == target.name }
-//		//if(result.isNotEmpty()) {
-//		if (obj != null) {
-//			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateProjectName)
-//		}
 	}
 
 	override fun beforeDelete(target: Project) {
-//		val count = repoRepositoryVersion.countByProjectId(target.id)
-//		if (count > 0)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationProjectHasModel)
+		// TODO you have to delete all related objects first
 	}
 
+	/**
+	 * Checks if there are any projects use the input model version
+	 * @param target Input Model Version object
+	 * @return True if there are projects use the model version, False otherwise
+	 */
 	fun checkIfProjectsUseRepositoryVersion(target: ModelVersion): Boolean {
 		return projectRepository.countAllByRepositoryDependencies_Id(target.id)
 	}
 
-	fun addToRepositoryDependenciesList(
-		project: Project,
-		dependencyRepoVer: ModelVersion
-	) {
-
-		if (dependencyRepoVer.status == ModelVersionStatus.Released)
-			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotLinkProjectToNoneReleasedModelVersion)
-
-		val result = project.repositoryDependencies.find { it.identifier == dependencyRepoVer.identifier }
-		if (result != null)
-			return
-
-		project.repositoryDependencies.add(dependencyRepoVer)
-		update(project)
-	}
-
-	fun removeFromRepositoryDependenciesList(
-		project: Project,
-		dependencyRepoVer: ModelVersion
-	) {
-		if (dependencyRepoVer.status == ModelVersionStatus.Released)
-			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeNotInDesignApplicationModelVersion)
-
-		for ((index, repo) in project.repositoryDependencies.withIndex()) {
-			if (repo.identifier == dependencyRepoVer.identifier) {
-				project.repositoryDependencies.removeAt(index)
-				break
-			}
-		}
-
-		update(project)
-	}
-
+	/**
+	 * Updates Project dependencies from Model Versions
+	 * @param project Project object to be updated
+	 */
 	fun updateRepositoryVersionDependencies(project: Project) {
-		val dependencies = calculateRepositoryVersionDependencies(project)
-		project.repositoryDependencies = dependencies
-		update(project)
-	}
-
-	fun calculateRepositoryVersionDependencies(project: Project): MutableList<ModelVersion> {
 		val dependencies = mutableListOf<ModelVersion>()
-
 		val listFromArtifacts = artifactStoreService.getRepositoryVersionDependencies(project)
 		dependencies.addAll(listFromArtifacts)
 
@@ -192,9 +141,15 @@ class ProjectService : ApplicationBaseService<Project>() {
 				dependencies.add(item)
 		}
 
-		return dependencies
+		project.repositoryDependencies = dependencies
+		update(project)
 	}
 
+	/**
+	 * Builds a map that hold released model versions and its artifact templates that can be used with this project
+	 * @param id Project Id
+	 * @return released model versions and its artifact templates map
+	 */
 	@Suppress("UNCHECKED_CAST")
 	fun getAvailableArtifactsMap(id: Long): List<ModelVersionArtifactTemplatesMap> {
 		val list = mutableListOf<ModelVersionArtifactTemplatesMap>()
@@ -219,6 +174,12 @@ class ProjectService : ApplicationBaseService<Project>() {
 		return list
 	}
 
+	/**
+	 * Builds the map entry for model version and its artifact
+	 * @param repoVersion Model Version object
+	 * @param artifacts Artifact Template list
+	 * @return Map entry
+	 */
 	private fun buildRepoInfo(
 		repoVersion: ModelVersion,
 		artifacts: List<ArtifactTemplate>
@@ -242,9 +203,11 @@ class ProjectService : ApplicationBaseService<Project>() {
 		)
 	}
 
-	fun getArtifactByIdentifier(identifier: Long): ArtifactTemplate =
-		artifactTemplateService.findByIdentifierForProject(identifier)
-
+	/**
+	 * Retrieves all the used Artifact Templates for Project Id
+	 * @param id Project Id
+	 * @return Artifact Templates list
+	 */
 	fun getUsedArtifactTemplates(id: Long): List<ArtifactTemplate> {
 		return artifactStoreService.getUsedArtifactTemplatesForProject(id)
 	}

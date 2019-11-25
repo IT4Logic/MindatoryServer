@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.error
 
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
@@ -11,7 +30,12 @@ import graphql.execution.SimpleDataFetcherExceptionHandler
 import org.springframework.dao.DataIntegrityViolationException
 import java.util.*
 
+/**
+ * Implantation of [DataFetcherExceptionHandler] interface through extending [SimpleDataFetcherExceptionHandler] class,
+ * to handle errors during execution of GraphQL APIs
+ */
 class ApiDataFetcherExceptionHandler : SimpleDataFetcherExceptionHandler() {
+
 	override fun accept(handlerParameters: DataFetcherExceptionHandlerParameters?) {
 		val exception = handlerParameters?.exception ?: return super.accept(handlerParameters)
 
@@ -34,6 +58,11 @@ class ApiDataFetcherExceptionHandler : SimpleDataFetcherExceptionHandler() {
 		handlerParameters.executionContext.addError(error)
 	}
 
+	/**
+	 * Handle exceptions of type [DataIntegrityViolationException]
+	 * @param exception Raised exception
+	 * @return [ApiGraphQLError] instance for the input exception
+	 */
 	private fun handleDataIntegrityViolationException(
 		exception: DataIntegrityViolationException
 	): ApiGraphQLError {
@@ -57,6 +86,11 @@ class ApiDataFetcherExceptionHandler : SimpleDataFetcherExceptionHandler() {
 		)
 	}
 
+	/**
+	 * Handle exceptions of type [ObjectNotFoundException]
+	 * @param exception Raised exception
+	 * @return [ApiGraphQLError] instance for the input exception
+	 */
 	private fun handleObjectNotFoundException(
 		exception: ApplicationObjectNotFoundException
 	): ApiGraphQLError {
@@ -66,6 +100,11 @@ class ApiDataFetcherExceptionHandler : SimpleDataFetcherExceptionHandler() {
 		)
 	}
 
+	/**
+	 * Handle exceptions of type [AccessDeniedException]
+	 * @param exception Raised exception
+	 * @return [ApiGraphQLError] instance for the input exception
+	 */
 	private fun handleAccessDeniedException(
 		exception: org.springframework.security.access.AccessDeniedException
 	): ApiGraphQLError {
@@ -75,6 +114,11 @@ class ApiDataFetcherExceptionHandler : SimpleDataFetcherExceptionHandler() {
 		)
 	}
 
+	/**
+	 * Handle exceptions of type [ApplicationValidationException]
+	 * @param exception Raised exception
+	 * @return [ApiGraphQLError] instance for the input exception
+	 */
 	private fun handleApplicationValidationException(exception: ApplicationValidationException): ApiGraphQLError {
 		return ApiGraphQLError(
 			listOf(ApplicationErrorCodes.ValidationError, exception.errorCode),

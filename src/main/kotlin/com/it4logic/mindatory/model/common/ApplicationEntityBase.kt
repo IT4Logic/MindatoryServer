@@ -33,7 +33,7 @@ import javax.persistence.*
 
 
 /**
- * Base entity class for any error entity functionaries
+ * Base class for application entities
  */
 @MappedSuperclass
 @DynamicUpdate
@@ -70,9 +70,20 @@ abstract class ApplicationEntityBase {
 	open var id: Long = -1
 }
 
+/**
+ * Base class for any entity that would have Multiple Language Content (MLC) functionality
+ */
 abstract class ApplicationMLCEntityBase : ApplicationEntityBase() {
+	/**
+	 * Retrieves MLC objects
+	 * @return MLC objects list
+	 */
 	abstract fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity>
 
+	/**
+	 * Adds MLC object
+	 * @param mlc MLC Object
+	 */
 	open fun addMLC(mlc: MultipleLanguageContentBaseEntity) {
 		val result = obtainMLCs().filter { it.id == mlc.id }
 		if (result.isNotEmpty())
@@ -80,6 +91,10 @@ abstract class ApplicationMLCEntityBase : ApplicationEntityBase() {
 		obtainMLCs().add(mlc)
 	}
 
+	/**
+	 * Removes MLC object
+	 * @param mlc MLC Object
+	 */
 	open fun removeMLC(mlc: MultipleLanguageContentBaseEntity) {
 		val result = obtainMLCs().filter { it.id == mlc.id }
 		if (result.isEmpty())
@@ -87,73 +102,13 @@ abstract class ApplicationMLCEntityBase : ApplicationEntityBase() {
 		obtainMLCs().remove(mlc)
 	}
 
+	/**
+	 * Copy MLC Objects from the input object to current object
+	 * @param target Input object
+	 */
 	open fun copyMLCs(target: ApplicationMLCEntityBase) {
 		for (mlc in target.obtainMLCs()) {
 			addMLC(mlc)
 		}
 	}
 }
-
-
-///**
-// * Base entity class for company error entity functionaries
-// */
-//@MappedSuperclass
-//@DynamicUpdate
-//abstract class ApplicationCompanyEntityBase (
-//
-//        @Column(name = "company_id")
-//        open var companyId: Long = 1
-//
-//) : ApplicationMLCEntityBase()
-
-///**
-// * Base entity class for project error entity functionaries
-// */
-//@MappedSuperclass
-//@DynamicUpdate
-//abstract class ApplicationProjectEntityBase (
-//
-//    @get: NotNull
-//    @ManyToOne(optional = false)
-//    @JoinColumn(name = "project_id", nullable = false)
-//    open var project: Project
-//
-//) : ApplicationMLCEntityBase()
-
-
-///**
-// * Base entity class for project error entity functionaries
-// */
-//@MappedSuperclass
-//@DynamicUpdate
-//open class ApplicationRepositoryEntityBase (
-//    @get: NotNull
-//    @ManyToOne(optional = false)
-//    @JoinColumn(name = "repository_id", nullable = false)
-//    open var model: Model? = null
-//
-//) : ApplicationProjectEntityBase()
-
-///**
-// * Base entity class for project error entity functionaries
-// */
-//@MappedSuperclass
-//@DynamicUpdate
-//open class LanguageContentEntityBase (
-//    @get: NotNull
-//    @ManyToOne(optional = false)
-//    @JoinColumn(name = "language_id", nullable = false)
-//    open var language: Language? = null,
-//
-//    @get: NotBlank
-//    @Column(nullable = false, length = 255)
-//    open var fieldName: String = "",
-//
-//    @get: NotNull
-//    @Lob
-//    open var contents: String = ""
-//
-//) : ApplicationEntityBase()
-
-

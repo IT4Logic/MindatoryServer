@@ -33,7 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
-
+/**
+ * Relation Store Data Service
+ */
 @Service
 @Transactional
 class RelationStoreService : ApplicationBaseService<RelationStore>() {
@@ -48,39 +50,16 @@ class RelationStoreService : ApplicationBaseService<RelationStore>() {
 	override fun type(): Class<RelationStore> = RelationStore::class.java
 
 	override fun beforeCreate(target: RelationStore) {
-		if (target.relationTemplate.modelVersion.status != ModelVersionStatus.Released)
+		// Make sure that Model Version is not in design mode
+		if (target.relationTemplate.modelVersion.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
-
-//    if(target.relationTemplate.id != target.relationTemplateVersion.relationTemplate.id)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
-
-//    if(target.relationTemplate.status != ModelVersionStatus.Released)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
 	}
 
 	override fun beforeUpdate(target: RelationStore) {
-		if (target.relationTemplate.modelVersion.status != ModelVersionStatus.Released)
+		// Make sure that Model Version is not in design mode
+		if (target.relationTemplate.modelVersion.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
-//    if(target.relationTemplate.id != target.relationTemplateVersion.relationTemplate.id)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectVersionAndTemplateMismatch)
-
-//    if(target.relationTemplateVersion.status != ModelVersionStatus.Released)
-//      throw ApplicationValidationException(ApplicationErrorCodes.ValidationStoreObjectCanOnlyBeAssociatedWithReleasedVersion)
 	}
-
-//	override fun create(target: RelationStore): RelationStore {
-//		target.relationTemplate = target.relationTemplate
-//		return super.create(target)
-//	}
-//
-//	override fun update(target: RelationStore): RelationStore {
-//		target.relationTemplate = target.relationTemplate
-//		return super.update(target)
-//	}
-
-//	fun countByRelationTemplateRepositoryVersionId(id: Long): Long {
-//		return relationStoreRepository.countByRelationTemplateRepositoryVersionId(id)
-//	}
 
 	override fun afterCreate(target: RelationStore) {
 		projectService.updateRepositoryVersionDependencies(target.project)
@@ -94,7 +73,11 @@ class RelationStoreService : ApplicationBaseService<RelationStore>() {
 		projectService.updateRepositoryVersionDependencies(target.project)
 	}
 
-	fun deleteAnyRelatedJoinsUsedWithArtifact(artifactId: Long) {
+	/**
+	 * Delete all relation stores that artifact store used with
+	 * @param artifactId Artifact Store Id
+	 */
+	fun deleteAnyRelationsUsedWithArtifact(artifactId: Long) {
 		var result = relationStoreRepository.findAllBySourceArtifactId(artifactId)
 		for (obj in result) {
 			delete(obj)
@@ -106,6 +89,11 @@ class RelationStoreService : ApplicationBaseService<RelationStore>() {
 		}
 	}
 
+	/**
+	 * Retrieves Model Versions that have been used inside the project
+	 * @param project Project object
+	 * @return Model Version list
+	 */
 	fun getRepositoryVersionDependencies(project: Project): List<ModelVersion> {
 		val dependencies = mutableListOf<ModelVersion>()
 
@@ -121,16 +109,10 @@ class RelationStoreService : ApplicationBaseService<RelationStore>() {
 			if (dependencies.find { it.id == relationStore.relationTemplate.targetStereotype.modelVersion.id } == null)
 				dependencies.add(relationStore.relationTemplate.targetStereotype.modelVersion)
 
-			if (dependencies.find { it.id == relationStore.relationTemplate.sourceArtifact.modelVersion.id } == null)
-				dependencies.add(relationStore.relationTemplate.sourceArtifact.modelVersion)
-
 			for (attribute in relationStore.relationTemplate.sourceArtifact.attributes) {
 				if (dependencies.find { it.id == attribute.modelVersion.id } == null)
 					dependencies.add(attribute.modelVersion)
 			}
-
-			if (dependencies.find { it.id == relationStore.relationTemplate.targetArtifact.modelVersion.id } == null)
-				dependencies.add(relationStore.relationTemplate.targetArtifact.modelVersion)
 
 			for (attribute in relationStore.relationTemplate.targetArtifact.attributes) {
 				if (dependencies.find { it.id == attribute.modelVersion.id } == null)
@@ -141,14 +123,12 @@ class RelationStoreService : ApplicationBaseService<RelationStore>() {
 		return dependencies
 	}
 
-	fun findStoresForRelationTemplate(relationTemplateId: Long): List<RelationStore> {
-		return relationStoreRepository.findAllByRelationTemplateId(relationTemplateId)
-	}
-
-	fun countStoresForRelationTemplate(relationTemplateId: Long): Long {
-		return relationStoreRepository.countAllByRelationTemplateId(relationTemplateId)
-	}
-
+	/**
+	 * Counts how many relation stores that use relation template and artifact store either as source or target
+	 * @param relationTemplateId Relation Template Id
+	 * @param storeId Artifact Store Id
+	 * @return Relation Stores count
+	 */
 	fun countStoresForRelationTemplateAndArtifactStore(relationTemplateId: Long, storeId: Long): Long {
 		return relationStoreRepository.countAllByArtifactStoreAndRelationTemplate(storeId, relationTemplateId)
 	}

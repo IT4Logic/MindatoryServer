@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.model
 
 import com.it4logic.mindatory.graphql.GQLBaseService
@@ -14,7 +33,9 @@ import org.springframework.data.domain.Page
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
-
+/**
+ * GraphQL service for Artifact Template
+ */
 @Service
 @GraphQLApi
 class ArtifactTemplateGQLService : GQLBaseService<ArtifactTemplate>() {
@@ -50,6 +71,13 @@ class ArtifactTemplateGQLService : GQLBaseService<ArtifactTemplate>() {
 		return super.find(locale, id, filter)
 	}
 
+	/**
+	 * Custom implementation to provide the Model Version information while creating Artifact Template object
+	 * @param locale Input locale
+	 * @param verId Model Version Id
+	 * @param target Input object instance
+	 * @return Created Artifact Template instance
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminCreate}')")
 	@GraphQLMutation(name = "createArtifactTemplate")
 	fun create(locale: String?, verId: Long, target: ArtifactTemplate): ArtifactTemplate {
@@ -77,6 +105,13 @@ class ArtifactTemplateGQLService : GQLBaseService<ArtifactTemplate>() {
 		return super.delete(locale, target)
 	}
 
+	/**
+	 * Updated Artifact Template Metadata
+	 * @param locale Input locale
+	 * @param id Artifact Template Id
+	 * @param metadata Input metadata in String format
+	 * @return Updated Artifact Template instance
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ArtifactTemplateAdminModify}')")
 	@GraphQLMutation
 	fun updateArtifactTemplateMetadata(locale: String?, id: Long, metadata: String): ArtifactTemplate {

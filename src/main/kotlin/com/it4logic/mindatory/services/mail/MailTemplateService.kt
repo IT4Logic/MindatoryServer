@@ -31,7 +31,9 @@ import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
-
+/**
+ * Mail Template Data Service
+ */
 @Service
 @Transactional
 class MailTemplateService : ApplicationBaseService<MailTemplate>() {
@@ -59,10 +61,19 @@ class MailTemplateService : ApplicationBaseService<MailTemplate>() {
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationMailTemplateUUIDNotFound)
 	}
 
+	/**
+	 * Check if the Template UUID associated with the input mail template instance is valid
+	 * @return True if the UUID is valid, False otherwise
+	 */
 	private fun isTemplateUUIDValid(target: MailTemplate): Boolean {
 		return MailTemplateTypeUUID.fromValueString(target.uuid) != null
 	}
 
+	/**
+	 * Retrieves the mail template object associated with the input Mail Template UUID
+	 * @param mailTemplateTypeUUID Input Template UUID
+	 * @return Mail Template instance, or [ApplicationObjectNotFoundException] will be thrown
+	 */
 	fun getMailTemplate(mailTemplateTypeUUID: MailTemplateTypeUUID): MailTemplate {
 		val uuid = mailTemplateTypeUUID.toUUID().toString()
 		val template = mailTemplateRepository.findOneByUuid(uuid)

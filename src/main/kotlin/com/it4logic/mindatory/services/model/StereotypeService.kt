@@ -33,7 +33,9 @@ import java.util.*
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
-
+/**
+ * Stereotype Data Service
+ */
 @Service
 @Transactional
 class StereotypeService : ApplicationBaseService<Stereotype>() {
@@ -56,10 +58,13 @@ class StereotypeService : ApplicationBaseService<Stereotype>() {
 
 	@Suppress("UNCHECKED_CAST")
 	override fun beforeCreate(target: Stereotype) {
+		// Check if the if Model Version is released or not, as released version cannot be modified
 		if (target.modelVersion.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		target.identifier = UUID.randomUUID().toString()
+
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result = findAll(null, null, "modelVersion.id==" + target.modelVersion.id) as List<Stereotype>
 		val obj = result.find { it.name == target.name }
 		if (obj != null)
@@ -68,6 +73,7 @@ class StereotypeService : ApplicationBaseService<Stereotype>() {
 
 	@Suppress("UNCHECKED_CAST")
 	override fun beforeUpdate(target: Stereotype) {
+		// Check if the if Model Version is released or not, as released version cannot be modified
 		if (target.modelVersion.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
@@ -75,6 +81,7 @@ class StereotypeService : ApplicationBaseService<Stereotype>() {
 		if (objTmp.identifier != target.identifier)
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.ValidationIdentifierNotMatched)
 
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result = findAll(null, null, "modelVersion.id==" + target.modelVersion.id) as List<Stereotype>
 		val obj = result.find { it.name == target.name && it.identifier != target.identifier }
 		if (obj != null)
@@ -82,18 +89,11 @@ class StereotypeService : ApplicationBaseService<Stereotype>() {
 	}
 
 	override fun beforeDelete(target: Stereotype) {
+		// Check if the if Model Version is released or not, as released version cannot be modified
 		if (target.modelVersion.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		if (relationTemplateService.isStereotypeUsedInRelationTemplates(target))
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationStereotypesUsedInRelationTemplates)
-//
-//		var count = relationTemplateService.countBySourceStereotypeId(target.id)
-//		if (count > 0)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationStereotypesUsedInRelationTemplates)
-//
-//		count = relationTemplateService.countByTargetStereotypeId(target.id)
-//		if (count > 0)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationStereotypesUsedInRelationTemplates)
 	}
 }

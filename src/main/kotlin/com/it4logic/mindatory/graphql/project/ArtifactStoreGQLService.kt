@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.project
 
 import com.it4logic.mindatory.graphql.GQLBaseService
@@ -15,7 +34,9 @@ import org.springframework.data.domain.Page
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
-
+/**
+ * GraphQL service for Artifact Store
+ */
 @Service
 @GraphQLApi
 class ArtifactStoreGQLService : GQLBaseService<ArtifactStore>() {
@@ -48,13 +69,28 @@ class ArtifactStoreGQLService : GQLBaseService<ArtifactStore>() {
 		return super.find(locale, id, filter)
 	}
 
+	/**
+	 * Generates Traceability Matrix for the given Artifact Store object
+	 * @param locale Input locale
+	 * @param id Artifact Store Id
+	 * @param filter Input Filter in RSQL syntax
+	 * @return Traceability Matrix
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ArtifactStoreAdminView}', '${ApplicationSecurityPermissions.ArtifactStoreAdminCreate}', '${ApplicationSecurityPermissions.ArtifactStoreAdminModify}', '${ApplicationSecurityPermissions.ArtifactStoreAdminDelete}')")
 	@GraphQLQuery
-	fun generateStoreTraceability(locale: String?, id: Long?, filter: String?): List<Any> {
+	fun generateArtifactStoreTraceabilityMatrix(locale: String?, id: Long?, filter: String?): List<Any> {
 		val store = find(locale, id, filter)
-		return artifactStoreService.generateStoreTraceability(store!!)
+		return artifactStoreService.generateStoreTraceabilityMatrix(store!!)
 	}
 
+	/**
+	 * Custom implementation to provide the Project and Project and Artifact Template information while creating Artifact Store object
+	 * @param locale Input locale
+	 * @param projectId Project Id
+	 * @param artifactTemplateId Artifact Template Id
+	 * @param target Input object instance
+	 * @return Created Artifact Store instance
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ArtifactStoreAdminCreate}')")
 	@GraphQLMutation(name = "createArtifactStore")
 	fun create(locale: String?, projectId: Long, artifactTemplateId: Long, target: ArtifactStore): ArtifactStore {

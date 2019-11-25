@@ -34,14 +34,23 @@ import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
+import javax.transaction.Transactional
 
-
+/**
+ * Security User Token Data Service
+ */
 @Service
+@Transactional
 class SecurityUserTokenService : ApplicationBaseService<SecurityUserToken>() {
+
+	/**
+	 * Structure for Token Object consists of User Id and Random UUID
+	 */
 	class TokenObject(var userId: Long, var uuid: String)
 
 	@Autowired
 	private lateinit var userTokenRepository: SecurityUserTokenRepository
+
 	@Autowired
 	private lateinit var textEncryptor: TextEncryptor
 
@@ -49,6 +58,21 @@ class SecurityUserTokenService : ApplicationBaseService<SecurityUserToken>() {
 
 	override fun type(): Class<SecurityUserToken> = SecurityUserToken::class.java
 
+	/**
+	 * Retrieves the User Token Object by input token string representation
+	 * @param token Input token string representation
+	 * @return User Token object, or [ApplicationObjectNotFoundException] will be thrown
+	 */
+	fun findToken(token: String): SecurityUserToken {
+		return userTokenRepository.findOneByToken(token)
+			.orElseThrow { ApplicationObjectNotFoundException(token, type().simpleName.toLowerCase()) }
+	}
+
+	/**
+	 * Creates Token Object from the input user object
+	 * @param user Input user object
+	 * @return Created User Token object
+	 */
 	private fun createToke(user: SecurityUser): SecurityUserToken {
 		val tokenObject = TokenObject(user.id, UUID.randomUUID().toString())
 		val tokenDate = LocalDateTime.now()
@@ -62,18 +86,22 @@ class SecurityUserTokenService : ApplicationBaseService<SecurityUserToken>() {
 		return create(token)
 	}
 
-	fun createUserTokenForUser(user: SecurityUser): SecurityUserToken {
+	/**
+	 * Deletes existing token if any and creates a new one
+	 * @param user Input user object
+	 * @return Created User Token object
+	 */
+	fun deleteAndCreateToken(user: SecurityUser): SecurityUserToken {
 		val result = userTokenRepository.findOneByUserId(user.id)
 		if (result.isPresent)
 			userTokenRepository.delete(result.get())
 		return createToke(user)
 	}
 
-	fun findToken(token: String): SecurityUserToken {
-		return userTokenRepository.findOneByToken(token)
-			.orElseThrow { ApplicationObjectNotFoundException(token, type().simpleName.toLowerCase()) }
-	}
-
+	/**
+	 * Validates User Token Object, if there are errors [ApplicationValidationException] exception will be thrown
+	 * @param secToken Input User Token Object
+	 */
 	fun validateToken(secToken: SecurityUserToken) {
 		val token = textEncryptor.decrypt(secToken.token)
 

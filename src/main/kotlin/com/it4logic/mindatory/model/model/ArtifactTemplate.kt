@@ -26,6 +26,7 @@ import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import io.leangen.graphql.annotations.GraphQLIgnore
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -82,6 +83,7 @@ data class ArtifactTemplate(
 	@OneToMany
 	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
+	@get: GraphQLIgnore
 	var mlcs: MutableList<ArtifactTemplateMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {

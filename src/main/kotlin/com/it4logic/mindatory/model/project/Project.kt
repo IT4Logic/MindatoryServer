@@ -26,6 +26,7 @@ import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import com.it4logic.mindatory.model.model.ModelVersion
+import io.leangen.graphql.annotations.GraphQLIgnore
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -37,7 +38,8 @@ import javax.persistence.*
 
 /**
  * Project entity that will be used as container for the whole application.
- * One database can have one or more projects. Project will act like a database but without the need to change the database and that will be at runtime.
+ * One database can have one or more projects. Project will act like a database
+ * but without the need to change the database and that will be at runtime.
  */
 @Audited
 @Entity
@@ -59,7 +61,6 @@ data class Project(
 	@Transient
 	var description: String = "",
 
-//	@JsonIgnore
 	@ManyToMany(cascade = [CascadeType.ALL])
 	@JoinTable(
 		name = "t_m2m_project_model_ver_depends",
@@ -72,6 +73,7 @@ data class Project(
 	@OneToMany
 	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
+	@get: GraphQLIgnore
 	var mlcs: MutableList<ProjectMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {
@@ -84,7 +86,7 @@ data class Project(
 }
 
 /**
- * Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface ProjectRepository : ApplicationBaseRepository<Project> {
@@ -92,7 +94,7 @@ interface ProjectRepository : ApplicationBaseRepository<Project> {
 }
 
 /**
- * Multiple Language Content support entity
+ * Multiple Language Content entity
  */
 @Audited
 @Entity
@@ -108,7 +110,7 @@ interface ProjectRepository : ApplicationBaseRepository<Project> {
 class ProjectMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**
- * Multiple Language Content support Repository
+ * Multiple Language Content Repository
  */
 @RepositoryRestResource(exported = false)
 interface ProjectMLCRepository : MultipleLanguageContentBaseEntityRepository<ProjectMultipleLanguageContent>

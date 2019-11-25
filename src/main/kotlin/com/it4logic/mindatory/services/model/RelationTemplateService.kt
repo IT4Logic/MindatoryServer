@@ -33,14 +33,14 @@ import java.util.*
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
+/**
+ * Relation Template Data Service
+ */
 @Service
 @Transactional
 class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 	@Autowired
 	private lateinit var relationTemplateRepository: RelationTemplateRepository
-
-//	@Autowired
-//	private lateinit var relationStoreRepository: RelationStoreRepository
 
 	@Autowired
 	private lateinit var modelService: ModelService
@@ -60,6 +60,7 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 	override fun multipleLanguageContentType(): KClass<*> = RelationTemplateMultipleLanguageContent::class
 
 	override fun beforeCreate(target: RelationTemplate) {
+		// Check if the if Model Version is released or not, as released version cannot be modified
 		if (target.modelVersion.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
@@ -67,6 +68,7 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 	}
 
 	override fun beforeUpdate(target: RelationTemplate) {
+		// Check if the if Model Version is released or not, as released version cannot be modified
 		if (target.modelVersion.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
@@ -76,16 +78,9 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 	}
 
 	override fun beforeDelete(target: RelationTemplate) {
+		// Check if the if Model Version is released or not, as released version cannot be modified
 		if (target.modelVersion.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
-
-//
-//		if (target.modelVersion.status == ModelVersionStatus.InDesign)
-//			return
-
-//		val count = relationStoreRepository.countByRelationTemplateId(target.id)
-//		if (count > 0)
-//			throw ApplicationValidationException(ApplicationErrorCodes.ValidationRelationTemplateHasRelatedStoreData)
 	}
 
 	override fun afterCreate(target: RelationTemplate) {
@@ -100,60 +95,26 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 		modelVersionService.updateModelVersionDependencies(target.modelVersion)
 	}
 
+	/**
+	 * Retrieves all the relation templates that the input artifact template Id has been used as a source or target
+	 * @param artifactTemplateId Input Artifact Template Id
+	 * @return Relation Templates list
+	 */
+	fun findAllRelationsRelatedToArtifact(artifactTemplateId: Long) : List<RelationTemplate> {
+		val output = mutableListOf<RelationTemplate>()
+		output.addAll(relationTemplateRepository.findAllBySourceArtifactId(artifactTemplateId))
+		output.addAll(relationTemplateRepository.findAllByTargetArtifactId(artifactTemplateId))
+		output.forEach {
+			loadMLC(it)
+		}
+		return output
+	}
 
-//	fun checkIfThisRepositoryVersionRelationTemplatesUsedOutside(relationTemplate: RelationTemplate) {
-	/*
-	* 1- i need to know all the templates in this version
-	* 2- i need to know which of them used in another version
-	* 3- i need to know the version that are not related to version model
-	* */
-
-	/*
-	findAllBy
-		RepositoryVersion
-			Repository
-				Id
-		And
-		SourceArtifact
-			RepositoryVersionIdNot
-
-
-	()
-*/
-//		val result =
-//			relationTemplateRepository.findAllByRepositoryVersionIdNotAndSourceArtifactRepositoryVersionId(relationTemplate.modelVersion.id)
-//		result.filter {
-//			it.
-//		}
-
-//		relationTemplateRepository.countByRepositoryVersionIdNotAndSourceArtifactRepositoryVersionId(modelId, modelId)
-//	}
-
-//	fun countByRepositoryVersionIdNotAndSourceArtifactRepositoryVersionId(id: Long): Long {
-//		return relationTemplateRepository.countByRepositoryVersionIdNotAndSourceArtifactRepositoryVersionId(id, id)
-//	}
-//
-//	fun countByRepositoryVersionIdNotAndTargetArtifactRepositoryVersionId(id: Long): Long {
-//		return relationTemplateRepository.countByRepositoryVersionIdNotAndTargetArtifactRepositoryVersionId(id, id)
-//	}
-//
-//	fun countByRepositoryVersionIdNotAndSourceStereotypeRepositoryVersionId(id: Long): Long {
-//		return relationTemplateRepository.countByRepositoryVersionIdNotAndSourceStereotypeRepositoryVersionId(id, id)
-//	}
-//
-//	fun countByRepositoryVersionIdNotAndTargetStereotypeRepositoryVersionId(id: Long): Long {
-//		return relationTemplateRepository.countByRepositoryVersionIdNotAndTargetStereotypeRepositoryVersionId(id, id)
-//	}
-
-//	fun countBySourceStereotypeId(id: Long): Long {
-//		return relationTemplateRepository.countBySourceStereotypeId(id)
-//	}
-//
-//	fun countByTargetStereotypeId(id: Long): Long {
-//		return relationTemplateRepository.countByTargetStereotypeId(id)
-//	}
-
-	fun deleteAnyRelatedJoinsUsedWithArtifact(artifactId: Long) {
+	/**
+	 * Deletes any relation templates that has the input artifact template Id as a source or target
+	 * @param artifactId Input Artifact Template Id
+	 */
+	fun deleteAnyRelatedRelationsUsedWithArtifact(artifactId: Long) {
 		var result = relationTemplateRepository.findAllBySourceArtifactId(artifactId)
 		for (obj in result) {
 			delete(obj)
@@ -165,14 +126,27 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 		}
 	}
 
+	/**
+	 * Checks if the input Stereotype object is used with any relation templates
+	 * @param target Input Stereotype object
+	 * @return True if the Stereotype object is used, False otherwise
+	 */
 	fun isStereotypeUsedInRelationTemplates(target: Stereotype): Boolean {
 		return relationTemplateRepository.countBySourceStereotypeId(target.id) > 0 ||
 				relationTemplateRepository.countByTargetStereotypeId(target.id) > 0
 	}
 
+	/**
+	 * Retrieves Model Versions list that have been used in Relation Templates through Artifact Templates as source
+	 * or target.
+	 * @param modelVersion Input model Version object
+	 * @return Model Versions list
+	 */
 	fun getRepositoryVersionDependencies(modelVersion: ModelVersion): List<ModelVersion> {
 		val result = mutableListOf<ModelVersion>()
 
+		// Get the artifacts that not belong to relation model version and used with relations
+		// as a source
 		var artifactTemplates =
 			relationTemplateRepository.findAllByModelVersionIdAndSourceArtifactModelVersionIdNot(
 				modelVersion.id,
@@ -186,6 +160,8 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 			}
 		}
 
+		// Get the artifacts that not belong to relation model version and used with relations
+		// as a target
 		artifactTemplates =
 			relationTemplateRepository.findAllByModelVersionIdAndTargetArtifactModelVersionIdNot(
 				modelVersion.id,
@@ -199,6 +175,8 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 			}
 		}
 
+		// Get the stereotypes that not belong to relation model version and used with relations
+		// as a source
 		var stereotypes =
 			relationTemplateRepository.findAllByModelVersionIdAndSourceStereotypeModelVersionIdNot(
 				modelVersion.id,
@@ -212,6 +190,8 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 			}
 		}
 
+		// Get the stereotypes that not belong to relation model version and used with relations
+		// as a target
 		stereotypes =
 			relationTemplateRepository.findAllByModelVersionIdAndTargetStereotypeModelVersionIdNot(
 				modelVersion.id,
@@ -228,28 +208,10 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 		return result
 	}
 
-	fun findAllRelationsRelatedToArtifact(artifactTemplateId: Long) : List<RelationTemplate> {
-		val output = mutableListOf<RelationTemplate>()
-		output.addAll(relationTemplateRepository.findAllBySourceArtifactId(artifactTemplateId))
-		output.addAll(relationTemplateRepository.findAllByTargetArtifactId(artifactTemplateId))
-		output.forEach {
-			loadMLC(it)
-		}
-		return output
-	}
+
 
 	// ================================================================================================================
 /*
-	fun isArtifactExists(
-		targetArtifactVersion: ArtifactTemplate,
-		lookupList: List<ArtifactTemplate>
-	): Boolean {
-		for (obj in lookupList) {
-			if (targetArtifactVersion.id == obj.id)
-				return true
-		}
-		return false
-	}
 
 	fun migrateStores(sourceVersion: RelationTemplate, targetVersion: RelationTemplate): MutableList<RelationStore> {
 		for (sourceArtifact in sourceVersion.sourceArtifacts) {

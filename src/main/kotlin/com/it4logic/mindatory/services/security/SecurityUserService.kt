@@ -35,140 +35,150 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
-
+/**
+ * Security User Data Service
+ */
 @Service
 @Transactional
 class SecurityUserService : ApplicationBaseService<SecurityUser>() {
-    @Autowired
-    private lateinit var userRepository: SecurityUserRepository
+	@Autowired
+	private lateinit var userRepository: SecurityUserRepository
 
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
+	@Autowired
+	private lateinit var passwordEncoder: PasswordEncoder
 
-    @Autowired
-    private lateinit var mlcRepository: SecurityUserMLCRepository
+	@Autowired
+	private lateinit var mlcRepository: SecurityUserMLCRepository
 
-    @Autowired
-    protected lateinit var languageManager: LanguageManager
+	@Autowired
+	protected lateinit var languageManager: LanguageManager
 
-    override fun repository(): ApplicationBaseRepository<SecurityUser> = userRepository
+	override fun repository(): ApplicationBaseRepository<SecurityUser> = userRepository
 
-    override fun type(): Class<SecurityUser> = SecurityUser::class.java
+	override fun type(): Class<SecurityUser> = SecurityUser::class.java
 
-    override fun multipleLanguageContentRepository() : SecurityUserMLCRepository = mlcRepository
+	override fun multipleLanguageContentRepository(): SecurityUserMLCRepository = mlcRepository
 
-    override fun multipleLanguageContentType() : KClass<*> = SecurityUserMultipleLanguageContent::class
+	override fun multipleLanguageContentType(): KClass<*> = SecurityUserMultipleLanguageContent::class
 
-    override fun beforeCreate(target: SecurityUser) {
-        if(target.preferences == null)
-            target.preferences = SecurityUserPreferences(/*user = target*/)
-//        else
-//            target.preferences?.user = target
-        target.password = passwordEncoder.encode(target.password)
-    }
+	override fun beforeCreate(target: SecurityUser) {
+		if (target.preferences == null)
+			target.preferences = SecurityUserPreferences()
+		target.password = passwordEncoder.encode(target.password)
+	}
 
-    /**
-     * Updates SecurityUser password
-     *
-     * @param id SecurityUser Id
-     * @param changePasswordRequest ChangePasswordRequest object
-     */
-    fun changeUserPassword(id: Long, changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
-        val user = findById(id)
-        changeUserPassword(user, changePasswordRequest, verifyCurrent)
-    }
+	/**
+	 * Changes SecurityUser password
+	 * @param id SecurityUser Id
+	 * @param changePasswordRequest ChangePasswordRequest object
+	 * @param verifyCurrent Whether to verify the current password or not
+	 */
+	fun changeUserPassword(id: Long, changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
+		val user = findById(id)
+		changeUserPassword(user, changePasswordRequest, verifyCurrent)
+	}
 
-    /**
-     * Updates SecurityUser password
-     *
-     * @param target SecurityUser object
-     * @param changePasswordRequest ChangePasswordRequest object
-     */
-    fun changeUserPassword(target: SecurityUser, changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
-        if(changePasswordRequest.newPassword.compareTo(changePasswordRequest.confirmPassword) != 0)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationPasswordsNotMatched)
+	/**
+	 * Updates SecurityUser password
+	 *
+	 * @param target SecurityUser object
+	 * @param changePasswordRequest ChangePasswordRequest object
+	@param verifyCurrent Whether to verify the current password or not
+	 */
+	fun changeUserPassword(target: SecurityUser, changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
+		if (changePasswordRequest.newPassword.compareTo(changePasswordRequest.confirmPassword) != 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationPasswordsNotMatched)
 
-        if(verifyCurrent) {
-            // check the current user password
-            if (!passwordEncoder.matches(changePasswordRequest.currentPassword, target.password))
-                throw ApplicationValidationException(ApplicationErrorCodes.ValidationIncorrectUserPassword)
-        }
+		if (verifyCurrent) {
+			// check the current user password
+			if (!passwordEncoder.matches(changePasswordRequest.currentPassword, target.password))
+				throw ApplicationValidationException(ApplicationErrorCodes.ValidationIncorrectUserPassword)
+		}
 
-        target.password = passwordEncoder.encode(changePasswordRequest.newPassword)
+		target.password = passwordEncoder.encode(changePasswordRequest.newPassword)
 
-        update(target)
-    }
+		update(target)
+	}
 
-    /**
-     * Searches and loads user for the input username
-     *
-     * @param username SecurityUser username
-     * @return SecurityUser object, or ApplicationObjectNotFoundException in case if the user username doesn't exist
-     */
-    fun findByUsername(username: String) : SecurityUser {
-        val obj = userRepository.findByUsername(username).orElseThrow { ApplicationObjectNotFoundException(username, SecurityUser::class.java.simpleName.toLowerCase()) }
-        loadMLC(obj)
-        return obj
-    }
+	/**
+	 * Searches and loads user for the input username
+	 * @param username SecurityUser username
+	 * @return SecurityUser object, or ApplicationObjectNotFoundException in case if the user username doesn't exist
+	 */
+	fun findByUsername(username: String): SecurityUser {
+		val obj = userRepository.findByUsername(username).orElseThrow {
+			ApplicationObjectNotFoundException(
+				username,
+				SecurityUser::class.java.simpleName.toLowerCase()
+			)
+		}
+		loadMLC(obj)
+		return obj
+	}
 
-    /**
-     * Searches and loads users for the input group id
-     *
-     * @param id SecurityGroup Id
-     * @return SecurityUser objects list
-     */
-    fun findAllByGroupId(id: Long) : MutableList<SecurityUser> {
-        val objList = userRepository.findAllByGroupId(id)
-        for(obj in objList)
-            loadMLC(obj)
-        return objList
-    }
+	/**
+	 * Searches and loads users for the input group id
+	 * @param id SecurityGroup Id
+	 * @return SecurityUser objects list
+	 */
+	fun findAllByGroupId(id: Long): MutableList<SecurityUser> {
+		val objList = userRepository.findAllByGroupId(id)
+		for (obj in objList)
+			loadMLC(obj)
+		return objList
+	}
 
-    /**
-     * Searches and loads user for the input role id
-     *
-     * @param id SecurityRole Id
-     * @return SecurityUser objects list
-     */
-    fun findAllByRoleId(id: Long) : MutableList<SecurityUser> {
-        val objList = userRepository.findAllByRolesId(id)
-        for(obj in objList)
-            loadMLC(obj)
-        return objList
-    }
+	/**
+	 * Searches and loads user for the input role id
+	 *
+	 * @param id SecurityRole Id
+	 * @return SecurityUser objects list
+	 */
+	fun findAllByRoleId(id: Long): MutableList<SecurityUser> {
+		val objList = userRepository.findAllByRolesId(id)
+		for (obj in objList)
+			loadMLC(obj)
+		return objList
+	}
 
-    /**
-     * Cet the current user object according to the current signed-in user
-     *
-     * @return Current [SecurityUser] object or [ApplicationObjectNotFoundException] will be thrown
-     */
-    fun getCurrentSecurityUser(): SecurityUser {
-        val username = if(SecurityFactory.getCurrentUsername().isPresent) SecurityFactory.getCurrentUsername().get() else ""
-        val obj = userRepository.findByUsername(username).orElseThrow { ApplicationObjectNotFoundException(username, SecurityUser::class.java.simpleName.toLowerCase()) }
-        loadMLC(obj)
-        return obj
-    }
+	/**
+	 * Cet the current user object according to the current signed-in user
+	 *
+	 * @return Current [SecurityUser] object or [ApplicationObjectNotFoundException] will be thrown
+	 */
+	fun getCurrentSecurityUser(): SecurityUser {
+		val username =
+			if (SecurityFactory.getCurrentUsername().isPresent) SecurityFactory.getCurrentUsername().get() else ""
+		val obj = userRepository.findByUsername(username).orElseThrow {
+			ApplicationObjectNotFoundException(
+				username,
+				SecurityUser::class.java.simpleName.toLowerCase()
+			)
+		}
+		loadMLC(obj)
+		return obj
+	}
 
-    /**
-     * Update current user information
-     *
-     * @param target SecurityUser object
-     * @return Updated SecurityUser object
-     */
-    fun updateCurrentSecurityUser(target: SecurityUser): SecurityUser {
-        val currentUser = getCurrentSecurityUser()
-        if(target.id != currentUser.id && target.username != currentUser.username)
-            throw throw ApplicationValidationException(ApplicationErrorCodes.ValidationChangeAnotherUserProfileNotAllowed)
-        return update(target)
-    }
+	/**
+	 * Update current user information
+	 *
+	 * @param target SecurityUser object
+	 * @return Updated SecurityUser object
+	 */
+	fun updateCurrentSecurityUser(target: SecurityUser): SecurityUser {
+		val currentUser = getCurrentSecurityUser()
+		if (target.id != currentUser.id && target.username != currentUser.username)
+			throw throw ApplicationValidationException(ApplicationErrorCodes.ValidationChangeAnotherUserProfileNotAllowed)
+		return update(target)
+	}
 
-    /**
-     * Updates current SecurityUser password
-     *
-     * @param changePasswordRequest ChangePasswordRequest object
-     */
-    fun changeCurrentUserPassword(changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
-        val currentUser = getCurrentSecurityUser()
-        changeUserPassword(currentUser, changePasswordRequest, verifyCurrent)
-    }
+	/**
+	 * Updates current SecurityUser password
+	 *
+	 * @param changePasswordRequest ChangePasswordRequest object
+	 */
+	fun changeCurrentUserPassword(changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
+		val currentUser = getCurrentSecurityUser()
+		changeUserPassword(currentUser, changePasswordRequest, verifyCurrent)
+	}
 }

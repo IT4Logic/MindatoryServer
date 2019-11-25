@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.project
 
 import com.it4logic.mindatory.graphql.GQLBaseService
@@ -14,7 +33,9 @@ import org.springframework.data.domain.Page
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
-
+/**
+ * GraphQL service for Project
+ */
 @Service
 @GraphQLApi
 class ProjectGQLService : GQLBaseService<Project>() {
@@ -41,6 +62,13 @@ class ProjectGQLService : GQLBaseService<Project>() {
 		return super.find(locale, id, filter)
 	}
 
+	/**
+	 * Retrieves all available Artifact Templates that can be used within the project
+	 * @param locale Input Locale
+	 * @param id Project Id
+	 * @param filter Input filter in RSQL format
+	 * @return Artifact Templates List
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ProjectAdminView}', '${ApplicationSecurityPermissions.ProjectAdminCreate}', '${ApplicationSecurityPermissions.ProjectAdminModify}', '${ApplicationSecurityPermissions.ProjectAdminDelete}')")
 	@GraphQLQuery(name = "availableArtifactTemplates")
 	fun getAvailableArtifactTemplates(
@@ -52,6 +80,12 @@ class ProjectGQLService : GQLBaseService<Project>() {
 		return projectService.getAvailableArtifactsMap(id)
 	}
 
+	/**
+	 * Retrieves all used Artifact Templates within the project
+	 * @param locale Input Locale
+	 * @param id Project Id
+	 * @return Ussed Artifact Templates List
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ProjectAdminView}', '${ApplicationSecurityPermissions.ProjectAdminCreate}', '${ApplicationSecurityPermissions.ProjectAdminModify}', '${ApplicationSecurityPermissions.ProjectAdminDelete}')")
 	@GraphQLQuery(name = "usedArtifactTemplates")
 	fun getUsedArtifactTemplates(

@@ -20,7 +20,6 @@
 
 package com.it4logic.mindatory.model.model
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
@@ -74,7 +73,6 @@ data class ModelVersion(
 	@Column(name = "f_metadata")
 	var metadata: String = "",
 
-	@JsonIgnore
 	@ManyToMany(cascade = [CascadeType.ALL])
 	@JoinTable(
 		name = "t_m2m_model_ver_model_dependencies",

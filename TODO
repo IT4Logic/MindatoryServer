@@ -1,76 +1,18 @@
-ok - controller for ACL
-ok - acl unit tests included in the other tests
-ok - project before delete rules
-- move test data type to a separated plugin
-====================================
-multiple content languages
----------------------------
-ok 1- language entity with default option
-ok 2- language controller
-ok 3- language service
-ok 4- set/get current language from language helper
-ok 5- for entity part (ex. project)
-    ok a- make the field transit
-    ok b- create new entity to hold the contents
-    ok c- direct link between entity and entity contents but not json ignore
-    ok d- before/after saving entity listener will be responsible for managing the contents
-ok 6- validate existing translations before delete languages
-ok 7- have force delete language with translation
-ok 8- don't delete default language
-ok 9- system must have at least one language
-ok 10- exception if no default language
-ok 11- passing language selection in controllers
-ok 12- languages test case
-ok 13- MLC search through search criteria (JPA RSQL)
-=======================================
-update plugins kotlin and spring version
-=======================================
+Mailing Service
+Store Migration
+create version (copy old version)
+all related project objects have to be deleted before project
+all related model version objects have to be deleted before model version
+change attribute store validation exception to more focus one
 - mail service
 - reset password
 - forgot password
-- mail template (MLC)
-    - mail template type
-    - mail template variables  (MLC)
 - protect root properties (e.g. id, create by, ..) and design version
-=========================================
 Attribute Template Validation (create/modify/delete)
 relation between repositories in delete
 delete validation for repository version
+project traceability matrix
+project documentation
 
 
 
-=======================================
-ok - UUID for project, repository and data type plugin
-ok - project and repository have dependencies of repository versions
-    ok - structure
-    ok - implementation
-        ok - model
-        ok - controller
-        ok - service
-ok - repository version, hence project, have dependencies of data types (plugins)
-    ok - structure
-    ok - implementation
-        ok - model
-        ok - controller
-        ok - service
-ok - each repo version items can be used with other repo versions.
-ok - project has store data
-ok - repo version has diagram/metadata attribute
-ok - data types are outside of repository
-ok - don't use native repositories outside of their services
-ok - change AttributeTemplateDataTypeProperty DataType from enum to string
-ok - when repo version uses some elements from other repo version, it will be added automatically as a dependency
-    ok - artifact (create/update/delete)
-    ok - join (create/update/delete)
-- when project uses some elements from repo version, it will be added automatically as a dependency
-    ok - artifact (create/update/delete)
-    ok - join (create/update/delete)
-ok - update services before create and update to find the duplicates by language (ref SecurityGroupService)
-ok - update ApplicationServiceRegistry
-ok - when repo version uses some data type plugin, it will be added automatically as a dependency (ok)
-   ok - attribute (create/update/delete)
-no need - interface for artifact attributes
-
-- add view permission automatically if needed
-- plugin controllers & services
-- data plugin should verify if it compatible with a given version or not. (ok)

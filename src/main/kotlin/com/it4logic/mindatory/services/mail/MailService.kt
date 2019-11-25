@@ -22,21 +22,23 @@ import javax.servlet.http.HttpServletRequest
 
 
 /**
- * This class is responsible for handling mailing functionalities
+ * This class is responsible for handling mailing functionality
  */
 @Service
 class MailService {
 	@Autowired
 	private lateinit var appPreferencesService: AppPreferencesService
+
 	@Autowired
 	private lateinit var mailTemplateService: MailTemplateService
-	//	@Autowired
-//	private lateinit var languageManager: LanguageManager
+
 	@Autowired
 	@Qualifier("appTemplateEngine")
 	private lateinit var templateEngine: ITemplateEngine
+
 	@Autowired
 	private lateinit var applicationContext: WebApplicationContext
+
 	@Autowired
 	private lateinit var currentRequest: HttpServletRequest
 
@@ -80,7 +82,9 @@ class MailService {
 	}
 
 	/**
-	 * Configures the mail service
+	 * Configures the mail service from Application Preferences
+	 * @param appPreferences Application Preferences object, in case of Null the AppPreferences will be loaded
+	 * @return AppPreferences instance
 	 */
 	protected fun configMailSender(appPreferences: AppPreferences?): AppPreferences {
 

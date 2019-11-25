@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.project
 
 import com.it4logic.mindatory.graphql.GQLBaseService
@@ -15,7 +34,9 @@ import org.springframework.data.domain.Page
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
-
+/**
+ * GraphQL service for Relation Store
+ */
 @Service
 @GraphQLApi
 class RelationStoreGQLService : GQLBaseService<RelationStore>() {
@@ -48,6 +69,14 @@ class RelationStoreGQLService : GQLBaseService<RelationStore>() {
 		return super.find(locale, id, filter)
 	}
 
+	/**
+	 * Custom implementation to provide the Project and Relation Template information while creating Relation Store object
+	 * @param locale Input locale
+	 * @param projectId Project Id
+	 * @param relationTemplateId Relation Template Id
+	 * @param target Input object instance
+	 * @return Created Relation Store instance
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.RelationStoreAdminCreate}')")
 	@GraphQLMutation(name = "createRelationStore")
 	fun create(locale: String?, projectId: Long, relationTemplateId: Long, target: RelationStore): RelationStore {

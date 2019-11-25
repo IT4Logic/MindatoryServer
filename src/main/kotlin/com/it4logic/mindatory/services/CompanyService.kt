@@ -31,7 +31,9 @@ import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
 
-
+/**
+ * Company Data Service
+ */
 @Service
 @Transactional
 class CompanyService : ApplicationBaseService<Company>() {
@@ -52,6 +54,10 @@ class CompanyService : ApplicationBaseService<Company>() {
 
 	override fun multipleLanguageContentType(): KClass<*> = CompanyMultipleLanguageContent::class
 
+	/**
+	 * Finds and loads the first instance of Companies, because only once instance is allowed
+	 * @return Company instance
+	 */
 	fun findFirst(): Company {
 		val obj = repository().findAll()[0]
 		mlcService().load(obj)
@@ -59,24 +65,22 @@ class CompanyService : ApplicationBaseService<Company>() {
 	}
 
 	override fun beforeCreate(target: Company) {
-		//    val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContents(languageManager.currentLanguage.id, "name", target.name)
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
 		val obj = result.find { it.contents == target.name }
-		//if(result.isNotEmpty()) {
 		if (obj != null) {
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateCompanyName)
 		}
 	}
 
 	override fun beforeUpdate(target: Company) {
-		//        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndContentsAndParentNot(languageManager.currentLanguage.id, "name", target.name, target.id)
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
 			languageManager.currentLanguage.id,
 			"name",
 			target.id
 		)
 		val obj = result.find { it.contents == target.name }
-		//if(result.isNotEmpty()) {
 		if (obj != null) {
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateCompanyName)
 		}

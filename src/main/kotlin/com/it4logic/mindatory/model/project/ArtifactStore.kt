@@ -20,7 +20,6 @@
 
 package com.it4logic.mindatory.model.project
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
@@ -33,7 +32,9 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
 import javax.validation.constraints.NotNull
 
-
+/**
+ * Artifact Store entity
+ */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
@@ -43,12 +44,10 @@ data class ArtifactStore(
 	@get: MultipleLanguageContent
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_artifact_template_id", nullable = false)
-//	@JsonIgnore
 	var artifactTemplate: ArtifactTemplate,
 
 	@get: MultipleLanguageContent
 	@OneToMany(mappedBy = "artifact")
-//	@JsonIgnore
 	var attributes: MutableList<AttributeStore> = mutableListOf(),
 
 	@Column(name = "f_store_status")
@@ -58,7 +57,6 @@ data class ArtifactStore(
 	@get: MultipleLanguageContent
 	@ManyToOne
 	@JoinColumn(name = "f_project_id", nullable = false)
-	@JsonIgnore
 	var project: Project
 
 ) : ApplicationMLCEntityBase() {
@@ -66,20 +64,12 @@ data class ArtifactStore(
 }
 
 /**
- * Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
-interface ArtifactStoreRepository : //ApplicationProjectBaseRepository<ArtifactStore>,
-	ApplicationBaseRepository<ArtifactStore> {
+interface ArtifactStoreRepository : ApplicationBaseRepository<ArtifactStore> {
 	fun findAllByProjectId(id: Long): List<ArtifactStore>
 
 	@Query("select distinct a.artifactTemplate from ArtifactStore a where a.project.id=?1")
 	fun findAllUsedArtifactTemplates(projectId: Long): List<ArtifactTemplate>
-
-	fun findAllByArtifactTemplateId(templateId: Long): List<ArtifactStore>
-
-
-	//	fun countByRepositoryVersionId(id: Long): Long
-//	fun countByArtifactTemplateRepositoryVersionId(id: Long): Long
-//	fun countByArtifactTemplateId(id: Long): Long
 }

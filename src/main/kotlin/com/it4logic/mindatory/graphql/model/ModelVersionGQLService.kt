@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.model
 
 import com.it4logic.mindatory.graphql.GQLBaseService
@@ -13,7 +32,9 @@ import org.springframework.data.domain.Page
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
-
+/**
+ * GraphQL service for Model Version
+ */
 @Service
 @GraphQLApi
 class ModelVersionGQLService : GQLBaseService<ModelVersion>() {
@@ -45,6 +66,12 @@ class ModelVersionGQLService : GQLBaseService<ModelVersion>() {
 		throw NotImplementedError()
 	}
 
+	/**
+	 * Custom implementation to provide the Model information while creating Model Version object
+	 * @param locale Input locale
+	 * @param modelId Model Id
+	 * @return Created model Version instance
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ModelAdminCreate}')")
 	@GraphQLMutation
 	fun createModelVersion(locale: String?, modelId: Long): ModelVersion {
@@ -57,6 +84,13 @@ class ModelVersionGQLService : GQLBaseService<ModelVersion>() {
 		throw NotImplementedError()
 	}
 
+	/**
+	 * Updated Model Version Metadata
+	 * @param locale Input locale
+	 * @param id Model Version Id
+	 * @param metadata Input metadata in String format
+	 * @return Updated Model Version instance
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ModelAdminModify}')")
 	@GraphQLMutation
 	fun updateModelVersionMetadata(locale: String?, id: Long, metadata: String): ModelVersion {
@@ -76,6 +110,12 @@ class ModelVersionGQLService : GQLBaseService<ModelVersion>() {
 		return super.delete(locale, target)
 	}
 
+	/**
+	 * Releases the Model Version object to be used within projects
+	 * @param locale Input locale
+	 * @param id Model Version Id
+	 * @return Released Model Version object
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ModelAdminModify}')")
 	@GraphQLMutation
 	fun releaseModelVersion(locale: String?, id: Long): ModelVersion {

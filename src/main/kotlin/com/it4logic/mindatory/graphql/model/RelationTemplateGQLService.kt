@@ -1,3 +1,22 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.graphql.model
 
 import com.it4logic.mindatory.graphql.GQLBaseService
@@ -14,7 +33,9 @@ import org.springframework.data.domain.Page
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
-
+/**
+ * GraphQL service for Relation Template
+ */
 @Service
 @GraphQLApi
 class RelationTemplateGQLService : GQLBaseService<RelationTemplate>() {
@@ -44,24 +65,19 @@ class RelationTemplateGQLService : GQLBaseService<RelationTemplate>() {
 		return super.findAll(locale, sort, filter)
 	}
 
-//	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.RelationTemplateAdminView}', '${ApplicationSecurityPermissions.RelationTemplateAdminCreate}', '${ApplicationSecurityPermissions.RelationTemplateAdminModify}', '${ApplicationSecurityPermissions.RelationTemplateAdminDelete}')")
-//	@GraphQLQuery
-//	fun findRelationsForArtifactPageable(locale: String?, page: Int, size: Int, sort: String?, artifactTemplateId: Long): Page<RelationTemplate> {
-//		return findAll(locale, page, size, sort, "sourceArtifact.id==${artifactTemplateId},targetArtifact.id==${artifactTemplateId}")
-//	}
-//
-//	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.RelationTemplateAdminView}', '${ApplicationSecurityPermissions.RelationTemplateAdminCreate}', '${ApplicationSecurityPermissions.RelationTemplateAdminModify}', '${ApplicationSecurityPermissions.RelationTemplateAdminDelete}')")
-//	@GraphQLQuery
-//	fun findRelationsForArtifact(locale: String?, page: Int, size: Int, sort: String?, artifactTemplateId: Long): List<RelationTemplate> {
-//		return findAll(locale, sort, "sourceArtifact.id==${artifactTemplateId},targetArtifact.id==${artifactTemplateId}")
-//	}
-
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.RelationTemplateAdminView}', '${ApplicationSecurityPermissions.RelationTemplateAdminCreate}', '${ApplicationSecurityPermissions.RelationTemplateAdminModify}', '${ApplicationSecurityPermissions.RelationTemplateAdminDelete}')")
 	@GraphQLQuery(name = "relationTemplate")
 	override fun find(locale: String?, id: Long?, filter: String?): RelationTemplate? {
 		return super.find(locale, id, filter)
 	}
 
+	/**
+	 * Custom implementation to provide the Model Version information while creating Relation Template object
+	 * @param locale Input locale
+	 * @param verId Model Version Id
+	 * @param target Input object instance
+	 * @return Created Relation Template instance
+	 */
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.RelationTemplateAdminCreate}')")
 	@GraphQLMutation(name = "createRelationTemplate")
 	fun create(locale: String?, verId: Long, target: RelationTemplate): RelationTemplate {

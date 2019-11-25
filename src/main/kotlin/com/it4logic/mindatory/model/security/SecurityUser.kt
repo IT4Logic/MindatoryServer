@@ -36,6 +36,9 @@ import java.util.*
 import javax.validation.constraints.*
 import javax.persistence.*
 
+/**
+ * Security User entity
+ */
 @Audited
 @Entity
 @EntityListeners(AuditingEntityListener::class)
@@ -158,21 +161,17 @@ data class SecurityUser(
 }
 
 /**
- * SecurityUsers Entity Repository
+ * JPA Repository
  */
 @RepositoryRestResource(exported = false)
 interface SecurityUserRepository : ApplicationBaseRepository<SecurityUser> {
-	//        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>) : MutableList<SecurityUser>
-//        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>, pageable: Pageable) : Page<SecurityUser>
-//        fun findAllByGroupId(id: Long, @Nullable spec: Specification<SecurityUser>, sort: Sort) : MutableList<SecurityUser>
 	fun findAllByGroupId(id: Long): MutableList<SecurityUser>
-
 	fun findAllByRolesId(id: Long): MutableList<SecurityUser>
 	fun findByUsername(username: String): Optional<SecurityUser>
 }
 
 /**
- * Multiple Language Content support entity
+ * Multiple Language Content entity
  */
 @Audited
 @Entity
@@ -188,7 +187,7 @@ interface SecurityUserRepository : ApplicationBaseRepository<SecurityUser> {
 class SecurityUserMultipleLanguageContent : MultipleLanguageContentBaseEntity()
 
 /**
- * Multiple Language Content support Repository
+ * Multiple Language Content Repository
  */
 @RepositoryRestResource(exported = false)
 interface SecurityUserMLCRepository : MultipleLanguageContentBaseEntityRepository<SecurityUserMultipleLanguageContent>

@@ -28,7 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
-
+/**
+ * Application Preferences Data Service
+ */
 @Service
 @Transactional
 class AppPreferencesService : ApplicationBaseService<AppPreferences>() {
@@ -42,6 +44,10 @@ class AppPreferencesService : ApplicationBaseService<AppPreferences>() {
 
 	override fun type(): Class<AppPreferences> = AppPreferences::class.java
 
+	/**
+	 * Finds and loads the first instance of Application Preferences, because only once instance is allowed
+	 * @return Application Preferences instance
+	 */
 	fun findFirst(): AppPreferences {
 		val obj = repository().findAll()[0]
 		mlcService().load(obj)

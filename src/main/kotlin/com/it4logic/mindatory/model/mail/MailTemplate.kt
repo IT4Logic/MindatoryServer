@@ -26,6 +26,7 @@ import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
+import io.leangen.graphql.annotations.GraphQLIgnore
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -88,6 +89,7 @@ data class MailTemplate(
 	@OneToMany
 	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
 	@JsonIgnore
+	@get: GraphQLIgnore
 	var mlcs: MutableList<MailTemplateMultipleLanguageContent> = mutableListOf()
 
 ) : ApplicationMLCEntityBase() {
