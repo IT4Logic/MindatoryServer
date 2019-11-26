@@ -148,23 +148,29 @@ interface ApplicationErrorCodes {
 			"mindatory.error.validation.cannot_use_artifact_in_none_released_version_inside_project"
 
 		// Attribute Template Data Types
-		const val DataTypeDoesNotExist = "mindatory.error.plugin.data_type_does_not_exit"
-		const val MissingProperty = "mindatory.error.plugin.missing_property"
-		const val PropertyValueIsNotMatchingPropertyType =
+		const val ValidationAttributeTemplateDataTypeDoesNotExist = "mindatory.error.plugin.data_type_does_not_exit"
+		const val ValidationAttributeTemplateDataTypeMissingProperty = "mindatory.error.plugin.missing_property"
+		const val ValidationAttributeTemplateDataTypePropertyValueIsNotMatchingPropertyType =
 			"mindatory.error.plugin.property_value_is_not_matching_property_type"
-		const val ContentsIsNotMatchingDataType = "mindatory.error.plugin.contents_is_not_matching_data_type"
+		const val ValidationAttributeTemplateDataTypePropertyValueIsNotInRange =
+			"mindatory.error.plugin.validation.contents_is_not_in_range"
+		const val ValidationAttributeTemplateDataTypeContentsIsNotMatchingDataType =
+			"mindatory.error.plugin.contents_is_not_matching_data_type"
 
-		const val ValidationContentsIsRequired = "mindatory.error.plugin.validation.contents_is_required"
-		const val ValidationContentsIsLowerThanMinimum =
+		const val ValidationAttributeTemplateDataTypeContentsIsRequired =
+			"mindatory.error.plugin.validation.contents_is_required"
+		const val ValidationAttributeTemplateDataTypeContentsIsLowerThanMinimum =
 			"mindatory.error.plugin.validation.contents_is_lower_than_minimum"
-		const val ValidationContentsIsHigherThanMinimum =
+		const val ValidationAttributeTemplateDataTypeContentsIsHigherThanMaximum =
 			"mindatory.error.plugin.validation.contents_is_higher_than_minimum"
-		const val ValidationContentsLengthIsLowerThanMinimum =
+		const val ValidationAttributeTemplateDataTypeContentsLengthIsLowerThanMinimum =
 			"mindatory.error.plugin.validation.contents_length_is_lower_than_minimum"
-		const val ValidationContentsLengthIsHigherThanMinimum =
+		const val ValidationAttributeTemplateDataTypeContentsLengthIsHigherThanMinimum =
 			"mindatory.error.plugin.validation.contents_length_is_higher_than_minimum"
-		const val ValidationContentsIsNotMatchingPattern =
+		const val ValidationAttributeTemplateDataTypeContentsIsNotMatchingPattern =
 			"mindatory.error.plugin.validation.contents_is_not_matching_pattern"
+		const val ValidationAttributeTemplateDataTypeContentsIsNotInRange =
+			"mindatory.error.plugin.validation.contents_is_not_in_range"
 
 
 		// Data Not Found

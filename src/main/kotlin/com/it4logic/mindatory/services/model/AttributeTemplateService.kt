@@ -72,7 +72,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 		if (target.modelVersion.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
-		val error = dataTypeManagerService.getAttributeTemplateDataType(target.typeUUID).validateDataTypeProperties(
+		val error = dataTypeManagerService.getAttributeTemplateDataType(target.typeUUID).validate(
 			target.properties
 		)
 
@@ -100,7 +100,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 		if (target.modelVersion.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
-		val error = dataTypeManagerService.getAttributeTemplateDataType(target.typeUUID).validateDataTypeProperties(
+		val error = dataTypeManagerService.getAttributeTemplateDataType(target.typeUUID).validate(
 			target.properties
 		)
 

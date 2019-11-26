@@ -1,18 +1,15 @@
-Mailing Service
-Store Migration
-create version (copy old version)
-all related project objects have to be deleted before project
-all related model version objects have to be deleted before model version
-change attribute store validation exception to more focus one
-- mail service
+- Mailing Service
 - reset password
 - forgot password
+- create version (copy old version)
+- all related project objects have to be deleted before project
+- all related model version objects have to be deleted before model version
+- change attribute store validation exception to more focus one
 - protect root properties (e.g. id, create by, ..) and design version
-Attribute Template Validation (create/modify/delete)
-relation between repositories in delete
-delete validation for repository version
-project traceability matrix
-project documentation
-
-
-
+- relation between repositories in delete
+- delete validation for repository version
+- project traceability matrix
+- project documentation
+- Error Code review
+-------------------------------------------------------------------------------------
+Done - Attribute Template data type Validation (create/modify/delete)

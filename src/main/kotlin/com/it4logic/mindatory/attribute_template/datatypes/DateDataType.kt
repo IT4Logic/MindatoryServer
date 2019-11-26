@@ -1,8 +1,33 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.attribute_template.datatypes
 
 import com.it4logic.mindatory.exceptions.ApiError
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.model.AttributeTemplateProperty
+import org.joda.time.chrono.ISOChronology
+import org.joda.time.chrono.IslamicChronology
+import org.joda.time.format.DateTimeFormat
+import org.springframework.http.HttpStatus
 import java.util.*
+
 
 class DateDataType : AttributeTemplateDataType {
 
@@ -61,80 +86,159 @@ class DateDataType : AttributeTemplateDataType {
 			)
 		)
 
-
-//	override fun buildControl(properties: Map<String, Any>, contents: JsonNode): String {
-//		return ""
-//	}
-
-	override fun validateDataTypeProperties(properties: MutableList<AttributeTemplateProperty>): ApiError? {
-		/*
-		if (!properties.containsKey(DataTypeProperty.REQUIRED))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.REQUIRED)
-		if (!properties.containsKey(DataTypeProperty.MIN_VALUE))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.MIN_VALUE)
-		if (!properties.containsKey(DataTypeProperty.MAX_VALUE))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.MAX_VALUE)
-
-		if (properties[DataTypeProperty.REQUIRED] !is Boolean)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.REQUIRED,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.REQUIRED].toString()))
-			)
-
-		if (properties[DataTypeProperty.MIN_VALUE] !is Long)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.MIN_VALUE,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.MIN_VALUE].toString()))
-			)
-
-		if (properties[DataTypeProperty.MAX_VALUE] !is Long)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.MAX_VALUE,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.MAX_VALUE].toString()))
-			)
-	*/
-		return null
-	}
-
-	override fun validateDataTypeContents(
-		contents: Any,
-		properties: MutableList<AttributeTemplateProperty>
+	override fun validate(
+		properties: MutableList<AttributeTemplateProperty>,
+		contents: String?,
+		validateContent: Boolean
 	): ApiError? {
-		/*
-		val error = validateDataTypeProperties(properties)
-		if (error != null)
-			return error
+		val required = properties.find { it.identifier == DataTypePropertyId.REQUIRED }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.REQUIRED
+			)
 
-		val required = properties[DataTypeProperty.REQUIRED].toString().toBoolean()
-		if (required && contents.isNull)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsIsRequired, "")
+		if (validateContent && required.value.toBoolean()) {
+			if (contents == null || contents.isBlank())
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsRequired,
+					""
+				)
+		}
 
-		if (!contents.isIntegralNumber)
-			return MindatoryApiError(PluginErrorCodes.ContentsIsNotMatchingDataType, "")
+		var property = properties.find { it.identifier == DataTypePropertyId.CALENDAR }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.CALENDAR
+			)
 
-		val value = contents.asLong()
+		if (required.value.toBoolean() && property.value.isBlank())
+			return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotInRange,
+				DataTypePropertyName.CALENDAR
+			)
 
-		val minValue = properties[DataTypeProperty.MIN_VALUE].toString().toLong()
-		if (minValue != -1L && value < minValue)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsIsLowerThanMinimum, "")
+		val calendarType: Int
+		try {
+			calendarType = property.value.toInt()
+			if (calendarType < 1 || calendarType > 3)
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotInRange,
+					""
+				)
+		} catch (ex: NumberFormatException) {
+			return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotMatchingPropertyType,
+				DataTypePropertyName.CALENDAR,
+				property.value
+			)
+		}
 
-		val maxValue = properties[DataTypeProperty.MAX_VALUE].toString().toLong()
-		if (maxValue != -1L && value < maxValue)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsIsHigherThanMinimum, "")
-	*/
+		val format = properties.find { it.identifier == DataTypePropertyId.FORMAT }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.FORMAT
+			)
+
+		// we need to get the suitable calendar instance according to calendar type
+		val calInstance = if (calendarType == 1) {
+			ISOChronology.getInstance()
+		} else {
+			IslamicChronology.getInstance()
+		}
+
+		val dtFormat = if(format.value.isBlank()) {
+			DateTimeFormat.fullDate().withChronology(calInstance)
+		} else {
+			DateTimeFormat.forPattern(format.value).withChronology(calInstance)
+		}
+
+		property = properties.find { it.identifier == DataTypePropertyId.MIN_VALUE }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.MIN_VALUE
+			)
+
+		try {
+			if (validateContent && contents != null) {
+				val dtValue = dtFormat.parseDateTime(property.value)
+				val dtContents = dtFormat.parseDateTime(contents)
+
+				if (dtContents < dtValue)
+					return ApiError(
+						HttpStatus.NOT_ACCEPTABLE,
+						ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsLowerThanMinimum,
+						""
+					)
+			}
+		} catch (ex: Exception) {
+			return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotMatchingPropertyType,
+				DataTypePropertyName.MIN_VALUE,
+				property.value
+			)
+		}
+
+		property = properties.find { it.identifier == DataTypePropertyId.MAX_VALUE }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.MAX_VALUE
+			)
+
+		try {
+			if (validateContent && contents != null) {
+				val dtValue = dtFormat.parseDateTime(property.value)
+				val dtContents = dtFormat.parseDateTime(contents)
+
+				if (dtContents < dtValue)
+					return ApiError(
+						HttpStatus.NOT_ACCEPTABLE,
+						ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsHigherThanMaximum,
+						""
+					)
+			}
+		} catch (ex: Exception) {
+			return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotMatchingPropertyType,
+				DataTypePropertyName.MAX_VALUE,
+				property.value
+			)
+		}
+
+		property = properties.find { it.identifier == DataTypePropertyId.DEFAULT_VALUE }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.DEFAULT_VALUE
+			)
+
+		try {
+			val defaultValue = property.value.toInt()
+			if (defaultValue < 1 || defaultValue > 2)
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotInRange,
+					""
+				)
+		} catch (ex: NumberFormatException) {
+			return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotMatchingPropertyType,
+				DataTypePropertyName.DEFAULT_VALUE,
+				property.value
+			)
+		}
+
 		return null
 	}
-
-	override fun migrateStoreContent(contents: Any, properties: MutableList<AttributeTemplateProperty>): Any {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-//
-//	private fun getResourceBundle(name: String = "AttributeDataTypes"): ResourceBundle {
-//		var locale = Locale("en")
-//
-//		if (localeString != null)
-//			locale = Locale(localeString)
-//
-//		return ResourceBundle.getBundle(name, locale)
-//	}
 }

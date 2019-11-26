@@ -1,9 +1,33 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.attribute_template.datatypes
 
 import com.it4logic.mindatory.exceptions.ApiError
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.model.AttributeTemplateProperty
+import org.springframework.http.HttpStatus
 import java.util.*
 
+/**
+ * Attribute Template Rich Text Data Type management class
+ */
 class RichTextDataType : AttributeTemplateDataType {
 
 	override val identifier: UUID
@@ -23,92 +47,27 @@ class RichTextDataType : AttributeTemplateDataType {
 			)
 		)
 
-
-//	override fun buildControl(properties: Map<String, Any>, contents: JsonNode): String {
-//		return ""
-//	}
-
-	override fun validateDataTypeProperties(properties: MutableList<AttributeTemplateProperty>): ApiError? {
-		/*
-		if (!properties.containsKey(DataTypeProperty.REQUIRED))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.REQUIRED)
-		if (!properties.containsKey(DataTypeProperty.MIN_LENGTH))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.MIN_LENGTH)
-		if (!properties.containsKey(DataTypeProperty.MAX_LENGTH))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.MAX_LENGTH)
-		if (!properties.containsKey(DataTypeProperty.PATTERN))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.PATTERN)
-
-		if (properties[DataTypeProperty.REQUIRED] !is Boolean)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.REQUIRED,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.REQUIRED].toString()))
-			)
-
-		if (properties[DataTypeProperty.MIN_LENGTH] !is Long)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.MIN_LENGTH,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.MIN_LENGTH].toString()))
-			)
-
-		if (properties[DataTypeProperty.MAX_LENGTH] !is Long)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.MAX_LENGTH,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.MAX_LENGTH].toString()))
-			)
-
-		if (properties[DataTypeProperty.PATTERN] !is String)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.PATTERN,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.PATTERN].toString()))
-			)
-	*/
-		return null
-	}
-
-	override fun validateDataTypeContents(
-		contents: Any,
-		properties: MutableList<AttributeTemplateProperty>
+	override fun validate(
+		properties: MutableList<AttributeTemplateProperty>,
+		contents: String?,
+		validateContent: Boolean
 	): ApiError? {
-		/*
-		val error = validateDataTypeProperties(properties)
-		if (error != null)
-			return error
+		val required = properties.find { it.identifier == DataTypePropertyId.REQUIRED }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.REQUIRED
+			)
 
-		val required = properties[DataTypeProperty.REQUIRED].toString().toBoolean()
-		if (required && contents.isNull)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsIsRequired, "")
+		if (validateContent && required.value.toBoolean()) {
+			if (contents == null || contents.isBlank())
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsRequired,
+					""
+				)
+		}
 
-		if (!contents.isTextual)
-			return MindatoryApiError(PluginErrorCodes.ContentsIsNotMatchingDataType, "")
-
-		val value = contents.asText()
-
-		val minLength = properties[DataTypeProperty.MIN_LENGTH].toString().toLong()
-		if (minLength != -1L && value.length < minLength)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsLengthIsLowerThanMinimum, "")
-
-		val maxLength = properties[DataTypeProperty.MAX_LENGTH].toString().toLong()
-		if (maxLength != -1L && value.length < maxLength)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsLengthIsHigherThanMinimum, "")
-
-		val pattern = properties[DataTypeProperty.PATTERN].toString().toRegex()
-		if (!pattern.matches(value))
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsIsNotMatchingPattern, "")
-	*/
 		return null
 	}
-
-	override fun migrateStoreContent(contents: Any, properties: MutableList<AttributeTemplateProperty>): Any {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-
-//private fun getResourceBundle(name: String = "AttributeDataTypes"): ResourceBundle {
-//	var locale = Locale("en")
-//
-//	if (localeString != null)
-//		locale = Locale(localeString)
-//
-//	return ResourceBundle.getBundle(name, locale)
-//}
 }

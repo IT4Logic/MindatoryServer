@@ -1,9 +1,47 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.attribute_template.datatypes
 
 import com.it4logic.mindatory.exceptions.ApiError
 import com.it4logic.mindatory.model.model.AttributeTemplateProperty
 import java.util.*
 
+/**
+ * Attribute Template Data Type Identifier
+ */
+enum class DataTypeUUID(private val uuid: UUID) {
+	Text(UUID.fromString("cd59f8d2-02d5-4175-97d8-be1bdec3c2a5")),
+	Number(UUID.fromString("dd4bf72f-8689-4653-b2b0-c8e59a592a80")),
+	Color(UUID.fromString("e8020525-d1e1-4f64-9d38-7b863aa320aa")),
+	Date(UUID.fromString("791abac4-99ac-4ee2-8eeb-874dd3a34b4b")),
+	Image(UUID.fromString("6b9c0883-d90b-405e-9d33-46526ec18e23")),
+	DropDown(UUID.fromString("06e6fd05-4bfa-4750-b4b3-97aa00cbecc2")),
+	Status(UUID.fromString("f2e8c309-cda0-4aa6-8f40-fa4552cedc43")),
+	RichText(UUID.fromString("1403ad50-d974-4a22-aa86-efcff79f8f31"));
+
+	fun toUUID(): UUID = this.uuid
+}
+
+/**
+ * Attribute Template Data Type Property Type Identifier
+ */
 abstract class DataTypePropertyDataType {
 	companion object {
 		const val String = "25fe3cf6-a0dd-444e-bcaa-ccc09f5a29f1"
@@ -16,6 +54,25 @@ abstract class DataTypePropertyDataType {
 	}
 }
 
+/**
+ * Attribute Template Data Type Property Type Name
+ */
+class DataTypeName {
+	companion object {
+		const val Text = "mindatory.attribute-template.name.text"
+		const val Number = "mindatory.attribute-template.name.number"
+		const val Color = "mindatory.attribute-template.name.color"
+		const val Date = "mindatory.attribute-template.name.date"
+		const val Image = "mindatory.attribute-template.name.image"
+		const val DropDown = "mindatory.attribute-template.name.drop-down"
+		const val Status = "mindatory.attribute-template.name.status"
+		const val RichText = "mindatory.attribute-template.name.rich-text"
+	}
+}
+
+/**
+ * Attribute Template Data Type Property Identifier
+ */
 class DataTypePropertyId {
 	companion object {
 		const val MIN_LENGTH = "0bbfc4c3-d471-4961-954b-88a0af89f028"
@@ -24,7 +81,6 @@ class DataTypePropertyId {
 		const val PATTERN = "7ba9e549-cca9-46b9-86c3-fd4b7500d3b6"
 		const val MIN_VALUE = "210dea1b-2e39-459f-ba10-10d1d2f9ec55"
 		const val MAX_VALUE = "66ea0577-30c3-4669-a696-af6e4ae6f14f"
-		//		const val USE_DECIMAL_POINT = "53d32fda-8236-41f6-894f-531dace244fa"
 		const val TYPE = "1f8b9701-ca81-4826-a485-3a2ac8099fd0"
 		const val FORMAT = "477f4d2e-62ac-4c57-8ed0-bfdd13596d27"
 		const val DATA = "e59c95e0-7efc-4e26-af67-26786ebc4be8"
@@ -44,6 +100,9 @@ class DataTypePropertyId {
 	}
 }
 
+/**
+ * Attribute Template Data Type Property Name
+ */
 class DataTypePropertyName {
 	companion object {
 		const val MIN_LENGTH = "mindatory.attribute-template.property-name.min_length"
@@ -52,7 +111,6 @@ class DataTypePropertyName {
 		const val PATTERN = "mindatory.attribute-template.property-name.pattern"
 		const val MIN_VALUE = "mindatory.attribute-template.property-name.min_value"
 		const val MAX_VALUE = "mindatory.attribute-template.property-name.max_value"
-		//		const val USE_DECIMAL_POINT = "mindatory.attribute-template.property-name.use_decimal_point"
 		const val TYPE = "mindatory.attribute-template.property-name.type"
 		const val FORMAT = "mindatory.attribute-template.property-name.format"
 		const val DATA = "mindatory.attribute-template.property-name.data"
@@ -72,32 +130,10 @@ class DataTypePropertyName {
 	}
 }
 
-class DataTypeName {
-	companion object {
-		const val Text = "mindatory.attribute-template.name.text"
-		const val Number = "mindatory.attribute-template.name.number"
-		const val Color = "mindatory.attribute-template.name.color"
-		const val Date = "mindatory.attribute-template.name.date"
-		const val Image = "mindatory.attribute-template.name.image"
-		const val DropDown = "mindatory.attribute-template.name.drop-down"
-		const val Status = "mindatory.attribute-template.name.status"
-		const val RichText = "mindatory.attribute-template.name.rich-text"
-	}
-}
 
-enum class DataTypeUUID(private val uuid: UUID) {
-	Text(UUID.fromString("cd59f8d2-02d5-4175-97d8-be1bdec3c2a5")),
-	Number(UUID.fromString("dd4bf72f-8689-4653-b2b0-c8e59a592a80")),
-	Color(UUID.fromString("e8020525-d1e1-4f64-9d38-7b863aa320aa")),
-	Date(UUID.fromString("791abac4-99ac-4ee2-8eeb-874dd3a34b4b")),
-	Image(UUID.fromString("6b9c0883-d90b-405e-9d33-46526ec18e23")),
-	DropDown(UUID.fromString("06e6fd05-4bfa-4750-b4b3-97aa00cbecc2")),
-	Status(UUID.fromString("f2e8c309-cda0-4aa6-8f40-fa4552cedc43")),
-	RichText(UUID.fromString("1403ad50-d974-4a22-aa86-efcff79f8f31"));
-
-	fun toUUID(): UUID = this.uuid
-}
-
+/**
+ * Attribute Template Data Type Property details
+ */
 data class AttributeTemplateDataTypeProperty(
 	var identifier: String,
 	var name: String,
@@ -106,33 +142,24 @@ data class AttributeTemplateDataTypeProperty(
 	var value: Any
 )
 
+/**
+ * Interface to be implemented by any class wants to handle Attribute Property Data Type
+ */
 interface AttributeTemplateDataType {
 	val identifier: UUID
-
 	val name: String
-
-//	var description: String
-
 	val properties: List<AttributeTemplateDataTypeProperty>
 
-//	fun buildControl(
-//		properties: Map<String, Any>,
-//		contents: JsonNode
-//	): String
-
-	fun validateDataTypeProperties(
-		properties: MutableList<AttributeTemplateProperty>
-	): ApiError?
-
-	fun validateDataTypeContents(
-		contents: Any,
-		properties: MutableList<AttributeTemplateProperty>
-	): ApiError?
-
-	fun migrateStoreContent(
-		contents: Any,
-		properties: MutableList<AttributeTemplateProperty>
-	): Any
-
-//	fun updateLocale(localeString: String?)
+	/**
+	 * Validates data type properties and data contents against data type properties
+	 * @param properties Data type properties
+	 * @param contents Data contents
+	 * @param validateContent Whether to validate contents or not
+	 * @return ApiError object in case of validation error, otherwise NULL
+	 */
+	fun validate(
+		properties: MutableList<AttributeTemplateProperty>,
+		contents: String? = null,
+		validateContent: Boolean = false
+	): ApiError? { return null }
 }

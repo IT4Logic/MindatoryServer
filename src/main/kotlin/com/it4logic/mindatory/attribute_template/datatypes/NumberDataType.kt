@@ -1,9 +1,33 @@
+/*
+    Copyright (c) 2019, IT4Logic.
+
+    This file is part of Mindatory project by IT4Logic.
+
+    Mindatory is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mindatory is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+ */
 package com.it4logic.mindatory.attribute_template.datatypes
 
 import com.it4logic.mindatory.exceptions.ApiError
+import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.model.model.AttributeTemplateProperty
+import org.springframework.http.HttpStatus
 import java.util.*
 
+/**
+ * Attribute Template Number Data Type management class
+ */
 class NumberDataType : AttributeTemplateDataType {
 
 	override val identifier: UUID
@@ -109,79 +133,155 @@ class NumberDataType : AttributeTemplateDataType {
 		)
 
 
-//	override fun buildControl(properties: Map<String, Any>, contents: JsonNode): String {
-//		return ""
-//	}
-
-	override fun validateDataTypeProperties(properties: MutableList<AttributeTemplateProperty>): ApiError? {
-		/*
-		if (!properties.containsKey(DataTypeProperty.REQUIRED))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.REQUIRED)
-		if (!properties.containsKey(DataTypeProperty.MIN_VALUE))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.MIN_VALUE)
-		if (!properties.containsKey(DataTypeProperty.MAX_VALUE))
-			return MindatoryApiError(PluginErrorCodes.MissingProperty, DataTypeProperty.MAX_VALUE)
-
-		if (properties[DataTypeProperty.REQUIRED] !is Boolean)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.REQUIRED,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.REQUIRED].toString()))
-			)
-
-		if (properties[DataTypeProperty.MIN_VALUE] !is Long)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.MIN_VALUE,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.MIN_VALUE].toString()))
-			)
-
-		if (properties[DataTypeProperty.MAX_VALUE] !is Long)
-			return MindatoryApiError(
-				PluginErrorCodes.PropertyValueIsNotMatchingPropertyType, DataTypeProperty.MAX_VALUE,
-				subErrors = arrayListOf(MindatoryApiSubError(properties[DataTypeProperty.MAX_VALUE].toString()))
-			)
-	*/
-		return null
-	}
-
-	override fun validateDataTypeContents(
-		contents: Any,
-		properties: MutableList<AttributeTemplateProperty>
+	override fun validate(
+		properties: MutableList<AttributeTemplateProperty>,
+		contents: String?,
+		validateContent: Boolean
 	): ApiError? {
-		/*
-		val error = validateDataTypeProperties(properties)
-		if (error != null)
-			return error
+		val allowNull = properties.find { it.identifier == DataTypePropertyId.ALLOW_NULL }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.ALLOW_NULL
+			)
 
-		val required = properties[DataTypeProperty.REQUIRED].toString().toBoolean()
-		if (required && contents.isNull)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsIsRequired, "")
+		val required = properties.find { it.identifier == DataTypePropertyId.REQUIRED }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.REQUIRED
+			)
 
-		if (!contents.isIntegralNumber)
-			return MindatoryApiError(PluginErrorCodes.ContentsIsNotMatchingDataType, "")
+		if (validateContent && !allowNull.value.toBoolean() && required.value.toBoolean()) {
+			if (contents == null || contents.isBlank())
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsRequired,
+					""
+				)
 
-		val value = contents.asLong()
+			try {
+				contents.toBigDecimal()
+			} catch (ex: NumberFormatException) {
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsNotMatchingDataType,
+					contents
+				)
+			}
+		}
 
-		val minValue = properties[DataTypeProperty.MIN_VALUE].toString().toLong()
-		if (minValue != -1L && value < minValue)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsIsLowerThanMinimum, "")
+		var property = properties.find { it.identifier == DataTypePropertyId.MIN_VALUE }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.MIN_VALUE
+			)
 
-		val maxValue = properties[DataTypeProperty.MAX_VALUE].toString().toLong()
-		if (maxValue != -1L && value < maxValue)
-			return MindatoryApiError(PluginErrorCodes.ValidationContentsIsHigherThanMinimum, "")
-	*/
+		try {
+			val value = property.value.toBigDecimal()
+			if (validateContent && contents != null && contents.toBigDecimal() < value)
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsLowerThanMinimum,
+					""
+				)
+		} catch (ex: NumberFormatException) {
+			return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotMatchingPropertyType,
+				DataTypePropertyName.MIN_VALUE,
+				property.value
+			)
+		}
+
+		property = properties.find { it.identifier == DataTypePropertyId.MAX_VALUE }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.MAX_VALUE
+			)
+
+		try {
+			val value = property.value.toBigDecimal()
+			if (validateContent && contents != null && contents.toBigDecimal() > value)
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsHigherThanMaximum,
+					""
+				)
+		} catch (ex: NumberFormatException) {
+			return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypePropertyValueIsNotMatchingPropertyType,
+				DataTypePropertyName.MAX_VALUE,
+				property.value
+			)
+		}
+
+		properties.find { it.identifier == DataTypePropertyId.SHOW_SPIN_BUTTONS }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.SHOW_SPIN_BUTTONS
+			)
+
+		properties.find { it.identifier == DataTypePropertyId.SYMBOL_POSITION }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.SYMBOL_POSITION
+			)
+
+		properties.find { it.identifier == DataTypePropertyId.SYMBOL }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.SYMBOL
+			)
+
+		properties.find { it.identifier == DataTypePropertyId.NEGATIVE_SYMBOL }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.NEGATIVE_SYMBOL
+			)
+
+		properties.find { it.identifier == DataTypePropertyId.DECIMAL_SEPARATOR }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.DECIMAL_SEPARATOR
+			)
+
+		properties.find { it.identifier == DataTypePropertyId.DIGITS }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.DIGITS
+			)
+
+		properties.find { it.identifier == DataTypePropertyId.GROUP_SEPARATOR }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.GROUP_SEPARATOR
+			)
+
+		properties.find { it.identifier == DataTypePropertyId.GROUP_SIZE }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.GROUP_SIZE
+			)
+
+		properties.find { it.identifier == DataTypePropertyId.DECIMAL_DIGITS }
+			?: return ApiError(
+				HttpStatus.NOT_ACCEPTABLE,
+				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeMissingProperty,
+				DataTypePropertyName.DECIMAL_DIGITS
+			)
+
 		return null
 	}
-
-	override fun migrateStoreContent(contents: Any, properties: MutableList<AttributeTemplateProperty>): Any {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-//
-//	private fun getResourceBundle(name: String = "AttributeDataTypes"): ResourceBundle {
-//		var locale = Locale("en")
-//
-//		if (localeString != null)
-//			locale = Locale(localeString)
-//
-//		return ResourceBundle.getBundle(name, locale)
-//	}
 }
