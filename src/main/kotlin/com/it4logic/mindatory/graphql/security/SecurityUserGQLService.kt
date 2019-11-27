@@ -23,8 +23,12 @@ import com.it4logic.mindatory.graphql.GQLBaseService
 import com.it4logic.mindatory.model.security.SecurityUser
 import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.security.ChangePasswordRequest
+import com.it4logic.mindatory.security.ProcessResetPasswordRequest
+import com.it4logic.mindatory.security.ResetPasswordRequest
 import com.it4logic.mindatory.services.common.ApplicationBaseService
+import com.it4logic.mindatory.services.mail.MailService
 import com.it4logic.mindatory.services.security.SecurityUserService
+import com.it4logic.mindatory.services.security.SecurityUserTokenService
 import io.leangen.graphql.annotations.GraphQLMutation
 import io.leangen.graphql.annotations.GraphQLQuery
 import io.leangen.graphql.spqr.spring.annotations.GraphQLApi
@@ -41,6 +45,12 @@ import org.springframework.stereotype.Service
 class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
 	@Autowired
 	lateinit var securityUserService: SecurityUserService
+
+	@Autowired
+	private lateinit var securityUserTokenService: SecurityUserTokenService
+
+	@Autowired
+	private lateinit var mailService: MailService
 
 	override fun service(): ApplicationBaseService<SecurityUser> = securityUserService
 
@@ -134,7 +144,7 @@ class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
 	 * Changes current logged-in user password
 	 * @param locale Input locale
 	 * @param request Change Password Request object
-	 * @return True if the password successfully changed, otherwise an excption will be thrown
+	 * @return True if the password successfully changed, otherwise an exception will be thrown
 	 */
 	@PreAuthorize("isFullyAuthenticated()")
 	@GraphQLMutation
@@ -143,6 +153,43 @@ class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
 	): Boolean? {
 		propagateLanguage(locale)
 		securityUserService.changeCurrentUserPassword(request, false)
+		return true
+	}
+
+	/**
+	 * Request Password Reset
+	 * @param locale Input locale
+	 * @param usernameOrEmail Username or user email
+	 * @return True if the request has been successfully sent, otherwise an exception will be thrown
+	 */
+	@GraphQLMutation
+	fun requestPasswordReset(
+		locale: String, request: ResetPasswordRequest
+	): Boolean? {
+		propagateLanguage(locale)
+		val user = securityUserService.findByUsernameOrEmail(request.usernameOrEmail)
+		val token = securityUserTokenService.createToke(user)
+		mailService.sendResetPasswordEmail(token, request.requesterRestPasswordUrl)
+		return true
+	}
+
+	/**
+	 * Process Password Reset Request
+	 * @param locale Input locale
+	 * @param request Password Reset Request
+	 * @return True if the request has been successfully sent, otherwise an exception will be thrown
+	 */
+	@GraphQLMutation
+	fun processResetPasswordRequest(locale: String, request: ProcessResetPasswordRequest): Boolean? {
+		propagateLanguage(locale)
+		val token = securityUserTokenService.findToken(request.token)
+		securityUserTokenService.validateToken(token)
+		securityUserService.changeUserPassword(
+			token.user,
+			ChangePasswordRequest("", request.password, request.passwordConfirm),
+			false
+		)
+		securityUserTokenService.delete(token)
 		return true
 	}
 }

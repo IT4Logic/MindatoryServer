@@ -1,9 +1,9 @@
-- Mailing Service
-- reset password
-- forgot password
-- create version (copy old version)
 - all related project objects have to be deleted before project
+
 - all related model version objects have to be deleted before model version
+- create version (copy old version)
+
+
 - change attribute store validation exception to more focus one
 - protect root properties (e.g. id, create by, ..) and design version
 - relation between repositories in delete

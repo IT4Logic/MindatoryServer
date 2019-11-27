@@ -73,7 +73,7 @@ class SecurityUserTokenService : ApplicationBaseService<SecurityUserToken>() {
 	 * @param user Input user object
 	 * @return Created User Token object
 	 */
-	private fun createToke(user: SecurityUser): SecurityUserToken {
+	fun createToke(user: SecurityUser): SecurityUserToken {
 		val tokenObject = TokenObject(user.id, UUID.randomUUID().toString())
 		val tokenDate = LocalDateTime.now()
 		tokenDate.plusDays(1)

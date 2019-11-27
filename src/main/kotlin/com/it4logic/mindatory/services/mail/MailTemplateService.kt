@@ -17,7 +17,6 @@
     along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-
 package com.it4logic.mindatory.services.mail
 
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes

@@ -63,6 +63,34 @@ data class ChangePasswordRequest(
 )
 
 /**
+ * Structure to be used in Password Reset Request
+ */
+data class ResetPasswordRequest(
+	@get: NotBlank
+	var usernameOrEmail: String,
+
+	@get: NotBlank
+	var requesterRestPasswordUrl: String
+)
+
+
+/**
+ * Structure to be used in Password Reset Request processing
+ */
+data class ProcessResetPasswordRequest(
+	@get: NotBlank
+	var token: String,
+
+	@get: NotBlank
+	@get: Size(min = 6)
+	var password: String,
+
+	@get: NotBlank
+	@get: Size(min = 6)
+	var passwordConfirm: String
+)
+
+/**
  * Utility class for ACL Security
  */
 enum class ApplicationPermission(private val permission: Permission) {

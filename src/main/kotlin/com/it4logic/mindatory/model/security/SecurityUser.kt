@@ -31,6 +31,7 @@ import org.hibernate.annotations.LazyCollectionOption
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import java.util.*
 import javax.validation.constraints.*
@@ -168,6 +169,9 @@ interface SecurityUserRepository : ApplicationBaseRepository<SecurityUser> {
 	fun findAllByGroupId(id: Long): MutableList<SecurityUser>
 	fun findAllByRolesId(id: Long): MutableList<SecurityUser>
 	fun findByUsername(username: String): Optional<SecurityUser>
+
+	@Query("select u from SecurityUser u where u.username=?1 or u.email=?1")
+	fun findByUsernameOrEmail(usernameOrPassword: String): Optional<SecurityUser>
 }
 
 /**

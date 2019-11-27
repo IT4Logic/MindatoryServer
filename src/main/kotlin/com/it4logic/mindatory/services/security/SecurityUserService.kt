@@ -181,4 +181,15 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
 		val currentUser = getCurrentSecurityUser()
 		changeUserPassword(currentUser, changePasswordRequest, verifyCurrent)
 	}
+
+	/**
+	 * Find Security User by username or email
+	 * @param usernameOrEmail User username or emila
+	 * @return [SecurityUser] instance, or [ApplicationObjectNotFoundException] will be raised
+	 *  in case if the object Id doesn't exist
+	 */
+	fun findByUsernameOrEmail(usernameOrEmail: String): SecurityUser {
+		return userRepository.findByUsernameOrEmail(usernameOrEmail)
+			.orElseThrow { ApplicationObjectNotFoundException(usernameOrEmail, type().simpleName.toLowerCase()) }
+	}
 }
