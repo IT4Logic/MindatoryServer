@@ -68,24 +68,22 @@ abstract class ApplicationEntityBase {
 	@GeneratedValue(strategy = GenerationType.AUTO, generator = "UseExistingOrGenerateIdGenerator")
 	@Column(name = "f_id")
 	open var id: Long = -1
-}
 
-/**
- * Base class for any entity that would have Multiple Language Content (MLC) functionality
- */
-abstract class ApplicationMLCEntityBase : ApplicationEntityBase() {
+
 	/**
 	 * Retrieves MLC objects
 	 * @return MLC objects list
 	 */
-	abstract fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity>
+	open fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
+		throw NotImplementedError()
+	}
 
 	/**
 	 * Adds MLC object
 	 * @param mlc MLC Object
 	 */
 	open fun addMLC(mlc: MultipleLanguageContentBaseEntity) {
-		val result = obtainMLCs().filter { it.id == mlc.id }
+		val result = obtainMLCs().filter { it.languageId == mlc.languageId && it.fieldName == mlc.fieldName }
 		if (result.isNotEmpty())
 			return
 		obtainMLCs().add(mlc)
@@ -106,9 +104,15 @@ abstract class ApplicationMLCEntityBase : ApplicationEntityBase() {
 	 * Copy MLC Objects from the input object to current object
 	 * @param target Input object
 	 */
-	open fun copyMLCs(target: ApplicationMLCEntityBase) {
+	open fun copyMLCs(target: ApplicationEntityBase) {
 		for (mlc in target.obtainMLCs()) {
 			addMLC(mlc)
+		}
+	}
+
+	fun findAllByLanguageIdAndFieldName(languageId: Long, propertyName: String): List<MultipleLanguageContentBaseEntity> {
+		return obtainMLCs().filter {
+			it.languageId == languageId && it.fieldName == propertyName
 		}
 	}
 }

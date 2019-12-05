@@ -66,7 +66,7 @@ class CompanyService : ApplicationBaseService<Company>() {
 
 	override fun beforeCreate(target: Company) {
 		// validates if there are any duplicates, as this property should be unique and MLC in the same time
-		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+		val result = target.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
 		val obj = result.find { it.contents == target.name }
 		if (obj != null) {
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateCompanyName)
@@ -75,7 +75,7 @@ class CompanyService : ApplicationBaseService<Company>() {
 
 	override fun beforeUpdate(target: Company) {
 		// validates if there are any duplicates, as this property should be unique and MLC in the same time
-		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
+		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentIdNot(
 			languageManager.currentLanguage.id,
 			"name",
 			target.id

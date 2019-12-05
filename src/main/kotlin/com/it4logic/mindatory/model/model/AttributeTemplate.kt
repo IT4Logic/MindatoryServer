@@ -27,6 +27,8 @@ import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import io.leangen.graphql.annotations.GraphQLIgnore
 import org.hibernate.annotations.DynamicUpdate
+import org.hibernate.annotations.LazyCollection
+import org.hibernate.annotations.LazyCollectionOption
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -75,7 +77,6 @@ data class AttributeTemplate(
 	@JoinColumn(name = "f_artifact_id", nullable = false)
 	var artifact: ArtifactTemplate,
 
-	@get: MultipleLanguageContent
 	@ManyToOne
 	@JoinColumn(name = "f_model_ver_id", nullable = false)
 	var modelVersion: ModelVersion,
@@ -84,13 +85,13 @@ data class AttributeTemplate(
 	var properties: MutableList<AttributeTemplateProperty> = mutableListOf(),
 
 	@NotAudited
-	@OneToMany
-	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
+	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")
+	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonIgnore
 	@get: GraphQLIgnore
 	var mlcs: MutableList<AttributeTemplateMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 
 	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
@@ -120,7 +121,15 @@ interface AttributeTemplateRepository : ApplicationBaseRepository<AttributeTempl
 		))
 	]
 )
-class AttributeTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+class AttributeTemplateMultipleLanguageContent(
+	@get: NotNull
+	@ManyToOne
+	@JoinColumn(name = "f_parent", nullable = false)
+	var parent: AttributeTemplate? = null
+) : MultipleLanguageContentBaseEntity() {
+	override fun updatedParent(obj: ApplicationEntityBase?) { parent = obj as AttributeTemplate? }
+	override fun obtainParent(): ApplicationEntityBase? = parent
+}
 
 /**
  * Multiple Language Content Repository

@@ -114,7 +114,13 @@ class ProjectService : ApplicationBaseService<Project>() {
 	}
 
 	override fun beforeDelete(target: Project) {
-		// TODO you have to delete all related objects first
+		for(relation in target.relations) {
+			relationStoreService.delete(relation)
+		}
+
+		for(artifact in target.artifacts) {
+			artifactStoreService.delete(artifact)
+		}
 	}
 
 	/**

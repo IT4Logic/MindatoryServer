@@ -26,12 +26,15 @@ import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import io.leangen.graphql.annotations.GraphQLIgnore
+import org.hibernate.annotations.LazyCollection
+import org.hibernate.annotations.LazyCollectionOption
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
 import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotNull
 import javax.validation.constraints.Size
 
 /**
@@ -62,19 +65,18 @@ data class Stereotype(
 	@Transient
 	var description: String = "",
 
-	@get: MultipleLanguageContent
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_model_ver_id", nullable = false)
 	var modelVersion: ModelVersion,
 
 	@NotAudited
-	@OneToMany
-	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
+	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")
+	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonIgnore
 	@get: GraphQLIgnore
 	var mlcs: MutableList<StereotypeMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
 		if (mlcs == null)
@@ -104,7 +106,15 @@ interface StereotypeRepository : ApplicationBaseRepository<Stereotype>
 		))
 	]
 )
-class StereotypeMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+class StereotypeMultipleLanguageContent(
+	@get: NotNull
+	@ManyToOne
+	@JoinColumn(name = "f_parent", nullable = false)
+	var parent: Stereotype? = null
+) : MultipleLanguageContentBaseEntity() {
+	override fun updatedParent(obj: ApplicationEntityBase?) { parent = obj as Stereotype? }
+	override fun obtainParent(): ApplicationEntityBase? = parent
+}
 
 /**
  * Multiple Language Content Repository

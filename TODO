@@ -1,6 +1,3 @@
-- all related project objects have to be deleted before project
-
-- all related model version objects have to be deleted before model version
 - create version (copy old version)
 
 

@@ -67,12 +67,16 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 		// Make sure that the model version is not in design mode
 		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
+
+		updateAttributeStores(target)
 	}
 
 	override fun beforeUpdate(target: ArtifactStore) {
 		// Make sure that the model version is not in design mode
 		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
+
+		updateAttributeStores(target)
 	}
 
 	override fun beforeDelete(target: ArtifactStore) {
@@ -80,22 +84,19 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
 
+		for (attribute in target.attributes) {
+			attributeStoreService.delete(attribute)
+		}
+
 		relationStoreService.deleteAnyRelationsUsedWithArtifact(target.id)
 	}
 
-	override fun beforeFlush(
-		savedTarget: ArtifactStore,
-		refTarget: ArtifactStore,
-		persistentFunctionType: PersistentFunctionType
-	) {
-		if (persistentFunctionType == PersistentFunctionType.DELETE)
-			return
-
+	fun updateAttributeStores(target: ArtifactStore) {
 		// Updating and validating attribute stores
-		for (aStore in refTarget.attributes) {
+		for (aStore in target.attributes) {
 			aStore.attributeTemplate = attributeTemplateService.findById(aStore.attributeTemplate.id)
-			aStore.artifact = savedTarget
-			aStore.project = savedTarget.project
+			aStore.artifact = target
+			aStore.project = target.project
 			attributeStoreService.validateStore(aStore)
 			if (aStore.id > -1)
 				attributeStoreService.update(aStore)

@@ -26,7 +26,7 @@ import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import com.it4logic.mindatory.mlc.MultipleLanguageContentService
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.query.QueryService
 import com.it4logic.mindatory.services.security.SecurityAclService
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,6 +34,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
 import javax.persistence.EntityManager
 import javax.transaction.Transactional
 import javax.validation.ConstraintViolation
@@ -46,16 +47,7 @@ import kotlin.reflect.KClass
  */
 @Service
 @Transactional
-abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
-
-	/**
-	 * Enumeration for Persistent Function Type
-	 */
-	enum class PersistentFunctionType {
-		CREATE,
-		UPDATE,
-		DELETE
-	}
+abstract class ApplicationBaseService<T : ApplicationEntityBase> {
 
 	@Autowired
 	protected lateinit var validator: Validator
@@ -66,11 +58,14 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	@Autowired
 	protected lateinit var multipleLanguageContentService: MultipleLanguageContentService
 
+	@Autowired
+	protected lateinit var platformTransactionManager: PlatformTransactionManager
+
 	/**
 	 * Retrieves Entity repository. This method has to be implemented by the derived class
 	 * @return Entity JPA Repository
 	 */
-	protected abstract fun repository(): ApplicationBaseRepository<T>
+	abstract fun repository(): ApplicationBaseRepository<T>
 
 	/**
 	 * Retrieves Entity class instance. This method has to be implemented by the derived class
@@ -192,11 +187,8 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 
 		validate(target)
 		beforeCreate(target)
+		saveMLC(target)
 		val obj = repository().save(target)
-		beforeFlush(obj, target, PersistentFunctionType.CREATE)
-		repository().flush()
-		afterFlush(obj, PersistentFunctionType.CREATE)
-		saveMLC(obj, target)
 		refresh(obj)
 		loadMLC(obj)
 		if (useAcl() && SecurityContextHolder.getContext().authentication != null) {
@@ -218,11 +210,8 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 		var obj = findById(target.id, false)
 		target.copyMLCs(obj)
 		beforeUpdate(target)
+		saveMLC(target)
 		obj = repository().save(target)
-		beforeFlush(obj, target, PersistentFunctionType.UPDATE)
-		repository().flush()
-		afterFlush(obj, PersistentFunctionType.UPDATE)
-		saveMLC(obj, target)
 		refresh(obj)
 		loadMLC(obj)
 		afterUpdate(obj)
@@ -248,11 +237,7 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 		}
 		val obj = findById(target.id, false)
 		beforeDelete(obj)
-		beforeFlush(obj, target, PersistentFunctionType.DELETE)
-		repository().flush()
-		afterFlush(obj, PersistentFunctionType.DELETE)
 		deleteMLC(obj)
-		repository().flush()
 		repository().delete(obj)
 		afterDelete(obj)
 	}
@@ -261,27 +246,23 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	 * Loads MLC content for the input object
 	 * @param target Input object
 	 */
-	fun loadMLC(target: ApplicationMLCEntityBase) {
+	fun loadMLC(target: ApplicationEntityBase) {
 		mlcService().load(target)
 	}
 
 	/**
-	 * LoadSaves MLC content for the input object
-	 * This method uses two isntance for the same object Id, because after saving the object all MLC enabled
-	 * properties will be cleared, hence, the updated content as well, this why we need the object instance
-	 * before saving to have reference to properties content to be saved or updated.
-	 * @param savedObj Saved object instance
+	 * Saves MLC content for the input object
 	 * @param target Reference object
 	 */
-	fun saveMLC(savedObj: ApplicationMLCEntityBase, target: ApplicationMLCEntityBase) {
-		mlcService().save(savedObj, target)
+	fun saveMLC(target: ApplicationEntityBase) {
+		mlcService().save(target)
 	}
 
 	/**
 	 * Deleted MLC content for the input object
 	 * @param target Input object
 	 */
-	fun deleteMLC(target: ApplicationMLCEntityBase) {
+	fun deleteMLC(target: ApplicationEntityBase) {
 		mlcService().delete(target)
 	}
 
@@ -290,6 +271,7 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	 * @param target Input object
 	 */
 	fun beforeCreate(target: T) {}
+
 	/**
 	 * Method to be called after saving to database
 	 * @param target Input object
@@ -301,6 +283,7 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	 * @param target Input object
 	 */
 	fun beforeUpdate(target: T) {}
+
 	/**
 	 * Method to be called after updating to database
 	 * @param target Input object
@@ -312,20 +295,10 @@ abstract class ApplicationBaseService<T : ApplicationMLCEntityBase> {
 	 * @param target Input object
 	 */
 	fun beforeDelete(target: T) {}
+
 	/**
 	 * Method to be called after deleting from database
 	 * @param target Input object
 	 */
 	fun afterDelete(target: T) {}
-
-	/**
-	 * Method to be called before flushing the changes to database
-	 * @param target Input object
-	 */
-	fun beforeFlush(savedTarget: T, refTarget: T, persistentFunctionType: PersistentFunctionType) {}
-	/**
-	 * Method to be called after flushing the changes to database
-	 * @param target Input object
-	 */
-	fun afterFlush(target: T, persistentFunctionType: PersistentFunctionType) {}
 }

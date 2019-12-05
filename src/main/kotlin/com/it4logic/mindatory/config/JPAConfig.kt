@@ -24,16 +24,24 @@ import com.it4logic.mindatory.model.common.ExtendedJpaRepositoryImpl
 import com.it4logic.mindatory.security.SecurityFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.data.domain.AuditorAware
 import org.springframework.data.envers.repository.support.EnversRevisionRepositoryFactoryBean
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
+import org.springframework.orm.jpa.JpaTransactionManager
+import org.springframework.orm.jpa.JpaVendorAdapter
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.annotation.EnableTransactionManagement
 import java.util.*
+
 
 /**
  * Utility class to configure JPA to enable auditing feature
  */
 @Configuration
+@EnableTransactionManagement
 @EnableJpaAuditing
 @EnableJpaRepositories(
     repositoryFactoryBeanClass = EnversRevisionRepositoryFactoryBean::class,
@@ -47,6 +55,13 @@ class JpaConfig {
     fun auditorProvider(): AuditorAware<String> {
         return SpringSecurityAuditorAware()
     }
+
+//   @Bean
+//    fun transactionManager(): PlatformTransactionManager? {
+//        val transactionManager = JpaTransactionManager()
+//        transactionManager.entityManagerFactory = entityManagerFactoryBean().getObject()
+//        return transactionManager
+//    }
 }
 
 /**

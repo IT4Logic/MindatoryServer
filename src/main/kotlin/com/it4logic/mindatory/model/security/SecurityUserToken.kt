@@ -20,7 +20,7 @@
 package com.it4logic.mindatory.model.security
 
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import org.hibernate.envers.Audited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -57,7 +57,7 @@ data class SecurityUserToken(
 	@Column(name = "f_expire_date")
 	val expireDate: LocalDateTime
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 

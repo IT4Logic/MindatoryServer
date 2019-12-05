@@ -20,53 +20,15 @@
 
 package com.it4logic.mindatory.model.common
 
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
-import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.repository.NoRepositoryBean
 import org.springframework.data.repository.history.RevisionRepository
-import org.springframework.lang.Nullable
 
 /**
- * Base interface for error functionality for entity repositories
+ * Base interface for functionality for entity repositories
  */
 @NoRepositoryBean
 interface ApplicationBaseRepository<T> : ExtendedJpaRepository<T, Long>, JpaRepository<T, Long>,
 	RevisionRepository<T, Long, Long>, JpaSpecificationExecutor<T>
 
-/**
- * Base interface for company error functionality for entity repositories
- */
-//@NoRepositoryBean
-//interface ApplicationCompanyRepository<T> : ApplicationBaseRepository<T>
-
-/**
- * Base interface for project error functionality for entity repositories
- */
-//interface ApplicationProjectBaseRepository<T> {
-//	fun findAllByProjectId(id: Long, @Nullable spec: Specification<T>?, pageable: Pageable): Page<T>
-//	fun findAllByProjectId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): List<T>
-//	fun findAllByProjectId(id: Long, sort: Sort): List<T>
-//	fun findAllByProjectId(id: Long): List<T>
-//	fun countByProjectId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): Long
-//	fun countByProjectId(id: Long): Long
-//}
-
-/**
- * Base interface for model error functionality for entity repositories
- */
-//interface ApplicationRepositoryBaseRepository<T> {
-//	fun findAllByModelVersionId(id: Long, @Nullable spec: Specification<T>?, pageable: Pageable): Page<T>
-//	fun findAllByModelVersionId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): List<T>
-//	fun findAllByModelVersionId(id: Long, sort: Sort): List<T>
-//	fun findAllByModelVersionId(id: Long): List<T>
-//	fun countByRepositoryVersionId(id: Long, @Nullable spec: Specification<T>?, sort: Sort): Long
-//	fun countByRepositoryVersionId(id: Long): Long
-//}
-
-
-@NoRepositoryBean
-interface LanguageContentBaseRepository<T> : ApplicationBaseRepository<T>

@@ -73,6 +73,18 @@ data class ModelVersion(
 	@Column(name = "f_metadata")
 	var metadata: String = "",
 
+	@get: MultipleLanguageContent
+	@OneToMany(mappedBy = "modelVersion")
+	var artifacts: MutableList<ArtifactTemplate> = mutableListOf(),
+
+	@get: MultipleLanguageContent
+	@OneToMany(mappedBy = "modelVersion")
+	var stereotypes: MutableList<Stereotype> = mutableListOf(),
+
+	@get: MultipleLanguageContent
+	@OneToMany(mappedBy = "modelVersion")
+	var relations: MutableList<RelationTemplate> = mutableListOf(),
+
 	@ManyToMany(cascade = [CascadeType.ALL])
 	@JoinTable(
 		name = "t_m2m_model_ver_model_dependencies",
@@ -80,7 +92,7 @@ data class ModelVersion(
 		inverseJoinColumns = [JoinColumn(name = "f_dependency_id")]
 	)
 	var modelDependencies: MutableList<ModelVersion> = mutableListOf()
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 
@@ -102,9 +114,7 @@ interface ModelVersionRepository : ApplicationBaseRepository<ModelVersion> {
 		id: Long
 	): Optional<ModelVersion>
 
-	fun findAllByStatus(status: ModelVersionStatus): List<ModelVersion>
-
-	@Query("select coalesce(max(designVersion),0) from ModelVersion o where o.model.id = ?1")
+	@Query("select coalesce(max(m.designVersion),0) from ModelVersion m where m.model.id = ?1")
 	fun maxDesignVersion(id: Long): Int
 }
 

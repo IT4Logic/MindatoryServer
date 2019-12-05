@@ -20,7 +20,7 @@
 package com.it4logic.mindatory.graphql
 
 import com.it4logic.mindatory.mlc.LanguageManager
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.services.LanguageService
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Service
  * The derived classes should provide the security permissions and GraphQL method names.
  */
 @Service
-abstract class GQLBaseService<T : ApplicationMLCEntityBase> {
+abstract class GQLBaseService<T : ApplicationEntityBase> {
 	@Autowired
 	lateinit var languageService: LanguageService
 

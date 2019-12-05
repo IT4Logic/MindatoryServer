@@ -61,7 +61,7 @@ data class AppPreferences(
 	@Column(name = "f_smtp_server_properties")
 	var smtpServerProperties: String = ""
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 
 	/**

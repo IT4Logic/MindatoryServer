@@ -21,7 +21,7 @@
 package com.it4logic.mindatory.mlc
 
 import com.it4logic.mindatory.model.project.ProjectMLCRepository
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
@@ -50,7 +50,7 @@ class MultipleLanguageContentService {
 	var repository: MultipleLanguageContentBaseEntityRepository<MultipleLanguageContentBaseEntity>? = null
 	var type: KClass<*>? = null
 
-	private val _applicationEntityBaseType = ApplicationMLCEntityBase::class.createType()
+	private val _applicationEntityBaseType = ApplicationEntityBase::class.createType()
 
 	@Autowired
 	private lateinit var beanFactory: AutowireCapableBeanFactory
@@ -68,51 +68,47 @@ class MultipleLanguageContentService {
 	 * Loads language content for the given object
 	 * @param target Input object instance
 	 */
-	fun load(target: ApplicationMLCEntityBase) {
+	fun load(target: ApplicationEntityBase) {
 		processTarget(target, ProcessingType.LOAD)
 	}
 
 	/**
 	 * Saves language content for the given object
-	 * @param savedObj Saved instance of the object
 	 * @param target Input object instance
 	 */
-	fun save(savedObj: ApplicationMLCEntityBase, target: ApplicationMLCEntityBase) {
-		processTarget(target, ProcessingType.SAVE, savedObj)
+	fun save(target: ApplicationEntityBase) {
+		processTarget(target, ProcessingType.SAVE)
 	}
 
 	/**
 	 * Deletes language content for the given object
 	 * @param target Input object instance
 	 */
-	fun delete(target: ApplicationMLCEntityBase) {
-		deleteObjectContent(target.id)
+	fun delete(target: ApplicationEntityBase) {
+		target.obtainMLCs().clear()
 	}
 
 	/**
 	 * Process object properties and save or delete language content accordingly
 	 * @param target Input object instance
 	 * @param processingType Processing type (either save or delete)
-	 * @param savedObj Saved object isntance
 	 */
 	private fun processTarget(
-		target: ApplicationMLCEntityBase,
-		processingType: ProcessingType,
-		savedObj: ApplicationMLCEntityBase? = null
+		target: ApplicationEntityBase,
+		processingType: ProcessingType
 	) {
 		val memberProperties = target::class.memberProperties.filterIsInstance<KMutableProperty<*>>()
-		val obj = savedObj ?: target
 		for (property in memberProperties) {
 			property.getter.findAnnotation<MultipleLanguageContent>() ?: continue
 
 			if (loadIfObjectsList(target, property))
 				continue
-			if (loadIfEntityObject(obj, property))
+			if (loadIfEntityObject(target, property))
 				continue
 
 			when (processingType) {
 				ProcessingType.LOAD -> loadFieldContent(target, property)
-				ProcessingType.SAVE -> saveFieldContent(savedObj!!, target, property)
+				ProcessingType.SAVE -> saveFieldContent(target, property)
 			}
 		}
 	}
@@ -123,7 +119,7 @@ class MultipleLanguageContentService {
 	 * @param property Input property
 	 * @return True if the property is list and has been loaded
 	 */
-	fun loadIfObjectsList(target: ApplicationMLCEntityBase, property: KMutableProperty<*>): Boolean {
+	fun loadIfObjectsList(target: ApplicationEntityBase, property: KMutableProperty<*>): Boolean {
 		if (property.returnType.arguments.isEmpty())
 			return false
 		val propertyType = property.returnType.classifier?.createType(property.returnType.arguments)
@@ -144,7 +140,7 @@ class MultipleLanguageContentService {
 			serviceBean = beanFactory.getBean(serviceName) as ApplicationBaseService<*>
 
 		objList.forEach {
-			val obj = it as ApplicationMLCEntityBase
+			val obj = it as ApplicationEntityBase
 			if (serviceName != null)
 				serviceBean?.loadMLC(obj)
 			else
@@ -159,12 +155,12 @@ class MultipleLanguageContentService {
 	 * @param property Input property
 	 * @return True if the property is Object and has been loaded
 	 */
-	fun loadIfEntityObject(target: ApplicationMLCEntityBase, property: KMutableProperty<*>): Boolean {
+	fun loadIfEntityObject(target: ApplicationEntityBase, property: KMutableProperty<*>): Boolean {
 		val propertyType = property.returnType.classifier?.createType(property.returnType.arguments)
 		val isEntityObject = propertyType?.isSubtypeOf(_applicationEntityBaseType)
 		if (isEntityObject != null && isEntityObject) {
 			var obj: Any? = property.getter.call(target) ?: return true
-			obj = obj as ApplicationMLCEntityBase
+			obj = obj as ApplicationEntityBase
 			val propertyFullClassName = propertyType.toString()
 			val serviceName = ApplicationServiceRegistry.registry[propertyFullClassName]
 			var serviceBean: ApplicationBaseService<*>? = null
@@ -185,63 +181,40 @@ class MultipleLanguageContentService {
 	 * @param target Input object instance
 	 * @param property Input property
 	 */
-	private fun loadFieldContent(target: ApplicationMLCEntityBase, property: KMutableProperty<*>) {
-		if (repository == null)
-			return
-		var entity = repository!!.findOneByLanguageIdAndFieldNameAndParent(
-			languageManager.currentLanguage.id,
-			property.name,
-			target.id
-		)
-		if (!entity.isPresent)
-			entity = repository!!.findOneByLanguageIdAndFieldNameAndParent(
-				languageManager.defaultLanguage.id,
-				property.name,
-				target.id
-			)
-		val value = if (entity.isPresent) entity.get().contents else ""
-		property.setter.call(target, value)
+	private fun loadFieldContent(target: ApplicationEntityBase, property: KMutableProperty<*>) {
+		val mlcs = target.obtainMLCs()
+		var mlc = mlcs.find {
+							it.languageId == languageManager.currentLanguage.id && it.fieldName == property.name
+						}
+		if(mlc == null) {
+			mlc = mlcs.find {
+				it.languageId == languageManager.defaultLanguage.id && it.fieldName == property.name
+			}
+		}
+		property.setter.call(target, mlc?.contents)
 	}
 
 	/**
 	 * Saves the language content for the input property
-	 * @param savedObj Saved object instance
-	 * @param refObj Reference object instance
+	 * @param target Reference object instance
 	 * @param property Input property
 	 */
 	private fun saveFieldContent(
-		savedObj: ApplicationMLCEntityBase,
-		refObj: ApplicationMLCEntityBase,
+		target: ApplicationEntityBase,
 		property: KMutableProperty<*>
 	) {
-		if (repository == null)
-			return
-		val entity = repository!!.findOneByLanguageIdAndFieldNameAndParent(
-			languageManager.currentLanguage.id,
-			property.name,
-			savedObj.id
-		)
-		var mlcObj =
-			(if (entity.isPresent) entity.get() else type!!.createInstance()) as MultipleLanguageContentBaseEntity
-		mlcObj.parent = savedObj.id
-		mlcObj.languageId = languageManager.currentLanguage.id
-		mlcObj.fieldName = property.name
-		val propValue = property.getter.call(refObj)
-		val obj: Any? = propValue ?: ""
-		mlcObj.contents = obj.toString()
-		mlcObj = repository!!.save(mlcObj)
-		savedObj.addMLC(mlcObj)
-	}
+		val mlcs = target.obtainMLCs()
+		val mlc = mlcs.find {
+			it.languageId == languageManager.currentLanguage.id && it.fieldName == property.name
+		} ?: type!!.createInstance() as MultipleLanguageContentBaseEntity
 
-	/**
-	 * Deletes the language content for the input object identifier
-	 * @param parentId Object identifier
-	 */
-	private fun deleteObjectContent(parentId: Long) {
-		if (repository == null)
-			return
-		val entities = repository!!.findAllByParent(parentId)
-		repository!!.deleteAll(entities)
+		mlc.updatedParent(target)
+		mlc.languageId = languageManager.currentLanguage.id
+		mlc.fieldName = property.name
+		val propValue = property.getter.call(target) ?: ""
+		mlc.contents = propValue.toString()
+
+		target.addMLC(mlc)
 	}
 }
 

@@ -28,7 +28,6 @@ import com.it4logic.mindatory.security.ApplicationSecurityPermissions
 import com.it4logic.mindatory.security.SecurityPermissionsHelper
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 import kotlin.reflect.KClass
@@ -61,7 +60,7 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
 
 	override fun beforeCreate(target: SecurityRole) {
 		// validates if there are any duplicates, as this property should be unique and MLC in the same time
-		val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+		val result = target.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
 		val obj = result.find { it.contents == target.name }
 		if (obj != null) {
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityRoleName)
@@ -71,7 +70,7 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
 
 	override fun beforeUpdate(target: SecurityRole) {
 		// validates if there are any duplicates, as this property should be unique and MLC in the same time
-		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(
+		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentIdNot(
 			languageManager.currentLanguage.id,
 			"name",
 			target.id

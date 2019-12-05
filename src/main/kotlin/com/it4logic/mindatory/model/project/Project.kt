@@ -27,6 +27,8 @@ import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import com.it4logic.mindatory.model.model.ModelVersion
 import io.leangen.graphql.annotations.GraphQLIgnore
+import org.hibernate.annotations.LazyCollection
+import org.hibernate.annotations.LazyCollectionOption
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -34,6 +36,7 @@ import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import javax.persistence.*
+import javax.validation.constraints.NotNull
 
 
 /**
@@ -61,6 +64,14 @@ data class Project(
 	@Transient
 	var description: String = "",
 
+	@get: MultipleLanguageContent
+	@OneToMany(mappedBy = "project")
+	var artifacts: MutableList<ArtifactStore> = mutableListOf(),
+
+	@get: MultipleLanguageContent
+	@OneToMany(mappedBy = "project")
+	var relations: MutableList<RelationStore> = mutableListOf(),
+
 	@ManyToMany(cascade = [CascadeType.ALL])
 	@JoinTable(
 		name = "t_m2m_project_model_ver_depends",
@@ -70,13 +81,13 @@ data class Project(
 	var repositoryDependencies: MutableList<ModelVersion> = mutableListOf(),
 
 	@NotAudited
-	@OneToMany
-	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
+	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")
+	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonIgnore
 	@get: GraphQLIgnore
 	var mlcs: MutableList<ProjectMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
 		if (mlcs == null)
@@ -107,7 +118,15 @@ interface ProjectRepository : ApplicationBaseRepository<Project> {
 		))
 	]
 )
-class ProjectMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+class ProjectMultipleLanguageContent(
+	@get: NotNull
+	@ManyToOne
+	@JoinColumn(name = "f_parent", nullable = false)
+	var parent: Project? = null
+) : MultipleLanguageContentBaseEntity() {
+	override fun updatedParent(obj: ApplicationEntityBase?) { parent = obj as Project? }
+	override fun obtainParent(): ApplicationEntityBase? = parent
+}
 
 /**
  * Multiple Language Content Repository

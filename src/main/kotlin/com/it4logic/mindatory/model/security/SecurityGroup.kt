@@ -23,11 +23,13 @@ package com.it4logic.mindatory.model.security
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import io.leangen.graphql.annotations.GraphQLIgnore
+import org.hibernate.annotations.LazyCollection
+import org.hibernate.annotations.LazyCollectionOption
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -56,13 +58,13 @@ data class SecurityGroup(
 	var description: String = "",
 
 	@NotAudited
-	@OneToMany(fetch = FetchType.EAGER)
-	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
+	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")
+	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonIgnore
 	@get: GraphQLIgnore
 	var mlcs: MutableList<SecurityGroupMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
 		if (mlcs == null)
@@ -93,7 +95,15 @@ interface SecurityGroupRepository : ApplicationBaseRepository<SecurityGroup>
 		))
 	]
 )
-class SecurityGroupMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+class SecurityGroupMultipleLanguageContent(
+	@get: NotNull
+	@ManyToOne
+	@JoinColumn(name = "f_parent", nullable = false)
+	var parent: SecurityGroup? = null
+) : MultipleLanguageContentBaseEntity() {
+	override fun updatedParent(obj: ApplicationEntityBase?) { parent = obj as SecurityGroup? }
+	override fun obtainParent(): ApplicationEntityBase? = parent
+}
 
 /**
  * Multiple Language Content Repository

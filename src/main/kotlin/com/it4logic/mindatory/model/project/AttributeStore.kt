@@ -24,11 +24,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import com.it4logic.mindatory.model.model.AttributeTemplate
 import io.leangen.graphql.annotations.GraphQLIgnore
+import org.hibernate.annotations.LazyCollection
+import org.hibernate.annotations.LazyCollectionOption
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -62,19 +64,18 @@ data class AttributeStore(
 	var artifact: ArtifactStore,
 
 	@get: NotNull
-	@get: MultipleLanguageContent
 	@ManyToOne
 	@JoinColumn(name = "f_project_id", nullable = false)
 	var project: Project,
 
 	@NotAudited
-	@OneToMany
-	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
+	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")
+	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonIgnore
 	@get: GraphQLIgnore
 	var mlcs: MutableList<AttributeStoreMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
 		if (mlcs == null)
@@ -87,9 +88,7 @@ data class AttributeStore(
  * JPA Repository
  */
 @RepositoryRestResource(exported = false)
-interface AttributeStoreRepository : //ApplicationProjectBaseRepository<AttributeStore>,
-	ApplicationBaseRepository<AttributeStore> {
-}
+interface AttributeStoreRepository : ApplicationBaseRepository<AttributeStore>
 
 /**
  * Multiple Language Content entity
@@ -105,7 +104,15 @@ interface AttributeStoreRepository : //ApplicationProjectBaseRepository<Attribut
 		))
 	]
 )
-class AttributeStoreMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+class AttributeStoreMultipleLanguageContent(
+	@get: NotNull
+	@ManyToOne
+	@JoinColumn(name = "f_parent", nullable = false)
+	var parent: AttributeStore? = null
+) : MultipleLanguageContentBaseEntity() {
+	override fun updatedParent(obj: ApplicationEntityBase?) { parent = obj as AttributeStore? }
+	override fun obtainParent(): ApplicationEntityBase? = parent
+}
 
 /**
  * Multiple Language Content Repository

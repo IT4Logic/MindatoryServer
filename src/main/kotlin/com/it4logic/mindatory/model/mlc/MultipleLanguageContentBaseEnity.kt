@@ -24,7 +24,6 @@ import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import org.hibernate.annotations.DynamicUpdate
 import org.springframework.data.repository.NoRepositoryBean
-import java.util.*
 import javax.persistence.*
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
@@ -46,13 +45,12 @@ open class MultipleLanguageContentBaseEntity(
 	@get: NotNull
 	@Lob
 	@Column(name = "f_contents")
-	open var contents: String = "",
+	open var contents: String = ""
 
-	@get: NotNull
-	@Column(name = "f_parent", nullable = false)
-	open var parent: Long = 0
-
-) : ApplicationEntityBase()
+) : ApplicationEntityBase() {
+	open fun updatedParent(obj: ApplicationEntityBase?) {}
+	open fun obtainParent(): ApplicationEntityBase? = null
+}
 
 /**
  * JPA Repository
@@ -60,12 +58,12 @@ open class MultipleLanguageContentBaseEntity(
 @NoRepositoryBean
 interface MultipleLanguageContentBaseEntityRepository<T : MultipleLanguageContentBaseEntity> :
 	ApplicationBaseRepository<T> {
-	fun findOneByLanguageIdAndFieldNameAndParent(langId: Long, fieldName: String, parentId: Long): Optional<T>
-
-	fun findAllByLanguageIdAndFieldName(langId: Long, fieldName: String): List<T>
-	fun findAllByLanguageIdAndFieldNameAndParentNot(langId: Long, fieldName: String, parentId: Long): List<T>
-
-	fun findAllByParent(parentId: Long): List<T>
+//	fun findOneByLanguageIdAndFieldNameAndParent(langId: Long, fieldName: String, parentId: Long): Optional<T>
+//
+//	fun findAllByLanguageIdAndFieldName(langId: Long, fieldName: String): List<T>
+	fun findAllByLanguageIdAndFieldNameAndParentIdNot(langId: Long, fieldName: String, parentId: Long): List<T>
+//
+//	fun findAllByParent(parentId: Long): List<T>
 	fun countByLanguageId(langId: Long): Long
 	fun deleteAllByLanguageId(langId: Long)
 }

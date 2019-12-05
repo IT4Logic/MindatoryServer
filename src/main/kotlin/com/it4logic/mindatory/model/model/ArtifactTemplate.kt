@@ -27,14 +27,16 @@ import com.it4logic.mindatory.model.common.*
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntityRepository
 import io.leangen.graphql.annotations.GraphQLIgnore
+import org.hibernate.annotations.LazyCollection
+import org.hibernate.annotations.LazyCollectionOption
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
-import java.util.*
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.Size
 import javax.persistence.*
+import javax.validation.constraints.NotNull
 
 /**
  * Artifact Template Entity
@@ -70,7 +72,6 @@ data class ArtifactTemplate(
 	@Column(name = "f_metadata")
 	var metadata: String = "",
 
-	@get: MultipleLanguageContent
 	@ManyToOne
 	@JoinColumn(name = "f_model_ver_id", nullable = false)
 	var modelVersion: ModelVersion,
@@ -80,13 +81,13 @@ data class ArtifactTemplate(
 	var attributes: MutableList<AttributeTemplate> = mutableListOf(),
 
 	@NotAudited
-	@OneToMany
-	@JoinColumn(name = "f_parent", referencedColumnName = "f_id")
+	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")
+	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonIgnore
 	@get: GraphQLIgnore
 	var mlcs: MutableList<ArtifactTemplateMultipleLanguageContent> = mutableListOf()
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 
 	@Suppress("SENSELESS_COMPARISON", "UNCHECKED_CAST")
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> {
@@ -108,7 +109,6 @@ interface ArtifactTemplateRepository : ApplicationBaseRepository<ArtifactTemplat
 	): List<ArtifactTemplate>
 
 	fun findAllByModelVersionId(modelVerId: Long): List<ArtifactTemplate>
-	fun findByIdentifier(identifier: String): Optional<ArtifactTemplate>
 }
 
 
@@ -126,7 +126,15 @@ interface ArtifactTemplateRepository : ApplicationBaseRepository<ArtifactTemplat
 		))
 	]
 )
-class ArtifactTemplateMultipleLanguageContent : MultipleLanguageContentBaseEntity()
+class ArtifactTemplateMultipleLanguageContent(
+	@get: NotNull
+	@ManyToOne
+	@JoinColumn(name = "f_parent", nullable = false)
+	var parent: ArtifactTemplate? = null
+) : MultipleLanguageContentBaseEntity() {
+	override fun updatedParent(obj: ApplicationEntityBase?) { parent = obj as ArtifactTemplate? }
+	override fun obtainParent(): ApplicationEntityBase? = parent
+}
 
 /**
  * Multiple Language Content Repository

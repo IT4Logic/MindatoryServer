@@ -45,7 +45,7 @@ data class SecurityUserPreferences(
 	@ManyToOne
 	@JoinColumn(name = "f_content_language")
 	var contentLanguage: Language? = null
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 

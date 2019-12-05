@@ -22,7 +22,7 @@ package com.it4logic.mindatory.model.mlc
 
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.common.ApplicationConstraintCodes
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import javax.validation.constraints.Size
 import javax.validation.constraints.NotBlank
 import org.hibernate.envers.Audited
@@ -57,7 +57,7 @@ data class Language(
 	@Column(name = "f_is_default")
 	var default: Boolean = false
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 

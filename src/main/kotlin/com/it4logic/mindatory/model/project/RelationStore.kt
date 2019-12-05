@@ -22,7 +22,7 @@ package com.it4logic.mindatory.model.project
 
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.model.RelationTemplate
 import org.hibernate.envers.Audited
@@ -62,12 +62,11 @@ data class RelationStore(
 	var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
 
 	@get: NotNull
-	@get: MultipleLanguageContent
 	@ManyToOne
 	@JoinColumn(name = "f_project_id", nullable = false)
 	var project: Project
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 
@@ -76,13 +75,9 @@ data class RelationStore(
  */
 @RepositoryRestResource(exported = false)
 interface RelationStoreRepository : ApplicationBaseRepository<RelationStore> {
-
-	fun countAllByRelationTemplateId(id: Long): Long
-
 	@Query("select coalesce(count(r.id),0) from RelationStore r where (r.sourceArtifact.id = ?1 or r.targetArtifact.id = ?1) and r.relationTemplate.id=?2")
 	fun countAllByArtifactStoreAndRelationTemplate(storeId: Long, tmpId: Long): Long
 
-	fun findAllByRelationTemplateId(id: Long): List<RelationStore>
 	fun findAllBySourceArtifactId(id: Long): List<RelationStore>
 	fun findAllByTargetArtifactId(id: Long): List<RelationStore>
 	fun findAllByProjectId(id: Long): List<RelationStore>

@@ -38,68 +38,72 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 class SecurityGroupService : ApplicationBaseService<SecurityGroup>() {
-    @Autowired
-    private lateinit var groupRepository: SecurityGroupRepository
+	@Autowired
+	private lateinit var groupRepository: SecurityGroupRepository
 
-    @Autowired
-    lateinit var securityUserService: SecurityUserService
+	@Autowired
+	lateinit var securityUserService: SecurityUserService
 
-    @Autowired
-    private lateinit var mlcRepository: SecurityGroupMLCRepository
+	@Autowired
+	private lateinit var mlcRepository: SecurityGroupMLCRepository
 
-    @Autowired
-    protected lateinit var languageManager: LanguageManager
+	@Autowired
+	protected lateinit var languageManager: LanguageManager
 
-    override fun repository(): ApplicationBaseRepository<SecurityGroup> = groupRepository
+	override fun repository(): ApplicationBaseRepository<SecurityGroup> = groupRepository
 
-    override fun type(): Class<SecurityGroup> = SecurityGroup::class.java
+	override fun type(): Class<SecurityGroup> = SecurityGroup::class.java
 
-    override fun multipleLanguageContentRepository() : SecurityGroupMLCRepository = mlcRepository
+	override fun multipleLanguageContentRepository(): SecurityGroupMLCRepository = mlcRepository
 
-    override fun multipleLanguageContentType() : KClass<*> = SecurityGroupMultipleLanguageContent::class
+	override fun multipleLanguageContentType(): KClass<*> = SecurityGroupMultipleLanguageContent::class
 
-    override fun beforeCreate(target: SecurityGroup) {
-        // validates if there are any duplicates, as this property should be unique and MLC in the same time
-        val result = mlcRepository.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
-        val obj = result.find { it.contents == target.name }
-        if(obj != null) {
-            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityGroupName)
-        }
-    }
+	override fun beforeCreate(target: SecurityGroup) {
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
+		val result = target.findAllByLanguageIdAndFieldName(languageManager.currentLanguage.id, "name")
+		val obj = result.find { it.contents == target.name }
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityGroupName)
+		}
+	}
 
-    override fun beforeUpdate(target: SecurityGroup) {
-        // validates if there are any duplicates, as this property should be unique and MLC in the same time
-        val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentNot(languageManager.currentLanguage.id, "name", target.id)
-        val obj = result.find { it.contents == target.name }
-        if(obj != null) {
-            throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityGroupName)
-        }
-    }
+	override fun beforeUpdate(target: SecurityGroup) {
+		// validates if there are any duplicates, as this property should be unique and MLC in the same time
+		val result = mlcRepository.findAllByLanguageIdAndFieldNameAndParentIdNot(
+			languageManager.currentLanguage.id,
+			"name",
+			target.id
+		)
+		val obj = result.find { it.contents == target.name }
+		if (obj != null) {
+			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateSecurityGroupName)
+		}
+	}
 
-    override fun beforeDelete(target: SecurityGroup) {
-        // Check if group has users or not
-        if( getGroupUsers(target.id).size > 0)
-            throw ApplicationValidationException(ApplicationErrorCodes.ValidationGroupHasUsers)
-    }
+	override fun beforeDelete(target: SecurityGroup) {
+		// Check if group has users or not
+		if (getGroupUsers(target.id).size > 0)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationGroupHasUsers)
+	}
 
-    /**
-     * Retrieves users associated with input group Id
-     * @param id Input group Id
-     * @return Users list
-     */
-    fun getGroupUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByGroupId(id)
+	/**
+	 * Retrieves users associated with input group Id
+	 * @param id Input group Id
+	 * @return Users list
+	 */
+	fun getGroupUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByGroupId(id)
 
-    /**
-     * Associates the input user Ids list with the input group
-     * @param id Input group Id
-     * @param userIdsList User Ids list
-     */
-    fun assignUsersToGroup(id: Long, userIdsList: List<Long>) {
-        val group = findById(id)
-        for(uid in userIdsList) {
-            val user = securityUserService.findById(uid)
-            user.group = group
-            securityUserService.update(user)
-        }
-    }
+	/**
+	 * Associates the input user Ids list with the input group
+	 * @param id Input group Id
+	 * @param userIdsList User Ids list
+	 */
+	fun assignUsersToGroup(id: Long, userIdsList: List<Long>) {
+		val group = findById(id)
+		for (uid in userIdsList) {
+			val user = securityUserService.findById(uid)
+			user.group = group
+			securityUserService.update(user)
+		}
+	}
 }

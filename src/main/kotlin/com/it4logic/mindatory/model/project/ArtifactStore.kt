@@ -22,7 +22,7 @@ package com.it4logic.mindatory.model.project
 
 import com.it4logic.mindatory.mlc.MultipleLanguageContent
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
-import com.it4logic.mindatory.model.common.ApplicationMLCEntityBase
+import com.it4logic.mindatory.model.common.ApplicationEntityBase
 import com.it4logic.mindatory.model.mlc.MultipleLanguageContentBaseEntity
 import com.it4logic.mindatory.model.model.ArtifactTemplate
 import org.hibernate.envers.Audited
@@ -54,12 +54,11 @@ data class ArtifactStore(
 	var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
 
 	@get: NotNull
-	@get: MultipleLanguageContent
 	@ManyToOne
 	@JoinColumn(name = "f_project_id", nullable = false)
 	var project: Project
 
-) : ApplicationMLCEntityBase() {
+) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
 

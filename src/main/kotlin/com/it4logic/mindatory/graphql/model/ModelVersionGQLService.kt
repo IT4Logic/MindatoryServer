@@ -101,13 +101,9 @@ class ModelVersionGQLService : GQLBaseService<ModelVersion>() {
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ModelAdminDelete}')")
 	@GraphQLMutation(name = "deleteModelVersion")
 	override fun delete(locale: String?, id: Long): Boolean {
-		return super.delete(locale, id)
-	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ModelAdminDelete}')")
-	@GraphQLMutation(name = "deleteModelVersion")
-	override fun delete(locale: String?, target: ModelVersion): Boolean {
-		return super.delete(locale, target)
+		propagateLanguage(locale)
+		modelVersionService.deleteVersion(id)
+		return true
 	}
 
 	/**
