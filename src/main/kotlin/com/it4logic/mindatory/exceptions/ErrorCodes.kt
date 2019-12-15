@@ -37,8 +37,10 @@ interface ApplicationErrorCodes {
 		// Validation
 		const val ValidationError = "mindatory.error.validation"
 		const val ValidationProjectHasModel = "mindatory.error.validation.project_has_model"
-		const val ValidationModelHasVersionThatHasRelatedStoreData =
-			"mindatory.error.validation.model_has_version_that_has_related_store_data"
+		const val ValidationModelHasVersionThatIsUsedInsideProjects =
+			"mindatory.error.validation.model_has_version_that_is_used_inside_projects"
+		const val ValidationModelVersionIsUsedInsideProjects =
+			"mindatory.error.validation.model_version_is_used_inside_projects"
 		const val ValidationModelHasArtifactTemplatesRelatedStoreData =
 			"mindatory.error.validation.model_has_artifact_templates_related_store_data"
 		const val ValidationModelHasAttributeTemplatesRelatedStoreData =
@@ -79,8 +81,8 @@ interface ApplicationErrorCodes {
 			"mindatory.error.validation.cannot_change_store_objects_related_to_none_released_model_version"
 		const val ValidationCannotChangeObjectsWithinNoneInDesignModelVersion =
 			"mindatory.error.validation.cannot_change_objects_within_none_in_design_model_version"
-		const val ValidationModelForVersionMismatch =
-			"mindatory.error.validation.model_for_version__mismatch"
+		const val ValidationModelVersionDoesNotBelongToModel =
+			"mindatory.error.validation.model_version_does_not_belong_to_model"
 		const val ValidationStoreObjectVersionAndTemplateMismatch =
 			"mindatory.error.validation.store_object_version_and_template_mismatch"
 		const val ValidationCannotChangeAttributesInReleasedArtifactTemplateVersion =
@@ -97,12 +99,12 @@ interface ApplicationErrorCodes {
 			"mindatory.error.validation.cannot_change_released_relation_template_version"
 		const val ValidationCannotDeleteArtifactStoreObjectThatUsedInRelationStoreObjects =
 			"mindatory.error.validation.cannot_delete_artifact_store_object_that_used_in_relation_store_objects"
-		const val ValidationCannotMigrateStoreObjectsToNoneReleasedVersion =
-			"mindatory.error.validation.cannot_migrate_store_objects_to_none_released_version"
-		const val ValidationCannotMigrateRelationStoresDueToRemovedSourceArtifactWithRelativeData =
-			"mindatory.error.validation.cannot_migrate_relation_stores_due_to_removed_source_artifact_with_relative_data"
-		const val ValidationCannotMigrateRelationStoresDueToRemovedTargetArtifactWithRelativeData =
-			"mindatory.error.validation.cannot_migrate_relation_stores_due_to_removed_target_artifact_with_relative_data"
+		const val ValidationNoEquivalentArtifactTemplateExists =
+			"mindatory.error.validation.no_equivalent_artifact_template_exists"
+		const val ValidationNoEquivalentAttributeTemplateExists =
+			"mindatory.error.validation.no_equivalent_attribute_template_exists"
+		const val ValidationNoEquivalentRelationTemplateExists =
+			"mindatory.error.validation.no_equivalent_relation_template_exists"
 		const val ValidationGroupHasUsers = "mindatory.error.validation.group_has_users"
 		const val ValidationPasswordsNotMatched = "mindatory.error.validation.passwords_not_matched"
 		const val ValidationIncorrectUserPassword = "mindatory.error.validation.incorrect_user_password"
@@ -119,8 +121,8 @@ interface ApplicationErrorCodes {
 		const val ValidationTokenUserIsNotMatching = "mindatory.error.validation.token_user_is_not_matching"
 		const val ValidationTokenIsExpired = "mindatory.error.validation.token_is_expired"
 		const val ValidationIdentifierNotMatched = "mindatory.error.validation.identifier_is_not_matched"
-		const val ValidationRequestedModelVersionDoesNotBelongToModel =
-			"mindatory.error.validation.requested_model_version_does_not_belong_to_model"
+		const val ValidationCannotChangeModelWhileStoresExist =
+			"mindatory.error.validation.cannot_change_model_while_stores_exist"
 		const val ValidationRequestedObjectDoesNotBelongToModelVersion =
 			"mindatory.error.validation.requested_object_does_not_belong_to_model_version"
 		const val ValidationRequestedAttributeTemplateDoesNotBelongToArtifactTemplate =

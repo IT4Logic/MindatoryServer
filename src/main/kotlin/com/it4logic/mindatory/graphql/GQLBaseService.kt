@@ -177,22 +177,7 @@ abstract class GQLBaseService<T : ApplicationEntityBase> {
 		id: Long
 	): Boolean {
 		propagateLanguage(locale)
-		service().deleteById(id)
-		return true
-	}
-
-	/**
-	 * Deletes an existing object
-	 * @param locale Input locale
-	 * @param target Input object instance
-	 * @return True if object has been deleted successfully or Exception will be raised
-	 */
-	fun delete(
-		locale: String?,
-		target: T
-	): Boolean {
-		propagateLanguage(locale)
-		service().delete(target)
+		service().delete(id)
 		return true
 	}
 }

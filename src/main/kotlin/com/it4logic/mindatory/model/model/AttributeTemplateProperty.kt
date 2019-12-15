@@ -54,7 +54,7 @@ data class AttributeTemplateProperty(
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_attribute_id", nullable = false)
-	var attribute: AttributeTemplate
+	var attribute: AttributeTemplate? = null
 
 ) : ApplicationEntityBase()
 
@@ -62,7 +62,6 @@ data class AttributeTemplateProperty(
  * JPA Repository
  */
 @RepositoryRestResource(exported = false)
-interface AttributeTemplatePropertyRepository : //ApplicationRepositoryBaseRepository<AttributeTemplate>,
-	ApplicationBaseRepository<AttributeTemplateProperty> {
+interface AttributeTemplatePropertyRepository : ApplicationBaseRepository<AttributeTemplateProperty> {
 	fun deleteByAttributeId(id: Long)
 }

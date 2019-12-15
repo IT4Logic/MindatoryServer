@@ -83,50 +83,6 @@ class SecurityRoleService : ApplicationBaseService<SecurityRole>() {
 		validatePermissions(target)
 	}
 
-	override fun beforeDelete(target: SecurityRole) {
-		// Find all users that have this role and remove role from them
-		val users = securityUserService.findAllByRoleId(target.id)
-		for (user in users) {
-			user.removeRole(target)
-			securityUserService.update(user)
-		}
-	}
-
-	/**
-	 * Retrieves users associated with input role Id
-	 * @param id Input role Id
-	 * @return Users list
-	 */
-	fun getRoleUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByRoleId(id)
-
-	/**
-	 * Associates the input user Ids list with the input role
-	 * @param id Input role Id
-	 * @param userIdsList User Ids list
-	 */
-	fun addUsersToRole(id: Long, userIdsList: List<Long>) {
-		val role = findById(id)
-		for (uid in userIdsList) {
-			val user = securityUserService.findById(uid)
-			user.addRole(role)
-			securityUserService.update(user)
-		}
-	}
-
-	/**
-	 * Remove the input role from the input user Ids list
-	 * @param id Input role Id
-	 * @param userIdsList User Ids list
-	 */
-	fun removeUsersFromRole(id: Long, userIdsList: List<Long>) {
-		val role = findById(id)
-		for (uid in userIdsList) {
-			val user = securityUserService.findById(uid)
-			user.removeRole(role)
-			securityUserService.update(user)
-		}
-	}
-
 	/**
 	 * Validates that the input role contains only the predefined permissions
 	 * @param target Input role object

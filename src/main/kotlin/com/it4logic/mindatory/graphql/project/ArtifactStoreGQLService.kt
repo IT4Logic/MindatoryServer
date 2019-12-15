@@ -113,10 +113,4 @@ class ArtifactStoreGQLService : GQLBaseService<ArtifactStore>() {
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ArtifactStoreAdminDelete}')")
-	@GraphQLMutation(name = "deleteArtifactStore")
-	override fun delete(locale: String?, target: ArtifactStore): Boolean {
-		return super.delete(locale, target)
-	}
 }

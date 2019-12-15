@@ -26,8 +26,6 @@ import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.model.ModelVersionStatus
 import com.it4logic.mindatory.model.project.RelationStore
 import com.it4logic.mindatory.model.project.RelationStoreRepository
-import com.it4logic.mindatory.model.project.Project
-import com.it4logic.mindatory.model.model.ModelVersion
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -51,26 +49,14 @@ class RelationStoreService : ApplicationBaseService<RelationStore>() {
 
 	override fun beforeCreate(target: RelationStore) {
 		// Make sure that Model Version is not in design mode
-		if (target.relationTemplate.modelVersion.status == ModelVersionStatus.InDesign)
+		if (target.relationTemplate?.modelVersion?.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
 	}
 
 	override fun beforeUpdate(target: RelationStore) {
 		// Make sure that Model Version is not in design mode
-		if (target.relationTemplate.modelVersion.status == ModelVersionStatus.InDesign)
+		if (target.relationTemplate?.modelVersion?.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
-	}
-
-	override fun afterCreate(target: RelationStore) {
-		projectService.updateRepositoryVersionDependencies(target.project)
-	}
-
-	override fun afterUpdate(target: RelationStore) {
-		projectService.updateRepositoryVersionDependencies(target.project)
-	}
-
-	override fun afterDelete(target: RelationStore) {
-		projectService.updateRepositoryVersionDependencies(target.project)
 	}
 
 	/**
@@ -87,40 +73,6 @@ class RelationStoreService : ApplicationBaseService<RelationStore>() {
 		for (obj in result) {
 			delete(obj)
 		}
-	}
-
-	/**
-	 * Retrieves Model Versions that have been used inside the project
-	 * @param project Project object
-	 * @return Model Version list
-	 */
-	fun getRepositoryVersionDependencies(project: Project): List<ModelVersion> {
-		val dependencies = mutableListOf<ModelVersion>()
-
-		val relationStores = relationStoreRepository.findAllByProjectId(project.id)
-
-		for (relationStore in relationStores) {
-			if (dependencies.find { it.id == relationStore.relationTemplate.modelVersion.id } == null)
-				dependencies.add(relationStore.relationTemplate.modelVersion)
-
-			if (dependencies.find { it.id == relationStore.relationTemplate.sourceStereotype.modelVersion.id } == null)
-				dependencies.add(relationStore.relationTemplate.sourceStereotype.modelVersion)
-
-			if (dependencies.find { it.id == relationStore.relationTemplate.targetStereotype.modelVersion.id } == null)
-				dependencies.add(relationStore.relationTemplate.targetStereotype.modelVersion)
-
-			for (attribute in relationStore.relationTemplate.sourceArtifact.attributes) {
-				if (dependencies.find { it.id == attribute.modelVersion.id } == null)
-					dependencies.add(attribute.modelVersion)
-			}
-
-			for (attribute in relationStore.relationTemplate.targetArtifact.attributes) {
-				if (dependencies.find { it.id == attribute.modelVersion.id } == null)
-					dependencies.add(attribute.modelVersion)
-			}
-		}
-
-		return dependencies
 	}
 
 	/**

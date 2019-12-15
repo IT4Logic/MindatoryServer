@@ -78,11 +78,4 @@ class SecurityGroupGQLService : GQLBaseService<SecurityGroup>() {
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.SecurityGroupAdminDelete}')")
-	@GraphQLMutation(name = "deleteSecurityGroup")
-	override fun delete(locale: String?, target: SecurityGroup): Boolean {
-		return super.delete(locale, target)
-	}
-
 }

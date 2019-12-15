@@ -58,14 +58,18 @@ data class SecurityRole(
 	@Transient
 	var description: String = "",
 
-	@Column(name = "f_permissions", insertable = false, updatable = false, length = 1)
-	var permissions: ArrayList<String> = ArrayList(),
+	@Transient
+	var permissions: MutableList<String> = mutableListOf(),
 
 	@Lob
 	@JsonIgnore
 	@Column(name = "f_authorities")
 	@get: GraphQLIgnore
 	var authorities: ByteArray? = null,
+
+	@ManyToMany(cascade = [CascadeType.ALL], mappedBy = "roles")
+	@LazyCollection(LazyCollectionOption.FALSE)
+	var users: MutableList<SecurityUser> = mutableListOf(),
 
 	@NotAudited
 	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")

@@ -60,6 +60,10 @@ data class RelationTemplate(
 	@Transient
 	var description: String = "",
 
+	@get: Size(max = 50)
+	@Column(name = "f_g_identifier")
+	var globalIdentifier: String = "",
+
 	@get: NotNull
 	@get: MultipleLanguageContent
 	@ManyToOne(optional = false)
@@ -86,7 +90,7 @@ data class RelationTemplate(
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_model_ver_id", nullable = false)
-	var modelVersion: ModelVersion,
+	var modelVersion: ModelVersion? = null,
 
 	@NotAudited
 	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")

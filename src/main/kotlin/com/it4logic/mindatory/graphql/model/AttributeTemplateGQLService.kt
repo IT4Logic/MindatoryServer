@@ -104,6 +104,7 @@ class AttributeTemplateGQLService : GQLBaseService<AttributeTemplate>() {
 		val ref = attributeTemplateService.findById(target.id)
 		target.modelVersion = ref.modelVersion
 		target.artifact = ref.artifact
+		target.globalIdentifier = ref.globalIdentifier
 		return super.update(locale, target)
 	}
 
@@ -111,12 +112,6 @@ class AttributeTemplateGQLService : GQLBaseService<AttributeTemplate>() {
 	@GraphQLMutation(name = "deleteAttributeTemplate")
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
-	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.AttributeTemplateAdminDelete}')")
-	@GraphQLMutation(name = "deleteAttributeTemplate")
-	override fun delete(locale: String?, target: AttributeTemplate): Boolean {
-		return super.delete(locale, target)
 	}
 
 	/**

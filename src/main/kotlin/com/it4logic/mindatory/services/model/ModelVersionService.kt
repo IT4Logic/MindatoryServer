@@ -144,7 +144,7 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 			modelVerRepository.findAllByStatusAndModelId(ModelVersionStatus.Released, modelVersion.model.id)
 
 		for (ver in releasedVersions)
-			ver.status = ModelVersionStatus.Obsoleted
+			ver.status = ModelVersionStatus.Obsolete
 
 		modelVerRepository.saveAll(releasedVersions)
 
@@ -160,12 +160,9 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 		val modelVersion = findById(modelVersionId)
 
 		if (modelVersion.status != ModelVersionStatus.InDesign) {
-			if (projectService.checkIfProjectsUseRepositoryVersion(modelVersion))
-				throw ApplicationValidationException(ApplicationErrorCodes.ValidationModelHasVersionThatHasRelatedStoreData)
+			if (projectService.checkIfProjectsUseModelVersion(modelVersion))
+				throw ApplicationValidationException(ApplicationErrorCodes.ValidationModelVersionIsUsedInsideProjects)
 		}
-
-		if (modelVerRepository.countAllByModelDependencies_Id(modelVersion.id) > 0)
-			throw ApplicationValidationException(ApplicationErrorCodes.ValidationModelHasVersionThatHasRelatedStoreData)
 
 		for(relation in modelVersion.relations) {
 			relationTemplateService.delete(relation)
@@ -180,21 +177,6 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 		}
 
 		super.delete(modelVersion)
-	}
-
-	/**
-	 * Updates Model Version Dependencies from other Model Versions
-	 * @param modelVersion Input Model Version object
-	 */
-	fun updateModelVersionDependencies(modelVersion: ModelVersion) {
-		val dependencies = mutableListOf<ModelVersion>()
-		val listFromJoins = relationTemplateService.getRepositoryVersionDependencies(modelVersion)
-		for (item in listFromJoins) {
-			if (dependencies.find { it.id == item.id } == null)
-				dependencies.add(item)
-		}
-		modelVersion.modelDependencies = dependencies
-		updateVersion(modelVersion)
 	}
 
 	/**
@@ -232,16 +214,12 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 
 	fun createDesignVersionFromReleasedVersion(releasedVersion: ModelVersion, newIdentifier: String, newDesignVersion: Int, newStatus: ModelVersionStatus): ModelVersion {
 
-		val modelDependenciesClone = mutableListOf<ModelVersion>()
-		modelDependenciesClone.addAll(releasedVersion.modelDependencies)
-
 		var modelVersionClone = ModelVersion(
 			identifier = newIdentifier,
 			model = releasedVersion.model,
 			designVersion = newDesignVersion,
 			status = newStatus,
-			metadata = releasedVersion.metadata,
-			modelDependencies = modelDependenciesClone
+			metadata = releasedVersion.metadata
 		)
 
 		modelVersionClone = repository().save(modelVersionClone)
@@ -254,6 +232,7 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 			var artifactClone =  ArtifactTemplate( identifier =  uuid,
 				name = "temp",
 				metadata = artifact.metadata,
+				globalIdentifier = artifact.globalIdentifier,
 				modelVersion = modelVersionClone)
 
 			for(mlc in artifact.mlcs) {
@@ -273,9 +252,10 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 				attributesUUIDMap[attribute.identifier] = attrUUID
 
 				var attributeClone = AttributeTemplate(
-					identifier = UUID.randomUUID().toString(),
+					identifier = attrUUID,
 					name = "temp",
 					typeUUID = attribute.typeUUID,
+					globalIdentifier = attribute.globalIdentifier,
 					artifact = artifactClone,
 					modelVersion = modelVersionClone)
 
@@ -338,6 +318,7 @@ class ModelVersionService : ApplicationBaseService<ModelVersion>() {
 		for(relation in releasedVersion.relations) {
 			var relationClone = RelationTemplate(
 				identifier = UUID.randomUUID().toString(),
+				globalIdentifier = relation.globalIdentifier,
 				modelVersion = modelVersionClone,
 				sourceArtifact = relation.sourceArtifact,
 				sourceStereotype = relation.sourceStereotype,

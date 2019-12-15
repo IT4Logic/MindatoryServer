@@ -78,11 +78,4 @@ class ModelGQLService : GQLBaseService<Model>() {
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ModelAdminDelete}')")
-	@GraphQLMutation(name = "deleteModel")
-	override fun delete(locale: String?, target: Model): Boolean {
-		return super.delete(locale, target)
-	}
-
 }

@@ -76,8 +76,8 @@ class MultipleLanguageContentService {
 	 * Saves language content for the given object
 	 * @param target Input object instance
 	 */
-	fun save(target: ApplicationEntityBase) {
-		processTarget(target, ProcessingType.SAVE)
+	fun save(target: ApplicationEntityBase, ref: ApplicationEntityBase?) {
+		processTarget(target, ProcessingType.SAVE, ref)
 	}
 
 	/**
@@ -95,7 +95,8 @@ class MultipleLanguageContentService {
 	 */
 	private fun processTarget(
 		target: ApplicationEntityBase,
-		processingType: ProcessingType
+		processingType: ProcessingType,
+		ref: ApplicationEntityBase? = null
 	) {
 		val memberProperties = target::class.memberProperties.filterIsInstance<KMutableProperty<*>>()
 		for (property in memberProperties) {
@@ -108,7 +109,7 @@ class MultipleLanguageContentService {
 
 			when (processingType) {
 				ProcessingType.LOAD -> loadFieldContent(target, property)
-				ProcessingType.SAVE -> saveFieldContent(target, property)
+				ProcessingType.SAVE -> saveFieldContent(target, ref, property)
 			}
 		}
 	}
@@ -191,7 +192,8 @@ class MultipleLanguageContentService {
 				it.languageId == languageManager.defaultLanguage.id && it.fieldName == property.name
 			}
 		}
-		property.setter.call(target, mlc?.contents)
+		if(mlc != null)
+			property.setter.call(target, mlc.contents)
 	}
 
 	/**
@@ -201,10 +203,11 @@ class MultipleLanguageContentService {
 	 */
 	private fun saveFieldContent(
 		target: ApplicationEntityBase,
+		ref: ApplicationEntityBase?,
 		property: KMutableProperty<*>
 	) {
-		val mlcs = target.obtainMLCs()
-		val mlc = mlcs.find {
+		val mlcs = ref?.obtainMLCs()
+		val mlc = mlcs?.find {
 			it.languageId == languageManager.currentLanguage.id && it.fieldName == property.name
 		} ?: type!!.createInstance() as MultipleLanguageContentBaseEntity
 

@@ -73,13 +73,17 @@ data class AttributeTemplate(
 	@Column(name = "f_type_uuid")
 	var typeUUID: String,
 
+	@get: Size(max = 50)
+	@Column(name = "f_g_identifier")
+	var globalIdentifier: String = "",
+
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_artifact_id", nullable = false)
-	var artifact: ArtifactTemplate,
+	var artifact: ArtifactTemplate? = null,
 
 	@ManyToOne
 	@JoinColumn(name = "f_model_ver_id", nullable = false)
-	var modelVersion: ModelVersion,
+	var modelVersion: ModelVersion? = null,
 
 	@OneToMany(mappedBy = "attribute", cascade = [CascadeType.ALL], orphanRemoval = true)
 	var properties: MutableList<AttributeTemplateProperty> = mutableListOf(),

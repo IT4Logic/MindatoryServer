@@ -68,17 +68,6 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
 	}
 
 	/**
-	 * Changes SecurityUser password
-	 * @param id SecurityUser Id
-	 * @param changePasswordRequest ChangePasswordRequest object
-	 * @param verifyCurrent Whether to verify the current password or not
-	 */
-	fun changeUserPassword(id: Long, changePasswordRequest: ChangePasswordRequest, verifyCurrent: Boolean) {
-		val user = findById(id)
-		changeUserPassword(user, changePasswordRequest, verifyCurrent)
-	}
-
-	/**
 	 * Updates SecurityUser password
 	 *
 	 * @param target SecurityUser object
@@ -123,19 +112,6 @@ class SecurityUserService : ApplicationBaseService<SecurityUser>() {
 	 */
 	fun findAllByGroupId(id: Long): MutableList<SecurityUser> {
 		val objList = userRepository.findAllByGroupId(id)
-		for (obj in objList)
-			loadMLC(obj)
-		return objList
-	}
-
-	/**
-	 * Searches and loads user for the input role id
-	 *
-	 * @param id SecurityRole Id
-	 * @return SecurityUser objects list
-	 */
-	fun findAllByRoleId(id: Long): MutableList<SecurityUser> {
-		val objList = userRepository.findAllByRolesId(id)
 		for (obj in objList)
 			loadMLC(obj)
 		return objList

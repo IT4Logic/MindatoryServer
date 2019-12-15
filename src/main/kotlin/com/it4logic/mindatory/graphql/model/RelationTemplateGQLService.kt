@@ -98,11 +98,4 @@ class RelationTemplateGQLService : GQLBaseService<RelationTemplate>() {
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.RelationTemplateAdminDelete}')")
-	@GraphQLMutation(name = "deleteRelationTemplate")
-	override fun delete(locale: String?, target: RelationTemplate): Boolean {
-		return super.delete(locale, target)
-	}
-
 }

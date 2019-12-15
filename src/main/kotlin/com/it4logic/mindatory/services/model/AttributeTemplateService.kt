@@ -69,7 +69,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 	@Suppress("UNCHECKED_CAST")
 	override fun beforeCreate(target: AttributeTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		val error = dataTypeManagerService.getAttributeTemplateDataType(target.typeUUID).validate(
@@ -82,9 +82,12 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 
 		target.identifier = UUID.randomUUID().toString()
 
+		if(target.globalIdentifier.isBlank())
+			target.globalIdentifier = UUID.randomUUID().toString()
+
 		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result =
-			findAll(null, null, "artifact.id==" + target.artifact.id) as List<AttributeTemplate>
+			findAll(null, null, "artifact.id==" + target.artifact?.id) as List<AttributeTemplate>
 		val obj = result.find { it.name == target.name }
 		if (obj != null)
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
@@ -97,7 +100,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 	@Suppress("UNCHECKED_CAST")
 	override fun beforeUpdate(target: AttributeTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		val error = dataTypeManagerService.getAttributeTemplateDataType(target.typeUUID).validate(
@@ -113,7 +116,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 
 		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result =
-			findAll(null, null, "artifact.id==" + target.artifact.id) as List<AttributeTemplate>
+			findAll(null, null, "artifact.id==" + target.artifact?.id) as List<AttributeTemplate>
 		val obj = result.find { it.name == target.name && it.identifier != target.identifier }
 		if (obj != null)
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateAttributeTemplateName)
@@ -129,7 +132,7 @@ class AttributeTemplateService : ApplicationBaseService<AttributeTemplate>() {
 
 	override fun beforeDelete(target: AttributeTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 	}
 }

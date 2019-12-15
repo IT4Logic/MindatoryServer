@@ -82,28 +82,7 @@ class SecurityGroupService : ApplicationBaseService<SecurityGroup>() {
 
 	override fun beforeDelete(target: SecurityGroup) {
 		// Check if group has users or not
-		if (getGroupUsers(target.id).size > 0)
+		if ( securityUserService.findAllByGroupId(target.id).size > 0)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationGroupHasUsers)
-	}
-
-	/**
-	 * Retrieves users associated with input group Id
-	 * @param id Input group Id
-	 * @return Users list
-	 */
-	fun getGroupUsers(id: Long): MutableList<SecurityUser> = securityUserService.findAllByGroupId(id)
-
-	/**
-	 * Associates the input user Ids list with the input group
-	 * @param id Input group Id
-	 * @param userIdsList User Ids list
-	 */
-	fun assignUsersToGroup(id: Long, userIdsList: List<Long>) {
-		val group = findById(id)
-		for (uid in userIdsList) {
-			val user = securityUserService.findById(uid)
-			user.group = group
-			securityUserService.update(user)
-		}
 	}
 }

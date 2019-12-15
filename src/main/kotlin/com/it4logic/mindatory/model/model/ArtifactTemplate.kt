@@ -72,9 +72,13 @@ data class ArtifactTemplate(
 	@Column(name = "f_metadata")
 	var metadata: String = "",
 
+	@get: Size(max = 50)
+	@Column(name = "f_g_identifier")
+	var globalIdentifier: String = "",
+
 	@ManyToOne
 	@JoinColumn(name = "f_model_ver_id", nullable = false)
-	var modelVersion: ModelVersion,
+	var modelVersion: ModelVersion? = null,
 
 	@get: MultipleLanguageContent
 	@OneToMany(mappedBy = "artifact")

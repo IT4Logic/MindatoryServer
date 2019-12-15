@@ -37,7 +37,7 @@ import javax.validation.constraints.Size
 enum class ModelVersionStatus(private val status: Int) {
 	InDesign(0),
 	Released(1),
-	Obsoleted(2)
+	Obsolete(2)
 }
 
 /**
@@ -56,7 +56,7 @@ enum class ModelVersionStatus(private val status: Int) {
 )
 data class ModelVersion(
 	@get: Size(max = 50)
-	var identifier: String,
+		var identifier: String,
 
 	@get: MultipleLanguageContent
 	@ManyToOne
@@ -83,15 +83,8 @@ data class ModelVersion(
 
 	@get: MultipleLanguageContent
 	@OneToMany(mappedBy = "modelVersion")
-	var relations: MutableList<RelationTemplate> = mutableListOf(),
+	var relations: MutableList<RelationTemplate> = mutableListOf()
 
-	@ManyToMany(cascade = [CascadeType.ALL])
-	@JoinTable(
-		name = "t_m2m_model_ver_model_dependencies",
-		joinColumns = [JoinColumn(name = "f_dependent_id")],
-		inverseJoinColumns = [JoinColumn(name = "f_dependency_id")]
-	)
-	var modelDependencies: MutableList<ModelVersion> = mutableListOf()
 ) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()
 }
@@ -102,12 +95,6 @@ data class ModelVersion(
  */
 @RepositoryRestResource(exported = false)
 interface ModelVersionRepository : ApplicationBaseRepository<ModelVersion> {
-	fun countAllByModelDependencies_Id(id: Long): Long
-	fun findOneByModelIdAndStatus(
-		appRepoId: Long,
-		modelVersionStatus: ModelVersionStatus
-	): Optional<ModelVersion>
-
 	fun findAllByStatusAndModelId(status: ModelVersionStatus, id: Long): List<ModelVersion>
 	fun findOneByStatusAndModelId(
 		status: ModelVersionStatus,

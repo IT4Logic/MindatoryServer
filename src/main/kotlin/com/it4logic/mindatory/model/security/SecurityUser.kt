@@ -113,7 +113,7 @@ data class SecurityUser(
 
 
 	@get: MultipleLanguageContent
-	@ManyToMany
+	@ManyToMany(cascade = [CascadeType.ALL])
 	@JoinTable(
 		name = "t_m2m_security_users_roles",
 		joinColumns = [JoinColumn(name = "f_user_id")],

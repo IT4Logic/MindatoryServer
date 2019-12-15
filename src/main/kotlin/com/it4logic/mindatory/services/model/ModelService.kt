@@ -98,17 +98,8 @@ class ModelService : ApplicationBaseService<Model>() {
 			if (ver.status == ModelVersionStatus.InDesign)
 				continue
 
-			if (checkIfVersionHasRelatedStoreObjects(ver))
-				throw ApplicationValidationException(ApplicationErrorCodes.ValidationModelHasVersionThatHasRelatedStoreData)
+			if (projectService.checkIfProjectsUseModelVersion(ver))
+				throw ApplicationValidationException(ApplicationErrorCodes.ValidationModelHasVersionThatIsUsedInsideProjects)
 		}
-	}
-
-	/**
-	 * Checks if the input model version object has any store objects related to it
-	 * @param target Input Model Version object
-	 * @return True if there are store objects related exist, False otherwise
-	 */
-	fun checkIfVersionHasRelatedStoreObjects(target: ModelVersion): Boolean {
-		return projectService.checkIfProjectsUseRepositoryVersion(target)
 	}
 }

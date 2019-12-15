@@ -69,14 +69,18 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
 	@Suppress("UNCHECKED_CAST")
 	override fun beforeCreate(target: ArtifactTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		target.identifier = UUID.randomUUID().toString()
 
+		if(target.globalIdentifier.isBlank())
+			target.globalIdentifier = UUID.randomUUID().toString()
+
+
 		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result =
-			findAll(null, null, "modelVersion.id==" + target.modelVersion.id) as List<ArtifactTemplate>
+			findAll(null, null, "modelVersion.id==" + target.modelVersion?.id) as List<ArtifactTemplate>
 		val obj = result.find { it.name == target.name }
 		if (obj != null)
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateArtifactTemplateName)
@@ -86,7 +90,7 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
 	@Suppress("UNCHECKED_CAST")
 	override fun beforeUpdate(target: ArtifactTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		val objTmp = findById(target.id)
@@ -95,7 +99,7 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
 
 		// validates if there are any duplicates, as this property should be unique and MLC in the same time
 		val result =
-			findAll(null, null, "modelVersion.id==" + target.modelVersion.id) as List<ArtifactTemplate>
+			findAll(null, null, "modelVersion.id==" + target.modelVersion?.id) as List<ArtifactTemplate>
 		val obj = result.find { it.name == target.name && it.identifier != target.identifier }
 		if (obj != null)
 			throw ApplicationDataIntegrityViolationException(ApplicationErrorCodes.DuplicateArtifactTemplateName)
@@ -104,7 +108,7 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
 
 	override fun beforeDelete(target: ArtifactTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		for (attribute in target.attributes) {
@@ -142,68 +146,4 @@ class ArtifactTemplateService : ApplicationBaseService<ArtifactTemplate>() {
 		loadMLC(artifact)
 		return artifact
 	}
-
-// ================================================================================================================
-
-//    fun migrateStores(source: ArtifactTemplateVersion, target: ArtifactTemplateVersion): MutableList<ArtifactStore> {
-//        val versionsMap = mutableMapOf<Long, ArtifactTemplateVersion?>()
-//        val managersMap = mutableMapOf<String, ArtifactTemplateDataTypeManager?>()
-//        val sourceArtifactStores = artifactStoreRepository.findAllByArtifactTemplateVersionId(source.id)
-//        val targetArtifactStores = mutableListOf<ArtifactStore>()
-//
-//        for(project in sourceArtifactStores) {
-//            val targetArtifactStore = ArtifactStore(artifact = project.artifact, artifactTemplateVersion = target)
-//            targetArtifactStore.project = project.project
-//
-//            for(attributeStore in project.attributeStores) {
-//                var artifactTemplateVersion: ArtifactTemplateVersion?
-//                if(versionsMap.containsKey(attributeStore.artifact.id)) {
-//                    artifactTemplateVersion = versionsMap[attributeStore.artifact.id]
-//                } else {
-//                    artifactTemplateVersion = getArtifactTemplateVersion(attributeStore, target)
-//                    versionsMap[attributeStore.artifact.id] = artifactTemplateVersion
-//                }
-//
-//                if(artifactTemplateVersion != null) {
-//                    var manager: ArtifactTemplateDataTypeManager?
-//                    if(managersMap.containsKey(artifactTemplateVersion.typeUUID)) {
-//                        manager = managersMap[artifactTemplateVersion.typeUUID]
-//                    }
-//                    else {
-//                        manager = dataTypeManagerService.getArtifactTemplateDataTypeManager(artifactTemplateVersion.typeUUID)
-//                        managersMap[artifactTemplateVersion.typeUUID] = manager
-//                    }
-//
-////                    val result = manager!!.migrateStoreContent(attributeStore.contentsJson, UUID.fromString(artifactTemplateVersion.typeUUID),
-////                                                                    artifactTemplateVersion.propertiesJson)
-////
-////                    val targetAttributeStore = AttributeStore(contents = "", contentsJson = result,
-////                                                    artifact = attributeStore.artifact,
-////                                                    artifactTemplateVersion = artifactTemplateVersion)
-////                    targetArtifactStore.attributeStores.add(targetAttributeStore)
-//                }
-//            }
-//
-//            project.storeStatus = StoreObjectStatus.Migrated
-//            targetArtifactStores.add(targetArtifactStore)
-//        }
-//
-//        artifactStoreRepository.saveAll(sourceArtifactStores)
-//        return artifactStoreRepository.saveAll(targetArtifactStores)
-//    }
-
-//    fun migrateStores(artifactId: Long, versionId: Long, targetVersionId: Long): MutableList<ArtifactStore> {
-//        val targetVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(targetVersionId,artifactId).orElseThrow {
-//            ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
-//        }
-//
-//        if(targetVersion.status != ModelVersionStatus.Released)
-//            throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateStoreObjectsToNoneReleasedVersion)
-//
-//        val sourceVersion = artifactTemplateVersionRepository.findOneByIdAndArtifactTemplateId(versionId,artifactId).orElseThrow {
-//            ApplicationObjectNotFoundException(versionId, ArtifactTemplateVersion::class.java.simpleName.toLowerCase())
-//        }
-//
-//        return migrateStores(sourceVersion, targetVersion)
-//    }
 }

@@ -151,14 +151,14 @@ class TextDataType : AttributeTemplateDataType {
 				DataTypePropertyName.PATTERN
 			)
 
-		val pattern = property.value.toRegex()
-		if (validateContent && contents != null && !pattern.matches(contents))
-			return ApiError(
-				HttpStatus.NOT_ACCEPTABLE,
-				ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsNotMatchingPattern,
-				""
-			)
-
+		if(property.value.isNotBlank()) {
+			if (validateContent && contents != null && !property.value.toRegex().matches(contents))
+				return ApiError(
+					HttpStatus.NOT_ACCEPTABLE,
+					ApplicationErrorCodes.ValidationAttributeTemplateDataTypeContentsIsNotMatchingPattern,
+					""
+				)
+		}
 		properties.find { it.identifier == DataTypePropertyId.MULTI_LINE }
 			?: return ApiError(
 				HttpStatus.NOT_ACCEPTABLE,

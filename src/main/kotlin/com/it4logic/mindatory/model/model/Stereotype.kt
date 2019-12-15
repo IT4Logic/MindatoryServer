@@ -67,7 +67,7 @@ data class Stereotype(
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_model_ver_id", nullable = false)
-	var modelVersion: ModelVersion,
+	var modelVersion: ModelVersion? = null,
 
 	@NotAudited
 	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")

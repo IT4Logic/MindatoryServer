@@ -92,11 +92,4 @@ class StereotypeGQLService : GQLBaseService<Stereotype>() {
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.StereotypeAdminDelete}')")
-	@GraphQLMutation(name = "deleteStereotype")
-	override fun delete(locale: String?, target: Stereotype): Boolean {
-		return super.delete(locale, target)
-	}
-
 }

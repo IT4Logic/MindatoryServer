@@ -62,6 +62,14 @@ class ProjectGQLService : GQLBaseService<Project>() {
 		return super.find(locale, id, filter)
 	}
 
+	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ProjectAdminView}', '${ApplicationSecurityPermissions.ProjectAdminCreate}', '${ApplicationSecurityPermissions.ProjectAdminModify}', '${ApplicationSecurityPermissions.ProjectAdminDelete}')")
+	@GraphQLQuery
+	fun projectHasStores(locale: String?, id: Long): Boolean {
+		propagateLanguage(locale)
+		val project = service().findById(id)
+		return project.artifacts.size > 0
+	}
+
 	/**
 	 * Retrieves all available Artifact Templates that can be used within the project
 	 * @param locale Input Locale
@@ -75,9 +83,9 @@ class ProjectGQLService : GQLBaseService<Project>() {
 		locale: String?,
 		id: Long,
 		filter: String?
-	): List<ProjectService.ModelVersionArtifactTemplatesMap> {
+	): List<ArtifactTemplate> {
 		propagateLanguage(locale)
-		return projectService.getAvailableArtifactsMap(id)
+		return projectService.getAvailableArtifactTemplates(id)
 	}
 
 	/**
@@ -108,16 +116,17 @@ class ProjectGQLService : GQLBaseService<Project>() {
 		return super.update(locale, target)
 	}
 
+	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ProjectAdminModify}')")
+	@GraphQLMutation
+	fun migrateProjectStores(locale: String?, projectId: Long): Boolean {
+		propagateLanguage(locale)
+		projectService.migrateStores(projectId)
+		return true
+	}
+
 	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ProjectAdminDelete}')")
 	@GraphQLMutation(name = "deleteProject")
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.ProjectAdminDelete}')")
-	@GraphQLMutation(name = "deleteProject")
-	override fun delete(locale: String?, target: Project): Boolean {
-		return super.delete(locale, target)
-	}
-
 }

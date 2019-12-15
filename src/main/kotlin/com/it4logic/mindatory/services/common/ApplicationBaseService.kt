@@ -187,14 +187,15 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
 
 		validate(target)
 		beforeCreate(target)
-		saveMLC(target)
+		saveMLC(target, null)
 		val obj = repository().save(target)
-		refresh(obj)
 		loadMLC(obj)
 		if (useAcl() && SecurityContextHolder.getContext().authentication != null) {
 			securityAclService()?.createAcl(obj, SecurityContextHolder.getContext().authentication)
 		}
-		afterCreate(obj)
+		afterCreate(obj, target)
+		repository().flush()
+		refresh(obj)
 		return obj
 	}
 
@@ -206,15 +207,13 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
 	 */
 	fun update(target: T): T {
 		validate(target)
-		// to make sure that the object exists
-		var obj = findById(target.id, false)
-		target.copyMLCs(obj)
 		beforeUpdate(target)
-		saveMLC(target)
-		obj = repository().save(target)
-		refresh(obj)
+		saveMLC(target, findById(target.id))
+		val obj = repository().save(target)
 		loadMLC(obj)
-		afterUpdate(obj)
+		afterUpdate(obj, target)
+		repository().flush()
+		refresh(obj)
 		return obj
 	}
 
@@ -222,24 +221,22 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
 	 * Deletes object by its Id
 	 * @param id Object Id
 	 */
-	fun deleteById(id: Long) {
-		val target = findById(id)
-		delete(target)
+	fun delete(id: Long) {
+		delete(findById(id, false))
 	}
 
 	/**
-	 * Deletes object by its instnace
-	 * @param target Object instance
+	 * Deletes object by its Id
+	 * @param id Object Id
 	 */
 	fun delete(target: T) {
 		if (useAcl() && SecurityContextHolder.getContext().authentication != null) {
 			securityAclService()?.deleteAcl(target)
 		}
-		val obj = findById(target.id, false)
-		beforeDelete(obj)
-		deleteMLC(obj)
-		repository().delete(obj)
-		afterDelete(obj)
+		beforeDelete(target)
+		deleteMLC(target)
+		repository().delete(target)
+		afterDelete(target)
 	}
 
 	/**
@@ -254,8 +251,8 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
 	 * Saves MLC content for the input object
 	 * @param target Reference object
 	 */
-	fun saveMLC(target: ApplicationEntityBase) {
-		mlcService().save(target)
+	fun saveMLC(target: ApplicationEntityBase, ref: ApplicationEntityBase?) {
+		mlcService().save(target, ref)
 	}
 
 	/**
@@ -276,7 +273,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
 	 * Method to be called after saving to database
 	 * @param target Input object
 	 */
-	fun afterCreate(target: T) {}
+	fun afterCreate(target: T, ref: T) {}
 
 	/**
 	 * Method to be called before updating to database
@@ -288,7 +285,7 @@ abstract class ApplicationBaseService<T : ApplicationEntityBase> {
 	 * Method to be called after updating to database
 	 * @param target Input object
 	 */
-	fun afterUpdate(target: T) {}
+	fun afterUpdate(target: T, ref: T) {}
 
 	/**
 	 * Method to be called before deleting from database

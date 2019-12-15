@@ -26,7 +26,6 @@ import com.it4logic.mindatory.model.common.ApplicationBaseRepository
 import com.it4logic.mindatory.model.model.*
 import com.it4logic.mindatory.model.project.ArtifactStore
 import com.it4logic.mindatory.model.project.ArtifactStoreRepository
-import com.it4logic.mindatory.model.project.Project
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import com.it4logic.mindatory.services.model.ArtifactTemplateService
 import com.it4logic.mindatory.services.model.AttributeTemplateService
@@ -65,23 +64,27 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 
 	override fun beforeCreate(target: ArtifactStore) {
 		// Make sure that the model version is not in design mode
-		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
+		if (target.artifactTemplate?.modelVersion?.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
+	}
 
-		updateAttributeStores(target)
+	override fun afterCreate(target: ArtifactStore, ref: ArtifactStore) {
+		updateAttributeStores(target, ref)
 	}
 
 	override fun beforeUpdate(target: ArtifactStore) {
 		// Make sure that the model version is not in design mode
-		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
+		if (target.artifactTemplate?.modelVersion?.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
+	}
 
-		updateAttributeStores(target)
+	override fun afterUpdate(target: ArtifactStore, ref: ArtifactStore) {
+		updateAttributeStores(target, ref)
 	}
 
 	override fun beforeDelete(target: ArtifactStore) {
 		// Make sure that the model version is not in design mode
-		if (target.artifactTemplate.modelVersion.status == ModelVersionStatus.InDesign)
+		if (target.artifactTemplate?.modelVersion?.status == ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeStoreObjectsRelatedToNoneReleasedModelVersion)
 
 		for (attribute in target.attributes) {
@@ -91,42 +94,18 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 		relationStoreService.deleteAnyRelationsUsedWithArtifact(target.id)
 	}
 
-	fun updateAttributeStores(target: ArtifactStore) {
+	fun updateAttributeStores(target: ArtifactStore, ref: ArtifactStore) {
 		// Updating and validating attribute stores
-		for (aStore in target.attributes) {
+		for (aStore in ref.attributes) {
 			aStore.attributeTemplate = attributeTemplateService.findById(aStore.attributeTemplate.id)
 			aStore.artifact = target
-			aStore.project = target.project
+			aStore.project = target.project!!
 			attributeStoreService.validateStore(aStore)
 			if (aStore.id > -1)
 				attributeStoreService.update(aStore)
 			else
 				attributeStoreService.create(aStore)
 		}
-	}
-
-	/**
-	 * Retrieves all the Model Versions that have been used inside a project
-	 * @param project Project object
-	 * @return Used Model Versions list
-	 */
-	fun getRepositoryVersionDependencies(project: Project): List<ModelVersion> {
-		val dependencies = mutableListOf<ModelVersion>()
-
-		val artifactStores = artifactStoreRepository.findAllByProjectId(project.id)
-
-		for (artifactStore in artifactStores) {
-			if (dependencies.find { it.id == artifactStore.artifactTemplate.modelVersion.id } == null)
-				dependencies.add(artifactStore.artifactTemplate.modelVersion)
-
-			for (attribute in artifactStore.attributes) {
-				if (dependencies.find { it.id == attribute.attributeTemplate.modelVersion.id } == null)
-					dependencies.add(attribute.attributeTemplate.modelVersion)
-
-			}
-		}
-
-		return dependencies
 	}
 
 	/**
@@ -148,7 +127,7 @@ class ArtifactStoreService : ApplicationBaseService<ArtifactStore>() {
 	 * @return Traceability Matrix
 	 */
 	fun generateStoreTraceabilityMatrix(store: ArtifactStore): List<Any> {
-		val artifactTemplateId : Long = store.artifactTemplate.id
+		val artifactTemplateId : Long = store.artifactTemplate!!.id
 		val output = mutableMapOf<RelationTemplate, Long>()
 		val relationTemplates = relationTemplateService.findAllRelationsRelatedToArtifact(artifactTemplateId)
 		for (relation in relationTemplates) {

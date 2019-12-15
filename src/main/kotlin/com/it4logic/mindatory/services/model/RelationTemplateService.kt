@@ -61,15 +61,19 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 
 	override fun beforeCreate(target: RelationTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		target.identifier = UUID.randomUUID().toString()
+
+		if(target.globalIdentifier.isBlank())
+			target.globalIdentifier = UUID.randomUUID().toString()
+
 	}
 
 	override fun beforeUpdate(target: RelationTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
 
 		val objTmp = findById(target.id)
@@ -79,20 +83,8 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 
 	override fun beforeDelete(target: RelationTemplate) {
 		// Check if the if Model Version is released or not, as released version cannot be modified
-		if (target.modelVersion.status != ModelVersionStatus.InDesign)
+		if (target.modelVersion?.status != ModelVersionStatus.InDesign)
 			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotChangeObjectsWithinNoneInDesignModelVersion)
-	}
-
-	override fun afterCreate(target: RelationTemplate) {
-		modelVersionService.updateModelVersionDependencies(target.modelVersion)
-	}
-
-	override fun afterUpdate(target: RelationTemplate) {
-		modelVersionService.updateModelVersionDependencies(target.modelVersion)
-	}
-
-	override fun afterDelete(target: RelationTemplate) {
-		modelVersionService.updateModelVersionDependencies(target.modelVersion)
 	}
 
 	/**
@@ -135,148 +127,4 @@ class RelationTemplateService : ApplicationBaseService<RelationTemplate>() {
 		return relationTemplateRepository.countBySourceStereotypeId(target.id) > 0 ||
 				relationTemplateRepository.countByTargetStereotypeId(target.id) > 0
 	}
-
-	/**
-	 * Retrieves Model Versions list that have been used in Relation Templates through Artifact Templates as source
-	 * or target.
-	 * @param modelVersion Input model Version object
-	 * @return Model Versions list
-	 */
-	fun getRepositoryVersionDependencies(modelVersion: ModelVersion): List<ModelVersion> {
-		val result = mutableListOf<ModelVersion>()
-
-		// Get the artifacts that not belong to relation model version and used with relations
-		// as a source
-		var artifactTemplates =
-			relationTemplateRepository.findAllByModelVersionIdAndSourceArtifactModelVersionIdNot(
-				modelVersion.id,
-				modelVersion.id
-			)
-
-		for (artifactTemplate in artifactTemplates) {
-			if (artifactTemplate.modelVersion.model.id != modelVersion.model.id) {
-				if (result.find { it.id == artifactTemplate.modelVersion.id } == null)
-					result.add(artifactTemplate.modelVersion)
-			}
-		}
-
-		// Get the artifacts that not belong to relation model version and used with relations
-		// as a target
-		artifactTemplates =
-			relationTemplateRepository.findAllByModelVersionIdAndTargetArtifactModelVersionIdNot(
-				modelVersion.id,
-				modelVersion.id
-			)
-
-		for (artifactTemplate in artifactTemplates) {
-			if (artifactTemplate.modelVersion.model.id != modelVersion.model.id) {
-				if (result.find { it.id == artifactTemplate.modelVersion.id } == null)
-					result.add(artifactTemplate.modelVersion)
-			}
-		}
-
-		// Get the stereotypes that not belong to relation model version and used with relations
-		// as a source
-		var stereotypes =
-			relationTemplateRepository.findAllByModelVersionIdAndSourceStereotypeModelVersionIdNot(
-				modelVersion.id,
-				modelVersion.id
-			)
-
-		for (stereotype in stereotypes) {
-			if (stereotype.modelVersion.model.id != modelVersion.model.id) {
-				if (result.find { it.id == stereotype.modelVersion.id } == null)
-					result.add(stereotype.modelVersion)
-			}
-		}
-
-		// Get the stereotypes that not belong to relation model version and used with relations
-		// as a target
-		stereotypes =
-			relationTemplateRepository.findAllByModelVersionIdAndTargetStereotypeModelVersionIdNot(
-				modelVersion.id,
-				modelVersion.id
-			)
-
-		for (stereotype in stereotypes) {
-			if (stereotype.modelVersion.model.id != modelVersion.model.id) {
-				if (result.find { it.id == stereotype.modelVersion.id } == null)
-					result.add(stereotype.modelVersion)
-			}
-		}
-
-		return result
-	}
-
-
-
-	// ================================================================================================================
-/*
-
-	fun migrateStores(sourceVersion: RelationTemplate, targetVersion: RelationTemplate): MutableList<RelationStore> {
-		for (sourceArtifact in sourceVersion.sourceArtifacts) {
-			if (!isArtifactExists(sourceArtifact, targetVersion.sourceArtifacts)) {
-				val count = relationStoreRepository.countByRelationTemplateIdAndSourceArtifacts_Id(
-					sourceVersion.id,
-					sourceArtifact.id
-				)
-				if (count > 0)
-					throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateRelationStoresDueToRemovedSourceArtifactWithRelativeData)
-			}
-		}
-
-		for (targetArtifact in sourceVersion.targetArtifacts) {
-			if (!isArtifactExists(targetArtifact, targetVersion.targetArtifacts)) {
-				val count = relationStoreRepository.countByRelationTemplateIdAndTargetArtifacts_Id(
-					sourceVersion.id,
-					targetArtifact.id
-				)
-				if (count > 0)
-					throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateRelationStoresDueToRemovedTargetArtifactWithRelativeData)
-			}
-		}
-
-		val targetStores = mutableListOf<RelationStore>()
-		val sourceStores = relationStoreRepository.findAllByRelationTemplateId(sourceVersion.id)
-		for (sourceStore in sourceStores) {
-			val targetStore = RelationStore(
-				sourceStore.sourceArtifacts,
-				sourceStore.targetArtifacts,
-				sourceStore.relationTemplate,
-				targetVersion,
-				project = sourceStore.project
-			)
-			targetStores.add(targetStore)
-			sourceStore.storeStatus = StoreObjectStatus.Migrated
-		}
-
-		relationStoreRepository.saveAll(sourceStores)
-		relationStoreRepository.saveAll(targetStores)
-
-		return targetStores
-	}
-
-	fun migrateStores(relationTemplateId: Long, sourceVersionId: Long, targetVersionId: Long): MutableList<RelationStore> {
-		val targetVersion =
-			relationTemplateRepository.findOneByIdAndRelationTemplateId(targetVersionId, relationTemplateId).orElseThrow {
-				ApplicationObjectNotFoundException(
-					targetVersionId,
-					RelationTemplate::class.java.simpleName.toLowerCase()
-				)
-			}
-
-		if (targetVersion.status != ModelVersionStatus.Released)
-			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotMigrateStoreObjectsToNoneReleasedVersion)
-
-		val sourceVersion =
-			relationTemplateRepository.findOneByIdAndRelationTemplateId(sourceVersionId, relationTemplateId).orElseThrow {
-				ApplicationObjectNotFoundException(
-					sourceVersionId,
-					RelationTemplate::class.java.simpleName.toLowerCase()
-				)
-			}
-
-		return migrateStores(sourceVersion, targetVersion)
-	}
- */
 }

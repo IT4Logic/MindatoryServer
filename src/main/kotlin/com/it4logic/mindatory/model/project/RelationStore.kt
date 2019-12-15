@@ -53,18 +53,16 @@ data class RelationStore(
 	var targetArtifact: ArtifactStore,
 
 	@get: MultipleLanguageContent
-	@get: NotNull
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_relation_template_id", nullable = false)
-	var relationTemplate: RelationTemplate,
+	var relationTemplate: RelationTemplate? = null,
 
 	@Column(name = "f_store_status")
 	var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
 
-	@get: NotNull
-	@ManyToOne
+	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_project_id", nullable = false)
-	var project: Project
+	var project: Project? = null
 
 ) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()

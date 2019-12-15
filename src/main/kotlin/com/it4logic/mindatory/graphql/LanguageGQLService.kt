@@ -86,11 +86,4 @@ class LanguageGQLService : GQLBaseService<Language>() {
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.LanguageAdminDelete}')")
-	@GraphQLMutation(name = "deleteLanguage")
-	override fun delete(locale: String?, target: Language): Boolean {
-		return super.delete(locale, target)
-	}
-
 }

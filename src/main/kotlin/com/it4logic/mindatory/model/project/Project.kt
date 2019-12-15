@@ -72,13 +72,11 @@ data class Project(
 	@OneToMany(mappedBy = "project")
 	var relations: MutableList<RelationStore> = mutableListOf(),
 
-	@ManyToMany(cascade = [CascadeType.ALL])
-	@JoinTable(
-		name = "t_m2m_project_model_ver_depends",
-		joinColumns = [JoinColumn(name = "f_dependent_id")],
-		inverseJoinColumns = [JoinColumn(name = "f_dependency_id")]
-	)
-	var repositoryDependencies: MutableList<ModelVersion> = mutableListOf(),
+	@get: MultipleLanguageContent
+	@get: NotNull
+	@ManyToOne
+	@JoinColumn(name = "f_model_ver_id", nullable = false)
+	var modelVersion: ModelVersion,
 
 	@NotAudited
 	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")
@@ -101,7 +99,7 @@ data class Project(
  */
 @RepositoryRestResource(exported = false)
 interface ProjectRepository : ApplicationBaseRepository<Project> {
-	fun countAllByRepositoryDependencies_Id(id: Long): Boolean
+	fun countAllByModelVersionId(id: Long): Long
 }
 
 /**

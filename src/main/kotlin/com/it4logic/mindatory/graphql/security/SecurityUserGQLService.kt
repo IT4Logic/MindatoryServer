@@ -90,12 +90,6 @@ class SecurityUserGQLService : GQLBaseService<SecurityUser>() {
 		return super.delete(locale, id)
 	}
 
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.SecurityUserAdminDelete}')")
-	@GraphQLMutation(name = "deleteSecurityUser")
-	override fun delete(locale: String?, target: SecurityUser): Boolean {
-		return super.delete(locale, target)
-	}
-
 	/**
 	 * Changes user password
 	 * @param locale Input locale

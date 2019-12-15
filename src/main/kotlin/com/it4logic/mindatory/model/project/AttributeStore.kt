@@ -61,12 +61,11 @@ data class AttributeStore(
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_artifact_id", nullable = false)
-	var artifact: ArtifactStore,
+	var artifact: ArtifactStore? = null,
 
-	@get: NotNull
 	@ManyToOne
 	@JoinColumn(name = "f_project_id", nullable = false)
-	var project: Project,
+	var project: Project? = null,
 
 	@NotAudited
 	@OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "parent")

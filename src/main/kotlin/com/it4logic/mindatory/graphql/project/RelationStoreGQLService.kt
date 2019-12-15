@@ -99,11 +99,4 @@ class RelationStoreGQLService : GQLBaseService<RelationStore>() {
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.RelationStoreAdminDelete}')")
-	@GraphQLMutation(name = "deleteRelationStore")
-	override fun delete(locale: String?, target: RelationStore): Boolean {
-		return super.delete(locale, target)
-	}
-
 }

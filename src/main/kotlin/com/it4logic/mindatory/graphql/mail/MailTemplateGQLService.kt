@@ -78,11 +78,4 @@ class MailTemplateGQLService : GQLBaseService<MailTemplate>() {
 	override fun delete(locale: String?, id: Long): Boolean {
 		return super.delete(locale, id)
 	}
-
-	@PreAuthorize("hasAnyAuthority('${ApplicationSecurityPermissions.SystemWideAdmin}', '${ApplicationSecurityPermissions.MailTemplateAdminDelete}')")
-	@GraphQLMutation(name = "deleteMailTemplate")
-	override fun delete(locale: String?, target: MailTemplate): Boolean {
-		return super.delete(locale, target)
-	}
-
 }

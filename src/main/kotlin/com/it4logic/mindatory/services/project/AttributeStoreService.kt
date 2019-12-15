@@ -67,9 +67,8 @@ class AttributeStoreService : ApplicationBaseService<AttributeStore>() {
 	fun validateStore(target: AttributeStore) {
 		val error =
 			attributeTemplateDataTypeManagerService.getAttributeTemplateDataType(target.attributeTemplate.typeUUID).validate(
-				target.attributeTemplate.properties, target.contents, true
-
-			) ?: return
-		throw ApplicationGeneralException(error)
+				target.attributeTemplate.properties, target.contents, true)
+		if(error != null)
+			throw ApplicationGeneralException(error)
 	}
 }

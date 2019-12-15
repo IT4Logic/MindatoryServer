@@ -40,11 +40,10 @@ import javax.validation.constraints.NotNull
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "t_artifact_stores")
 data class ArtifactStore(
-	@get: NotNull
 	@get: MultipleLanguageContent
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_artifact_template_id", nullable = false)
-	var artifactTemplate: ArtifactTemplate,
+	var artifactTemplate: ArtifactTemplate? = null,
 
 	@get: MultipleLanguageContent
 	@OneToMany(mappedBy = "artifact")
@@ -53,10 +52,9 @@ data class ArtifactStore(
 	@Column(name = "f_store_status")
 	var storeStatus: StoreObjectStatus = StoreObjectStatus.Active,
 
-	@get: NotNull
-	@ManyToOne
+	@ManyToOne(optional = false)
 	@JoinColumn(name = "f_project_id", nullable = false)
-	var project: Project
+	var project: Project? = null
 
 ) : ApplicationEntityBase() {
 	override fun obtainMLCs(): MutableList<MultipleLanguageContentBaseEntity> = mutableListOf()

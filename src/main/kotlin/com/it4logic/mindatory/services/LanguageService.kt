@@ -23,15 +23,19 @@ package com.it4logic.mindatory.services
 import com.it4logic.mindatory.exceptions.ApplicationErrorCodes
 import com.it4logic.mindatory.exceptions.ApplicationObjectNotFoundException
 import com.it4logic.mindatory.exceptions.ApplicationValidationException
-import com.it4logic.mindatory.model.model.ModelMLCRepository
 import com.it4logic.mindatory.model.CompanyMLCRepository
 import com.it4logic.mindatory.model.project.ProjectMLCRepository
 import com.it4logic.mindatory.model.mlc.Language
 import com.it4logic.mindatory.model.mlc.LanguageRepository
 import com.it4logic.mindatory.model.common.ApplicationBaseRepository
+import com.it4logic.mindatory.model.mail.MailTemplateMLCRepository
+import com.it4logic.mindatory.model.model.*
+import com.it4logic.mindatory.model.project.AttributeStoreMLCRepository
+import com.it4logic.mindatory.model.security.SecurityGroupMLCRepository
+import com.it4logic.mindatory.model.security.SecurityRoleMLCRepository
+import com.it4logic.mindatory.model.security.SecurityUserMLCRepository
 import com.it4logic.mindatory.services.common.ApplicationBaseService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
@@ -45,11 +49,30 @@ class LanguageService : ApplicationBaseService<Language>() {
 	private lateinit var languageRepository: LanguageRepository
 
 	@Autowired
+	protected lateinit var companyMLCRepository: CompanyMLCRepository
+	@Autowired
+	protected lateinit var mailTemplateMLCRepository: MailTemplateMLCRepository
+	@Autowired
+	protected lateinit var securityUserMLCRepository: SecurityUserMLCRepository
+	@Autowired
+	protected lateinit var securityRoleMLCRepository: SecurityRoleMLCRepository
+	@Autowired
+	protected lateinit var securityGroupMLCRepository: SecurityGroupMLCRepository
+	@Autowired
+	protected lateinit var modelMLCRepository: ModelMLCRepository
+	@Autowired
+	protected lateinit var relationTemplateMLCRepository: RelationTemplateMLCRepository
+	@Autowired
+	protected lateinit var stereotypeMLCRepository: StereotypeMLCRepository
+	@Autowired
+	protected lateinit var attributeTemplateMLCRepository: AttributeTemplateMLCRepository
+	@Autowired
+	protected lateinit var artifactTemplateMLCRepository: ArtifactTemplateMLCRepository
+	@Autowired
 	protected lateinit var projectMLCRepository: ProjectMLCRepository
 	@Autowired
-	protected lateinit var applicationRepositoryMLCRepository: ModelMLCRepository
-	@Autowired
-	protected lateinit var companyMLCRepository: CompanyMLCRepository
+	protected lateinit var attributeStoreMLCRepository: AttributeStoreMLCRepository
+
 
 	override fun repository(): ApplicationBaseRepository<Language> = languageRepository
 
@@ -64,8 +87,14 @@ class LanguageService : ApplicationBaseService<Language>() {
 	}
 
 	override fun beforeDelete(target: Language) {
-		checkForDelete(target.id)
-		checkForUsages(target.id)
+		if (target.default)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotDeleteDefaultLanguage)
+
+		val count = repository().count()
+		if (count <= 1)
+			throw ApplicationValidationException(ApplicationErrorCodes.ValidationAtLeastOneLanguageInSystem)
+
+		deleteRelatedContents(target.id)
 	}
 
 	/**
@@ -86,11 +115,11 @@ class LanguageService : ApplicationBaseService<Language>() {
 	 * @return Language object according to the given locale, or the default language object
 	 */
 	fun findLanguageByLocaleOrDefault(locale: String?): Language {
-		if (locale == null)
-			return languageRepository.findOneByDefault(true)
+		return if (locale == null)
+			languageRepository.findOneByDefault(true)
 				.orElseThrow { ApplicationObjectNotFoundException(-1, ApplicationErrorCodes.NotFoundDefaultLanguage) }
 		else {
-			return languageRepository.findOneByLocale(locale).orElseGet {
+			languageRepository.findOneByLocale(locale).orElseGet {
 				languageRepository.findOneByDefault(true).orElseThrow {
 					ApplicationObjectNotFoundException(
 						-1,
@@ -102,55 +131,22 @@ class LanguageService : ApplicationBaseService<Language>() {
 	}
 
 	/**
-	 * Deletes language and its all related translations from all objects
-	 * @param target Object instance
-	 */
-	fun forceDelete(target: Language) {
-		if (useAcl() && SecurityContextHolder.getContext().authentication != null) {
-			securityAclService()?.deleteAcl(target)
-		}
-		checkForDelete(target.id)
-		deleteRelatedContents(target.id)
-		repository().delete(target)
-		repository().flush()
-	}
-
-	/**
-	 * Check if we can delete this language, if no a suitable exception will be raised
-	 * @param id Language Id
-	 */
-	private fun checkForDelete(id: Long) {
-		val obj = findById(id)
-		if (obj.default)
-			throw ApplicationValidationException(ApplicationErrorCodes.ValidationCannotDeleteDefaultLanguage)
-
-		val count = repository().count()
-		if (count <= 1)
-			throw ApplicationValidationException(ApplicationErrorCodes.ValidationAtLeastOneLanguageInSystem)
-	}
-
-	/**
-	 * Check if the language has any usage (i.e. related contents), if yes a suitable exception will be raised
-	 * @param id Language Id
-	 */
-	private fun checkForUsages(id: Long) {
-		var count = projectMLCRepository.countByLanguageId(id)
-		if (count > 0)
-			throw ApplicationValidationException(ApplicationErrorCodes.ValidationLanguageHasRelatedContents)
-
-		count = applicationRepositoryMLCRepository.countByLanguageId(id)
-		if (count > 0)
-			throw ApplicationValidationException(ApplicationErrorCodes.ValidationLanguageHasRelatedContents)
-	}
-
-	/**
 	 * Delete all related language contents (usage)
 	 * @param id Language Id
 	 */
 	fun deleteRelatedContents(id: Long) {
-		applicationRepositoryMLCRepository.deleteAllByLanguageId(id)
-		projectMLCRepository.deleteAllByLanguageId(id)
 		companyMLCRepository.deleteAllByLanguageId(id)
+		mailTemplateMLCRepository.deleteAllByLanguageId(id)
+		securityUserMLCRepository.deleteAllByLanguageId(id)
+		securityRoleMLCRepository.deleteAllByLanguageId(id)
+		securityGroupMLCRepository.deleteAllByLanguageId(id)
+		modelMLCRepository.deleteAllByLanguageId(id)
+		relationTemplateMLCRepository.deleteAllByLanguageId(id)
+		stereotypeMLCRepository.deleteAllByLanguageId(id)
+		attributeTemplateMLCRepository.deleteAllByLanguageId(id)
+		artifactTemplateMLCRepository.deleteAllByLanguageId(id)
+		projectMLCRepository.deleteAllByLanguageId(id)
+		attributeStoreMLCRepository.deleteAllByLanguageId(id)
 	}
 
 	/**

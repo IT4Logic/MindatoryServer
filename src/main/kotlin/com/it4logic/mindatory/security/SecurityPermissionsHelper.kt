@@ -24,7 +24,7 @@ package com.it4logic.mindatory.security
  */
 class SecurityPermissionsHelper {
 	companion object {
-		fun verifyViewPermission(permissions: ArrayList<String>) {
+		fun verifyViewPermission(permissions: MutableList<String>) {
 
 			if (permissions.contains(ApplicationSecurityPermissions.LanguageAdminCreate) ||
 				permissions.contains(ApplicationSecurityPermissions.LanguageAdminModify) ||
